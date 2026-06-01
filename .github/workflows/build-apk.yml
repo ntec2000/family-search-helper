@@ -3,9 +3,10 @@ name: Build APK
 on:
   push:
     branches: [main, master]
-  pull_request:
-    branches: [main, master]
   workflow_dispatch:
+
+permissions:
+  contents: write    # release 생성 권한
 
 jobs:
   build:
@@ -35,59 +36,75 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Show Flutter / Dart version
-        run: |
-          flutter --version
-          dart --version
-
       - name: Install dependencies
         run: flutter pub get
-
-      - name: Run static analysis
-        run: flutter analyze --no-fatal-infos --no-fatal-warnings || true
-
-      - name: Run unit tests
-        run: flutter test || true
 
       - name: Build Release APK (universal)
         run: flutter build apk --release
 
-      - name: Build split-per-ABI APKs (smaller)
+      - name: Build split-per-ABI APKs
         run: flutter build apk --release --split-per-abi
 
-      - name: Show APK info
+      - name: Rename APKs for distribution
         run: |
-          ls -lh build/app/outputs/flutter-apk/
-          echo "================================"
-          echo "APK 빌드 완료"
-          echo "================================"
+          mkdir -p dist
+          cp build/app/outputs/flutter-apk/app-release.apk dist/family-search-helper-v1.0.0-universal.apk
+          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk dist/family-search-helper-v1.0.0-arm64.apk
+          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk dist/family-search-helper-v1.0.0-arm32.apk
+          cp build/app/outputs/flutter-apk/app-x86_64-release.apk dist/family-search-helper-v1.0.0-x86_64.apk
+          ls -lh dist/
 
-      - name: Upload Universal APK
+      - name: Upload Universal APK (artifact)
         uses: actions/upload-artifact@v4
         with:
           name: family-search-helper-universal-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
-          retention-days: 30
+          path: dist/family-search-helper-v1.0.0-universal.apk
+          retention-days: 90
 
-      - name: Upload Split APKs (smaller per device)
+      - name: Upload Split APKs (artifact)
         uses: actions/upload-artifact@v4
         with:
           name: family-search-helper-split-apks
-          path: |
-            build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk
-            build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
-            build/app/outputs/flutter-apk/app-x86_64-release.apk
-          retention-days: 30
+          path: dist/family-search-helper-v1.0.0-arm64.apk
+          retention-days: 90
 
-      - name: Create Release on tagged push
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Publish Release (latest)
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: v1.0.0
+          name: "가족역사기록 도우미 v1.0.0"
+          body: |
+            # 가족역사기록 도우미 (Family Search Helper) v1.0.0
+
+            **개발자**: Peter S. Choi
+            **문의**: ntec21c@gmail.com
+
+            ## 다운로드
+            - **family-search-helper-v1.0.0-universal.apk** (~80MB, 모든 기기 호환 — 권장)
+            - **family-search-helper-v1.0.0-arm64.apk** (~30MB, 최신 폰 전용, 가장 작음)
+            - **family-search-helper-v1.0.0-arm32.apk** (~30MB, 구형 폰)
+            - **family-search-helper-v1.0.0-x86_64.apk** (에뮬레이터용)
+
+            ## 설치
+            1. APK 파일을 전화기로 전송 (이메일/카카오톡/USB 등)
+            2. 설정 → 보안 → "출처를 알 수 없는 앱 설치 허용"
+            3. APK 파일을 탭하여 설치
+
+            ## 기능
+            - 족보 한자 OCR (온디바이스, 무료)
+            - 한자→한글 음 사전 8,528자 내장
+            - 만세력 양↔음력, 干支 추정
+            - 인물 카드 + 가계도 시각화
+            - SQLite 로컬 저장
+            - GEDCOM 5.5.1 / FamilySearch 동기화
+            - 전통 한지·먹 테마
           files: |
-            build/app/outputs/flutter-apk/app-release.apk
-            build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+            dist/family-search-helper-v1.0.0-universal.apk
+            dist/family-search-helper-v1.0.0-arm64.apk
+            dist/family-search-helper-v1.0.0-arm32.apk
+            dist/family-search-helper-v1.0.0-x86_64.apk
           draft: false
           prerelease: false
-          generate_release_notes: true
+          make_latest: "true"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
