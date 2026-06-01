@@ -1,0 +1,168 @@
+import 'package:uuid/uuid.dart';
+import '../models/person.dart';
+import 'hanja_dict.dart';
+import 'lunar_service.dart';
+
+/// 족보 OCR 텍스트 파서.
+/// 표준 족보 표기 규칙:
+///   子○○ / 女○○        : 인물(성별 + 이름)
+///   字○○                : 자(字)
+///   號○○                : 호
+///   配○○郡 ○○氏 父 ○○○: 배우자 정보
+///   墓○○郡 ○○面 ○○山   : 묘 위치
+///   ○○坐○○向            : 좌향
+///   干支○月○日 生        : 생일 (음력)
+///   干支○月○日 卒        : 사망일 (음력)
+///   ○○世                : 세
+class JokboParser {
+  static final _uuid = const Uuid();
+
+  /// OCR 인식 텍스트(세로쓰기 → 정렬된 평문)를 받아 인물 카드 목록 추출
+  static List<Person> parse(String rawText, {String? sourceImagePath}) {
+    // 줄바꿈/공백 정규화. 세로쓰기 OCR은 한 글자씩 줄바꿈되는 경우가 많아
+    // 짧은 줄을 이어 붙임.
+    final normalized = _normalize(rawText);
+
+    // 인물 단위 분할: 子 / 女 마커로 시작
+    final entries = _splitByPerson(normalized);
+
+    final persons = <Person>[];
+    for (final block in entries) {
+      final p = _parsePersonBlock(block, sourceImagePath: sourceImagePath);
+      if (p != null) persons.add(p);
+    }
+    return persons;
+  }
+
+  static String _normalize(String raw) {
+    // 한자/마커가 한 줄씩 떨어진 OCR 결과 → 공백 한 칸으로 통합
+    final lines = raw.split(RegExp(r'[\r\n]+'));
+    final buf = StringBuffer();
+    for (var l in lines) {
+      l = l.trim();
+      if (l.isEmpty) continue;
+      buf.write(l);
+      buf.write(' ');
+    }
+    var s = buf.toString();
+    // 다중 공백 정리
+    s = s.replaceAll(RegExp(r'\s+'), ' ');
+    return s;
+  }
+
+  static List<String> _splitByPerson(String text) {
+    // "子" 또는 "女" 마커를 인물 시작으로 간주
+    final pattern = RegExp(r'(?=[子女])');
+    final parts = text.split(pattern).where((s) => s.trim().isNotEmpty).toList();
+    // 첫 블록이 마커로 시작하지 않으면 제외(머리글 가능성)
+    return parts.where((p) {
+      final t = p.trim();
+      return t.startsWith('子') || t.startsWith('女');
+    }).toList();
+  }
+
+  static Person? _parsePersonBlock(String block, {String? sourceImagePath}) {
+    final t = block.trim();
+    if (t.length < 2) return null;
+
+    final dict = HanjaDict.instance;
+    final person = Person(
+      id: _uuid.v4(),
+      sourceImagePath: sourceImagePath,
+      rawText: t,
+    );
+
+    // 성별 + 이름: 子○ or 女○ 다음의 한자 1~3자
+    final nameMatch = RegExp(r'^([子女])([一-鿿]{1,3})').firstMatch(t);
+    if (nameMatch == null) return null;
+    person.gender = nameMatch.group(1) == '子' ? 'M' : 'F';
+    person.nameHanja = nameMatch.group(2)!;
+    person.nameHangul = dict.toHangul(person.nameHanja);
+
+    // 字 (자)
+    final ja = RegExp(r'字([一-鿿]{1,3})').firstMatch(t);
+    if (ja != null) person.ja = ja.group(1);
+
+    // 號 (호)
+    final ho = RegExp(r'號([一-鿿]{1,3})').firstMatch(t);
+    if (ho != null) person.ho = ho.group(1);
+
+    // 諡號 (시호)
+    final siho = RegExp(r'諡號?([一-鿿]{1,3})').firstMatch(t);
+    if (siho != null) person.siho = siho.group(1);
+
+    // 生 (출생) - 干支 + 월일 + 生
+    final birth = RegExp(
+            r'([甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥])([一-鿿零一二三四五六七八九十百○]{1,3}月[一-鿿零一二三四五六七八九十○]{1,3}日)\s*生')
+        .firstMatch(t);
+    if (birth != null) {
+      person.birthDateLunar = '${birth.group(1)}年 ${birth.group(2)} 生';
+      // 干支 → 양력 연도 추정 (가장 가까운 연도 후보)
+      final candidates = LunarService.estimateYearsFromGanzhi(birth.group(1)!);
+      if (candidates.isNotEmpty) {
+        final mostRecent =
+            candidates.where((y) => y <= DateTime.now().year).lastOrNull;
+        if (mostRecent != null) {
+          person.birthDateSolar = '$mostRecent (干支 추정)';
+        }
+      }
+    }
+
+    // 卒 (사망)
+    final death = RegExp(
+            r'([甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥])([一-鿿零一二三四五六七八九十百○]{1,3}月[一-鿿零一二三四五六七八九十○]{1,3}日)\s*卒')
+        .firstMatch(t);
+    if (death != null) {
+      person.deathDateLunar = '${death.group(1)}年 ${death.group(2)} 卒';
+      final candidates = LunarService.estimateYearsFromGanzhi(death.group(1)!);
+      if (candidates.isNotEmpty && person.birthDateSolar != null) {
+        // 출생연도 이후의 첫 후보
+        final birthYearStr = RegExp(r'(\d{4})').firstMatch(person.birthDateSolar!);
+        if (birthYearStr != null) {
+          final by = int.parse(birthYearStr.group(1)!);
+          final dy = candidates.firstWhere(
+              (y) => y > by && y <= DateTime.now().year,
+              orElse: () => -1);
+          if (dy > 0) person.deathDateSolar = '$dy (干支 추정)';
+        }
+      }
+    }
+
+    // 配 (배우자)
+    // 配○○郡 ○○氏 父 ○○○
+    final pae = RegExp(
+            r'配\s*([一-鿿]{1,4}[郡州府])?\s*([一-鿿]{1,3}氏)\s*(?:父\s*([一-鿿]{1,4}))?')
+        .firstMatch(t);
+    if (pae != null) {
+      person.spouseBongwan = pae.group(1);
+      person.spouseHanja = pae.group(2);
+      person.spouseHangul = pae.group(2) != null
+          ? dict.toHangul(pae.group(2)!)
+          : null;
+      person.spouseFather = pae.group(3);
+    }
+
+    // 墓 (묘 위치)
+    final myo = RegExp(
+            r'墓\s*([一-鿿]{1,4}[郡州府])?\s*([一-鿿]{0,3}[面里洞])?\s*([一-鿿]{0,4}[山谷洞])?')
+        .firstMatch(t);
+    if (myo != null) {
+      final parts = [myo.group(1), myo.group(2), myo.group(3)]
+          .where((s) => s != null && s.isNotEmpty)
+          .toList();
+      if (parts.isNotEmpty) person.burialPlace = parts.join(' ');
+    }
+
+    // 좌향: ○坐○向
+    final jwa = RegExp(r'([一-鿿])坐([一-鿿])向').firstMatch(t);
+    if (jwa != null) {
+      person.burialOrientation = '${jwa.group(1)}坐${jwa.group(2)}向';
+    }
+
+    return person;
+  }
+}
+
+extension _FirstLastOrNull<T> on Iterable<T> {
+  T? get lastOrNull => isEmpty ? null : last;
+}
