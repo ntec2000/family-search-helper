@@ -5,7 +5,7 @@ on:
     branches: [main, master]
   pull_request:
     branches: [main, master]
-  workflow_dispatch:    # 수동 실행 버튼
+  workflow_dispatch:
 
 jobs:
   build:
@@ -22,6 +22,11 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-34 platforms;android-35 build-tools;33.0.1 build-tools;34.0.0'
 
       - name: Setup Flutter 3.24.5
         uses: subosito/flutter-action@v2
