@@ -1,0 +1,171 @@
+import 'dart:convert';
+
+/// 가족역사기록서(FamilySearch Person) 호환 인물 모델
+class Person {
+  String id;
+  // 이름
+  String nameHanja;       // 崔海斗
+  String nameHangul;      // 최해두
+  String nameRoman;       // CHOI HAE-DU
+  String? ja;             // 字 (자)
+  String? ho;             // 號 (호)
+  String? siho;           // 諡號 (시호)
+  String? bongwan;        // 本貫 (본관) — 예: 慶州崔氏
+  String? pa;             // 派 (파)
+  int? sega;              // 世 (세대)
+  String gender;          // 'M' / 'F' / 'U'
+
+  // 출생
+  String? birthDateLunar;   // 干支 음력 표기
+  String? birthDateSolar;   // 1929-11-07
+  String? birthPlace;       // 경북 경주시 강동면
+
+  // 결혼
+  String? marriageDate;
+  String? marriagePlace;
+  String? spouseHanja;
+  String? spouseHangul;
+  String? spouseFather;     // 配 ○○○氏 父 ○○○
+  String? spouseBongwan;
+
+  // 사망/매장
+  String? deathDateLunar;
+  String? deathDateSolar;
+  String? deathPlace;
+  String? burialPlace;      // 墓 위치
+  String? burialOrientation; // 좌향 (예: 子坐午向)
+
+  // 가족 관계
+  String? fatherId;
+  String? motherId;
+  List<String> childrenIds;
+  List<String> sonsInLawIds;   // 사위
+  List<String> inLawsIds;      // 사돈
+
+  // 메타
+  String? sourceImagePath;
+  String? rawText;
+  DateTime createdAt;
+  DateTime updatedAt;
+
+  Person({
+    required this.id,
+    this.nameHanja = '',
+    this.nameHangul = '',
+    this.nameRoman = '',
+    this.ja,
+    this.ho,
+    this.siho,
+    this.bongwan,
+    this.pa,
+    this.sega,
+    this.gender = 'U',
+    this.birthDateLunar,
+    this.birthDateSolar,
+    this.birthPlace,
+    this.marriageDate,
+    this.marriagePlace,
+    this.spouseHanja,
+    this.spouseHangul,
+    this.spouseFather,
+    this.spouseBongwan,
+    this.deathDateLunar,
+    this.deathDateSolar,
+    this.deathPlace,
+    this.burialPlace,
+    this.burialOrientation,
+    this.fatherId,
+    this.motherId,
+    List<String>? childrenIds,
+    List<String>? sonsInLawIds,
+    List<String>? inLawsIds,
+    this.sourceImagePath,
+    this.rawText,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  })  : childrenIds = childrenIds ?? [],
+        sonsInLawIds = sonsInLawIds ?? [],
+        inLawsIds = inLawsIds ?? [],
+        createdAt = createdAt ?? DateTime.now(),
+        updatedAt = updatedAt ?? DateTime.now();
+
+  Map<String, dynamic> toMap() => {
+        'id': id,
+        'name_hanja': nameHanja,
+        'name_hangul': nameHangul,
+        'name_roman': nameRoman,
+        'ja': ja,
+        'ho': ho,
+        'siho': siho,
+        'bongwan': bongwan,
+        'pa': pa,
+        'sega': sega,
+        'gender': gender,
+        'birth_date_lunar': birthDateLunar,
+        'birth_date_solar': birthDateSolar,
+        'birth_place': birthPlace,
+        'marriage_date': marriageDate,
+        'marriage_place': marriagePlace,
+        'spouse_hanja': spouseHanja,
+        'spouse_hangul': spouseHangul,
+        'spouse_father': spouseFather,
+        'spouse_bongwan': spouseBongwan,
+        'death_date_lunar': deathDateLunar,
+        'death_date_solar': deathDateSolar,
+        'death_place': deathPlace,
+        'burial_place': burialPlace,
+        'burial_orientation': burialOrientation,
+        'father_id': fatherId,
+        'mother_id': motherId,
+        'children_ids': jsonEncode(childrenIds),
+        'sons_in_law_ids': jsonEncode(sonsInLawIds),
+        'in_laws_ids': jsonEncode(inLawsIds),
+        'source_image_path': sourceImagePath,
+        'raw_text': rawText,
+        'created_at': createdAt.toIso8601String(),
+        'updated_at': updatedAt.toIso8601String(),
+      };
+
+  factory Person.fromMap(Map<String, dynamic> m) => Person(
+        id: m['id'] as String,
+        nameHanja: m['name_hanja'] ?? '',
+        nameHangul: m['name_hangul'] ?? '',
+        nameRoman: m['name_roman'] ?? '',
+        ja: m['ja'],
+        ho: m['ho'],
+        siho: m['siho'],
+        bongwan: m['bongwan'],
+        pa: m['pa'],
+        sega: m['sega'] as int?,
+        gender: m['gender'] ?? 'U',
+        birthDateLunar: m['birth_date_lunar'],
+        birthDateSolar: m['birth_date_solar'],
+        birthPlace: m['birth_place'],
+        marriageDate: m['marriage_date'],
+        marriagePlace: m['marriage_place'],
+        spouseHanja: m['spouse_hanja'],
+        spouseHangul: m['spouse_hangul'],
+        spouseFather: m['spouse_father'],
+        spouseBongwan: m['spouse_bongwan'],
+        deathDateLunar: m['death_date_lunar'],
+        deathDateSolar: m['death_date_solar'],
+        deathPlace: m['death_place'],
+        burialPlace: m['burial_place'],
+        burialOrientation: m['burial_orientation'],
+        fatherId: m['father_id'],
+        motherId: m['mother_id'],
+        childrenIds: m['children_ids'] != null
+            ? List<String>.from(jsonDecode(m['children_ids']))
+            : [],
+        sonsInLawIds: m['sons_in_law_ids'] != null
+            ? List<String>.from(jsonDecode(m['sons_in_law_ids']))
+            : [],
+        inLawsIds: m['in_laws_ids'] != null
+            ? List<String>.from(jsonDecode(m['in_laws_ids']))
+            : [],
+        sourceImagePath: m['source_image_path'],
+        rawText: m['raw_text'],
+        createdAt: DateTime.parse(m['created_at']),
+        updatedAt: DateTime.parse(m['updated_at']),
+      );
+}
