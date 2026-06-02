@@ -62,22 +62,50 @@ class _CaptureScreenState extends State<CaptureScreen> {
   }
 
   Future<void> _process(String path) async {
+    if (!mounted) return;
     setState(() {
       _busy = true;
       _status = '한자 인식 중...';
     });
-    final ocr = await OcrService.recognize(path);
-    setState(() => _status = '족보 정보 분석 중...');
-    final persons = JokboParser.parse(ocr.text, sourceImagePath: path);
-    for (final p in persons) {
-      await DbService.instance.upsertPerson(p);
+    try {
+      final ocr = await OcrService.recognize(path);
+      if (!mounted) return;
+      setState(() => _status = '족보 정보 분석 중...');
+      final persons = JokboParser.parse(ocr.text, sourceImagePath: path);
+      for (final p in persons) {
+        await DbService.instance.upsertPerson(p);
+      }
+      if (!mounted) return;
+      Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+              builder: (_) => ResultScreen(
+                  rawText: ocr.text, persons: persons, imagePath: path)));
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _status = '';
+      });
+      showDialog(
+        context: context,
+        builder: (_) => AlertDialog(
+          title: const Text('인식 오류'),
+          content: Text('이미지를 처리하는 중 문제가 발생했습니다.\n'
+              '사진이 너무 크거나 형식이 지원되지 않을 수 있습니다.\n\n'
+              '다른 사진으로 다시 시도해 주세요.\n\n[$e]'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context); // close dialog
+                if (Navigator.canPop(context)) Navigator.pop(context); // back to home
+              },
+              child: const Text('확인'),
+            ),
+          ],
+        ),
+      );
     }
-    if (!mounted) return;
-    Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-            builder: (_) => ResultScreen(
-                rawText: ocr.text, persons: persons, imagePath: path)));
   }
 
   @override
@@ -95,7 +123,9 @@ class _CaptureScreenState extends State<CaptureScreen> {
           if (_camera != null && _camera!.value.isInitialized)
             Positioned.fill(child: CameraPreview(_camera!))
           else if (widget.imagePath != null)
-            Positioned.fill(child: Image.file(File(widget.imagePath!), fit: BoxFit.contain))
+            Positioned.fill(
+                child: Image.file(File(widget.imagePath!),
+                    fit: BoxFit.contain, cacheWidth: 1200))
           else
             const Center(child: CircularProgressIndicator()),
           if (_busy)

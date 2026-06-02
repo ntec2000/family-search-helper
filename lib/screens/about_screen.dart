@@ -39,7 +39,7 @@ class AboutScreen extends StatelessWidget {
                 Text('Family Search Helper',
                     style: TextStyle(fontSize: 12, color: HanjiColors.mukSoft, letterSpacing: 2)),
                 SizedBox(height: 16),
-                Text('v1.0.1',
+                Text('v1.0.2',
                     style: TextStyle(fontSize: 14, color: HanjiColors.ju, letterSpacing: 2)),
               ],
             ),
@@ -140,6 +140,18 @@ class AboutScreen extends StatelessWidget {
               padding: const EdgeInsets.all(8),
               child: Column(
                 children: const [
+                  _Hist(
+                    ver: 'v1.0.2',
+                    date: '2026-06-02',
+                    items: [
+                      '🔧 갤러리에서 큰 사진 업로드 시 강제 종료(크래시) 수정',
+                      '🔧 업로드 이미지 자동 축소(최대 2400px)로 메모리 부족 방지',
+                      '🔧 OCR/분석 전 구간 예외 처리 — 오류 시 안내 후 복귀',
+                      '🔧 미리보기 이미지 메모리 캐시 제한(cacheWidth)',
+                      '🔧 ML Kit 텍스트 인식 의존성 보정 (ica → ocr)',
+                    ],
+                  ),
+                  Divider(),
                   _Hist(
                     ver: 'v1.0.1',
                     date: '2026-06-02',

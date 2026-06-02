@@ -34,11 +34,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Future<void> _pickFromGallery() async {
-    final x = await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (x != null && mounted) {
-      await Navigator.push(context,
-          MaterialPageRoute(builder: (_) => CaptureScreen(imagePath: x.path)));
-      _reload();
+    try {
+      final x = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 2400,
+        maxHeight: 2400,
+        imageQuality: 88,
+      );
+      if (x != null && mounted) {
+        await Navigator.push(context,
+            MaterialPageRoute(builder: (_) => CaptureScreen(imagePath: x.path)));
+        _reload();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('이미지를 불러오지 못했습니다: $e')),
+        );
+      }
     }
   }
 
