@@ -48,42 +48,42 @@ jobs:
       - name: Rename APKs for distribution
         run: |
           mkdir -p dist
-          cp build/app/outputs/flutter-apk/app-release.apk dist/family-search-helper-v1.0.2-universal.apk
-          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk dist/family-search-helper-v1.0.2-arm64.apk
-          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk dist/family-search-helper-v1.0.2-arm32.apk
-          cp build/app/outputs/flutter-apk/app-x86_64-release.apk dist/family-search-helper-v1.0.2-x86_64.apk
+          cp build/app/outputs/flutter-apk/app-release.apk dist/family-search-helper-v1.0.3-universal.apk
+          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk dist/family-search-helper-v1.0.3-arm64.apk
+          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk dist/family-search-helper-v1.0.3-arm32.apk
+          cp build/app/outputs/flutter-apk/app-x86_64-release.apk dist/family-search-helper-v1.0.3-x86_64.apk
           ls -lh dist/
 
       - name: Upload Universal APK (artifact)
         uses: actions/upload-artifact@v4
         with:
           name: family-search-helper-universal-apk
-          path: dist/family-search-helper-v1.0.2-universal.apk
+          path: dist/family-search-helper-v1.0.3-universal.apk
           retention-days: 90
 
       - name: Upload Split APKs (artifact)
         uses: actions/upload-artifact@v4
         with:
           name: family-search-helper-split-apks
-          path: dist/family-search-helper-v1.0.2-arm64.apk
+          path: dist/family-search-helper-v1.0.3-arm64.apk
           retention-days: 90
 
       - name: Publish Release (latest)
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.2
-          name: "가족역사기록 도우미 v1.0.2"
+          tag_name: v1.0.3
+          name: "가족역사기록 도우미 v1.0.3"
           body: |
-            # 가족역사기록 도우미 (Family Search Helper) v1.0.2
+            # 가족역사기록 도우미 (Family Search Helper) v1.0.3
 
             **개발자**: Peter S. Choi
             **문의**: ntec21c@gmail.com
 
             ## 다운로드
-            - **family-search-helper-v1.0.2-universal.apk** (~80MB, 모든 기기 호환 — 권장)
-            - **family-search-helper-v1.0.2-arm64.apk** (~30MB, 최신 폰 전용, 가장 작음)
-            - **family-search-helper-v1.0.2-arm32.apk** (~30MB, 구형 폰)
-            - **family-search-helper-v1.0.2-x86_64.apk** (에뮬레이터용)
+            - **family-search-helper-v1.0.3-universal.apk** (~80MB, 모든 기기 호환 — 권장)
+            - **family-search-helper-v1.0.3-arm64.apk** (~30MB, 최신 폰 전용, 가장 작음)
+            - **family-search-helper-v1.0.3-arm32.apk** (~30MB, 구형 폰)
+            - **family-search-helper-v1.0.3-x86_64.apk** (에뮬레이터용)
 
             ## 설치
             1. APK 파일을 전화기로 전송 (이메일/카카오톡/USB 등)
@@ -102,15 +102,15 @@ jobs:
             - GEDCOM 5.5.1 내보내기 / FamilySearch OAuth 직접 동기화
             - 전통 한지·먹 테마
 
-            ## v1.0.2 변경사항
+            ## v1.0.3 변경사항
             - FamilySearch 연동을 **선택 옵션**으로 분리 (설정 On/Off 토글)
             - Client ID 를 앱 설정 화면에서 직접 입력 가능
             - 연동을 끄면 완전한 추출 전용 모드로 동작
           files: |
-            dist/family-search-helper-v1.0.2-universal.apk
-            dist/family-search-helper-v1.0.2-arm64.apk
-            dist/family-search-helper-v1.0.2-arm32.apk
-            dist/family-search-helper-v1.0.2-x86_64.apk
+            dist/family-search-helper-v1.0.3-universal.apk
+            dist/family-search-helper-v1.0.3-arm64.apk
+            dist/family-search-helper-v1.0.3-arm32.apk
+            dist/family-search-helper-v1.0.3-x86_64.apk
           draft: false
           prerelease: false
           make_latest: "true"

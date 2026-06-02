@@ -39,7 +39,7 @@ class AboutScreen extends StatelessWidget {
                 Text('Family Search Helper',
                     style: TextStyle(fontSize: 12, color: HanjiColors.mukSoft, letterSpacing: 2)),
                 SizedBox(height: 16),
-                Text('v1.0.2',
+                Text('v1.0.3',
                     style: TextStyle(fontSize: 14, color: HanjiColors.ju, letterSpacing: 2)),
               ],
             ),
@@ -140,6 +140,17 @@ class AboutScreen extends StatelessWidget {
               padding: const EdgeInsets.all(8),
               child: Column(
                 children: const [
+                  _Hist(
+                    ver: 'v1.0.3',
+                    date: '2026-06-02',
+                    items: [
+                      '🛠 특정 사진 업로드 시 강제 종료(네이티브 크래시) 해결',
+                      '🛠 OCR 전 이미지를 표준 JPEG 로 재인코딩(디코더 크래시 방지)',
+                      '🛠 EXIF 회전 자동 보정 + 안전한 크기로 정규화',
+                      '🛠 앱 전역 오류 핸들러 추가 — 예기치 못한 오류에도 앱 유지',
+                    ],
+                  ),
+                  Divider(),
                   _Hist(
                     ver: 'v1.0.2',
                     date: '2026-06-02',
