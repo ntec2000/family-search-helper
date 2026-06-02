@@ -81,9 +81,14 @@ class _PersonList extends StatelessWidget {
             subtitle: Text([
               if (p.ja != null) '字 ${p.ja}',
               if (p.birthDateLunar != null) '生 ${p.birthDateLunar}',
-              if (p.deathDateLunar != null) '卒 ${p.deathDateLunar}',
+              if (p.birthPlace != null) '生地 ${p.birthPlace}',
+              if (p.marriageDate != null) '婚 ${p.marriageDate}',
               if (p.spouseHanja != null) '配 ${p.spouseHanja}',
+              if (p.deathDateLunar != null) '卒 ${p.deathDateLunar}',
               if (p.burialPlace != null) '墓 ${p.burialPlace}',
+              if (p.childrenNote != null) '子女 ${p.childrenNote}',
+              if (p.sonsInLawNote != null) '婿 ${p.sonsInLawNote}',
+              if (p.inLawsNote != null) '査頓 ${p.inLawsNote}',
             ].join('\n'), style: const TextStyle(height: 1.5, fontSize: 12)),
             trailing: const Icon(Icons.edit_note),
             onTap: () => Navigator.push(

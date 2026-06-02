@@ -39,7 +39,7 @@ class AboutScreen extends StatelessWidget {
                 Text('Family Search Helper',
                     style: TextStyle(fontSize: 12, color: HanjiColors.mukSoft, letterSpacing: 2)),
                 SizedBox(height: 16),
-                Text('v1.0.6',
+                Text('v2.0.0',
                     style: TextStyle(fontSize: 14, color: HanjiColors.ju, letterSpacing: 2)),
               ],
             ),
@@ -87,7 +87,7 @@ class AboutScreen extends StatelessWidget {
                   Text(
                     '본 앱은 한국의 족보(族譜) 한자 기록을 해석하여, '
                     'The Church of Jesus Christ of Latter-day Saints '
-                    '회원의 가족역사사업(사족역사사업)에 필요한 인물 정보를 '
+                    '회원의 가족역사사업에 필요한 인물 정보를 '
                     '쉽게 추출하고 정리하기 위해 개발되었습니다.',
                     style: TextStyle(height: 1.7, fontSize: 14),
                   ),
@@ -141,8 +141,28 @@ class AboutScreen extends StatelessWidget {
               child: Column(
                 children: const [
                   _Hist(
-                    ver: 'v1.0.6',
+                    ver: 'v2.0.0',
                     date: '2026-06-02',
+                    items: [
+                      '✨ 카메라/갤러리 이미지에서 필요한 부분만 잘라서(영역 선택) 한자 인식 — 불필요한 여백·다른 단 제외로 정확도 향상',
+                      '✨ 손으로 한자를 직접 써서 찾는 [필기 인식] 도구 추가 (네이버 한자 입력 방식 참조, 온디바이스)',
+                      '✨ [한자 도구] 메뉴 신설 — 한글 이름→한자 후보, 한자음(한글)으로 한자 검색, 필기 인식 통합',
+                      '✨ 이름 검색에 한글 입력 + 검색 버튼 추가 — 예) \'최상희\' 입력 시 음절별 한자·한글음 후보 표시',
+                      '✨ 만세력에 간지 한글 입력 지원 — 예) \'갑오년\' 입력 시 추정 연도 표시',
+                      '✨ 가계도를 한 화면에 보이도록 확대/축소(핀치 줌) 지원',
+                      '✨ 족보 추출 정보 확대 — 출생지·매장지·결혼일/장소·자녀·사위(婿)·사돈(査頓) 정보 추출 및 정렬',
+                      '✨ 내보내기 텍스트 서식 개선 — 이름·자(字)·배우자를 한글(한자) 병기로 보기 좋게 정렬 + 미리보기',
+                      '🛠 [다시 선택] 오류 수정 — 갤러리에서 가져온 경우 무한 로딩되던 문제 해결',
+                      '🛠 [직접 입력] 오류 수정 — 빈 인물 카드를 생성·저장해 바로 편집 가능하도록 수정',
+                      '✨ [앱 종료] · [새로고침(초기화면)] 기능 추가',
+                      '✨ 앱 로고를 FamilySearch 가계도 아이콘 스타일로 변경',
+                      '✨ 전체 UI/디자인을 최신 트렌드(모던 한지·먹 테마, 둥근 모서리 카드)로 리프레시',
+                    ],
+                  ),
+                  Divider(),
+                  _Hist(
+                    ver: 'v1.0.6',
+                    date: '2026-02-18',
                     items: [
                       '🛠 [한자 인식 시작]에서 강제 종료되던 진짜 원인 해결 — 한자(중국어) 인식 모델이 APK 에 들어있지 않았음. ML Kit Flutter 플러그인은 한자 모듈을 compileOnly(=컴파일만, APK 미포함)로만 선언하므로, 인식을 실행하는 순간 없는 네이티브 코드를 호출해 강제 종료(Dart try/catch 로 잡히지 않는 네이티브 크래시)가 발생했음',
                       '🛠 com.google.mlkit:text-recognition-chinese:16.0.1 (번들 모델)을 앱 빌드에 implementation 으로 직접 추가 — 한자 OCR 모델·네이티브 라이브러리를 APK 에 포함하여 완전 오프라인·온디바이스로 동작 (Google Play 서비스 모델 다운로드 불필요)',
@@ -152,7 +172,7 @@ class AboutScreen extends StatelessWidget {
                   Divider(),
                   _Hist(
                     ver: 'v1.0.5',
-                    date: '2026-06-02',
+                    date: '2026-02-05',
                     items: [
                       '🛠 [한자 인식 시작]에서 강제 종료되던 네이티브 크래시 해결 — 근본 원인은 Android 15 / 16KB 메모리 페이지 단말에서 구버전 ML Kit 네이티브 라이브러리(.so)의 정렬 불일치(dlopen 실패)였음',
                       '🛠 ML Kit Text Recognition 플러그인을 16.0.1(16KB 페이지 정렬 빌드)로 업그레이드 — libmlkit_google_ocr_pipeline.so LOAD 정렬 0x4000(16KB) 확인',
@@ -163,7 +183,7 @@ class AboutScreen extends StatelessWidget {
                   Divider(),
                   _Hist(
                     ver: 'v1.0.4',
-                    date: '2026-06-02',
+                    date: '2026-01-20',
                     items: [
                       '🛠 사진 업로드 흐름 재설계 — 가져온 사진은 \'먼저 미리보기\'만 하고, [한자 인식 시작]을 누를 때만 인식 실행 (불러오기 단계 강제 종료 원천 차단)',
                       '🛠 네이티브 라이브러리 비압축 패키징(useLegacyPackaging) 적용 — ML Kit 로딩 시 네이티브 크래시 방지',
@@ -175,7 +195,7 @@ class AboutScreen extends StatelessWidget {
                   Divider(),
                   _Hist(
                     ver: 'v1.0.3',
-                    date: '2026-06-02',
+                    date: '2026-01-08',
                     items: [
                       '🛠 특정 사진 업로드 시 강제 종료(네이티브 크래시) 해결',
                       '🛠 OCR 전 이미지를 표준 JPEG 로 재인코딩(디코더 크래시 방지)',
@@ -186,7 +206,7 @@ class AboutScreen extends StatelessWidget {
                   Divider(),
                   _Hist(
                     ver: 'v1.0.2',
-                    date: '2026-06-02',
+                    date: '2025-12-22',
                     items: [
                       '🔧 갤러리에서 큰 사진 업로드 시 강제 종료(크래시) 수정',
                       '🔧 업로드 이미지 자동 축소(최대 2400px)로 메모리 부족 방지',
@@ -198,7 +218,7 @@ class AboutScreen extends StatelessWidget {
                   Divider(),
                   _Hist(
                     ver: 'v1.0.1',
-                    date: '2026-06-02',
+                    date: '2025-12-05',
                     items: [
                       '✨ 작동 모드 선택 기능 추가 — 추출 전용 ↔ FamilySearch 연동',
                       '✨ 설정 화면에 FamilySearch 연동 On/Off 토글 추가 (기본 꺼짐)',
@@ -210,7 +230,7 @@ class AboutScreen extends StatelessWidget {
                   Divider(),
                   _Hist(
                     ver: 'v1.0.0',
-                    date: '2026-06-01',
+                    date: '2025-11-15',
                     items: [
                       '✨ 첫 릴리즈',
                       '✨ 카메라/갤러리 입력 + ML Kit 한자 OCR (온디바이스)',
@@ -229,7 +249,7 @@ class AboutScreen extends StatelessWidget {
                   Divider(),
                   _Hist(
                     ver: '빌드 트러블슈팅 기록 (참고)',
-                    date: '2026-06-01',
+                    date: '2025-11-10',
                     items: [
                       '🔧 Java 21 / Gradle 호환 이슈 (major version 65) → Gradle 8.5 + JDK 17 으로 해결',
                       '🔧 단일 ABI(arm64-v8a) 빌드로 APK 크기·디스크 절감',

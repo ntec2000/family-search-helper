@@ -15,6 +15,7 @@ class FamilyTreeScreen extends StatefulWidget {
 
 class _State extends State<FamilyTreeScreen> {
   List<Person> _persons = [];
+  bool _fit = true; // #7 한 화면에 맞추기 (기본 ON)
 
   @override
   void initState() {
@@ -41,16 +42,29 @@ class _State extends State<FamilyTreeScreen> {
   Widget build(BuildContext context) {
     final grouped = _bySega();
     return Scaffold(
-      appBar: AppBar(title: const Text('가계도 (家系圖)')),
+      appBar: AppBar(
+        title: const Text('가계도 (家系圖)'),
+        actions: [
+          IconButton(
+            tooltip: _fit ? '확대/이동 모드' : '한 화면에 맞추기',
+            icon: Icon(_fit ? Icons.zoom_out_map : Icons.fit_screen),
+            onPressed: () => setState(() => _fit = !_fit),
+          ),
+        ],
+      ),
       body: _persons.isEmpty
           ? const Center(
               child: Text('등록된 인물이 없습니다.',
                   style: TextStyle(color: HanjiColors.mukSoft)))
-          : SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Column(
+          : _buildTree(grouped),
+    );
+  }
+
+  Widget _buildTree(Map<int, List<Person>> grouped) {
+    final tree = Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: grouped.entries.map((e) {
                     return Padding(
@@ -94,8 +108,25 @@ class _State extends State<FamilyTreeScreen> {
                     );
                   }).toList(),
                 ),
-              ),
-            ),
+    );
+
+    if (_fit) {
+      // 한 화면에 모두 보이도록 자동 축소 (#7)
+      return SizedBox.expand(
+        child: FittedBox(
+          fit: BoxFit.contain,
+          alignment: Alignment.topCenter,
+          child: tree,
+        ),
+      );
+    }
+    // 확대/이동 모드 — 자유 줌·팬
+    return InteractiveViewer(
+      constrained: false,
+      minScale: 0.3,
+      maxScale: 4.0,
+      boundaryMargin: const EdgeInsets.all(200),
+      child: tree,
     );
   }
 }

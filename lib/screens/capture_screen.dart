@@ -5,11 +5,14 @@ import 'package:image/image.dart' as img;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../models/person.dart';
 import '../services/ocr_service.dart';
 import '../services/jokbo_parser.dart';
 import '../services/db_service.dart';
 import '../theme/traditional_theme.dart';
 import 'result_screen.dart';
+import 'crop_screen.dart';
+import 'person_card_screen.dart';
 
 class CaptureScreen extends StatefulWidget {
   final String? imagePath;
@@ -80,6 +83,20 @@ class _CaptureScreenState extends State<CaptureScreen> {
           _status = '촬영 오류: $e';
         });
       }
+    }
+  }
+
+  /// #1 — 필요한 부분만 잘라서 추출. 현재 미리보기 이미지를 자르기 화면으로
+  /// 보내고, 돌아온 잘린 이미지 경로로 미리보기를 교체한다.
+  Future<void> _cropImage() async {
+    final path = _previewPath;
+    if (path == null || _busy) return;
+    final cropped = await Navigator.push<String?>(
+      context,
+      MaterialPageRoute(builder: (_) => CropScreen(imagePath: path)),
+    );
+    if (cropped != null && cropped.isNotEmpty && mounted) {
+      setState(() => _previewPath = cropped);
     }
   }
 
@@ -161,23 +178,51 @@ class _CaptureScreenState extends State<CaptureScreen> {
     }
   }
 
-  /// OCR 없이 바로 직접 입력 화면으로 (인식 실패 대비 안전 경로).
-  void _manualEntry() {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => ResultScreen(
-            rawText: '', persons: const [], imagePath: _previewPath ?? ''),
-      ),
-    );
+  /// #6 — 직접 입력. 빈 인물 1명을 새로 만들어 DB 에 저장한 뒤
+  /// 바로 인물카드(편집) 화면을 연다. (이전엔 빈 ResultScreen 이라 편집 불가)
+  Future<void> _manualEntry() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      final now = DateTime.now();
+      final person = Person(
+        id: 'manual_${now.millisecondsSinceEpoch}',
+        sourceImagePath: _previewPath,
+        createdAt: now,
+        updatedAt: now,
+      );
+      await DbService.instance.upsertPerson(person);
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PersonCardScreen(personId: person.id),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _status = '직접 입력 준비 오류: $e';
+        });
+      }
+    }
   }
 
+  /// #5 — 다시 선택. 카메라 촬영이었으면 카메라를 다시 켜고,
+  /// 갤러리에서 가져온 경우엔 이전(홈) 화면으로 돌아가 다시 고르게 한다.
+  /// (이전엔 갤러리 경우 빈 화면에서 무한 로딩되던 버그)
   void _retake() {
+    if (widget.imagePath != null) {
+      // 갤러리 모드: 홈으로 돌아가 다시 선택
+      Navigator.pop(context);
+      return;
+    }
     setState(() {
       _previewPath = null;
       _status = '';
     });
-    if (widget.imagePath == null) _initCamera();
+    _initCamera();
   }
 
   @override
@@ -233,6 +278,20 @@ class _CaptureScreenState extends State<CaptureScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _cropImage,
+                            icon: const Icon(Icons.crop,
+                                color: HanjiColors.hanji),
+                            label: const Text('영역 선택 (자르기)',
+                                style: TextStyle(color: HanjiColors.hanji)),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
                     SizedBox(
                       width: double.infinity,
                       child: FilledButton.icon(

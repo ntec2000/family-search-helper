@@ -18,7 +18,8 @@ class _PersonCardScreenState extends State<PersonCardScreen> {
   late TextEditingController _hanja, _hangul, _roman, _ja, _ho, _bongwan;
   late TextEditingController _birthLunar, _birthSolar, _birthPlace;
   late TextEditingController _deathLunar, _deathSolar, _deathPlace;
-  late TextEditingController _marriage, _spouse, _spouseFather, _burial;
+  late TextEditingController _marriage, _marriagePlace, _spouse, _spouseFather, _burial;
+  late TextEditingController _children, _sonsInLaw, _inLaws;
 
   @override
   void initState() {
@@ -44,9 +45,13 @@ class _PersonCardScreenState extends State<PersonCardScreen> {
       _deathSolar = TextEditingController(text: p.deathDateSolar ?? '');
       _deathPlace = TextEditingController(text: p.deathPlace ?? '');
       _marriage = TextEditingController(text: p.marriageDate ?? '');
+      _marriagePlace = TextEditingController(text: p.marriagePlace ?? '');
       _spouse = TextEditingController(text: p.spouseHanja ?? '');
       _spouseFather = TextEditingController(text: p.spouseFather ?? '');
       _burial = TextEditingController(text: p.burialPlace ?? '');
+      _children = TextEditingController(text: p.childrenNote ?? '');
+      _sonsInLaw = TextEditingController(text: p.sonsInLawNote ?? '');
+      _inLaws = TextEditingController(text: p.inLawsNote ?? '');
     });
   }
 
@@ -68,9 +73,13 @@ class _PersonCardScreenState extends State<PersonCardScreen> {
       ..deathDateSolar = _deathSolar.text.isEmpty ? null : _deathSolar.text
       ..deathPlace = _deathPlace.text.isEmpty ? null : _deathPlace.text
       ..marriageDate = _marriage.text.isEmpty ? null : _marriage.text
+      ..marriagePlace = _marriagePlace.text.isEmpty ? null : _marriagePlace.text
       ..spouseHanja = _spouse.text.isEmpty ? null : _spouse.text
       ..spouseFather = _spouseFather.text.isEmpty ? null : _spouseFather.text
       ..burialPlace = _burial.text.isEmpty ? null : _burial.text
+      ..childrenNote = _children.text.isEmpty ? null : _children.text
+      ..sonsInLawNote = _sonsInLaw.text.isEmpty ? null : _sonsInLaw.text
+      ..inLawsNote = _inLaws.text.isEmpty ? null : _inLaws.text
       ..updatedAt = DateTime.now();
     await DbService.instance.upsertPerson(_p!);
     if (mounted) {
@@ -132,8 +141,12 @@ class _PersonCardScreenState extends State<PersonCardScreen> {
               _row(_burial, '매장지 (墓)'),
               _section('Family (가족)'),
               _row(_marriage, '결혼일'),
+              _row(_marriagePlace, '결혼 장소'),
               _row(_spouse, '배우자 (한자)'),
               _row(_spouseFather, '배우자 부친'),
+              _row(_children, '자녀 (子女)'),
+              _row(_sonsInLaw, '사위 (婿)'),
+              _row(_inLaws, '사돈 (査頓)'),
               const SizedBox(height: 32),
               if (_p!.rawText != null)
                 ExpansionTile(

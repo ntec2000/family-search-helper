@@ -9,21 +9,24 @@ import 'lunar_service.dart';
 ///   字○○                : 자(字)
 ///   號○○                : 호
 ///   配○○郡 ○○氏 父 ○○○: 배우자 정보
+///   娶○○                : 결혼(취)
+///   居/籍/生於 ○○        : 출생/거주지
 ///   墓○○郡 ○○面 ○○山   : 묘 위치
 ///   ○○坐○○向            : 좌향
 ///   干支○月○日 生        : 생일 (음력)
 ///   干支○月○日 卒        : 사망일 (음력)
+///   婿/壻 ○○○           : 사위
+///   査頓/姻 ○○○         : 사돈
 ///   ○○世                : 세
 class JokboParser {
   static final _uuid = const Uuid();
 
+  static const _gan = '甲乙丙丁戊己庚辛壬癸';
+  static const _ji = '子丑寅卯辰巳午未申酉戌亥';
+
   /// OCR 인식 텍스트(세로쓰기 → 정렬된 평문)를 받아 인물 카드 목록 추출
   static List<Person> parse(String rawText, {String? sourceImagePath}) {
-    // 줄바꿈/공백 정규화. 세로쓰기 OCR은 한 글자씩 줄바꿈되는 경우가 많아
-    // 짧은 줄을 이어 붙임.
     final normalized = _normalize(rawText);
-
-    // 인물 단위 분할: 子 / 女 마커로 시작
     final entries = _splitByPerson(normalized);
 
     final persons = <Person>[];
@@ -35,7 +38,6 @@ class JokboParser {
   }
 
   static String _normalize(String raw) {
-    // 한자/마커가 한 줄씩 떨어진 OCR 결과 → 공백 한 칸으로 통합
     final lines = raw.split(RegExp(r'[\r\n]+'));
     final buf = StringBuffer();
     for (var l in lines) {
@@ -45,16 +47,13 @@ class JokboParser {
       buf.write(' ');
     }
     var s = buf.toString();
-    // 다중 공백 정리
     s = s.replaceAll(RegExp(r'\s+'), ' ');
     return s;
   }
 
   static List<String> _splitByPerson(String text) {
-    // "子" 또는 "女" 마커를 인물 시작으로 간주
     final pattern = RegExp(r'(?=[子女])');
     final parts = text.split(pattern).where((s) => s.trim().isNotEmpty).toList();
-    // 첫 블록이 마커로 시작하지 않으면 제외(머리글 가능성)
     return parts.where((p) {
       final t = p.trim();
       return t.startsWith('子') || t.startsWith('女');
@@ -93,11 +92,10 @@ class JokboParser {
 
     // 生 (출생) - 干支 + 월일 + 生
     final birth = RegExp(
-            r'([甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥])([一-鿿零一二三四五六七八九十百○]{1,3}月[一-鿿零一二三四五六七八九十○]{1,3}日)\s*生')
+            '([$_gan][$_ji])([一-鿿零一二三四五六七八九十百○]{1,3}月[一-鿿零一二三四五六七八九十○]{1,3}日)\\s*生')
         .firstMatch(t);
     if (birth != null) {
       person.birthDateLunar = '${birth.group(1)}年 ${birth.group(2)} 生';
-      // 干支 → 양력 연도 추정 (가장 가까운 연도 후보)
       final candidates = LunarService.estimateYearsFromGanzhi(birth.group(1)!);
       if (candidates.isNotEmpty) {
         final mostRecent =
@@ -110,13 +108,12 @@ class JokboParser {
 
     // 卒 (사망)
     final death = RegExp(
-            r'([甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥])([一-鿿零一二三四五六七八九十百○]{1,3}月[一-鿿零一二三四五六七八九十○]{1,3}日)\s*卒')
+            '([$_gan][$_ji])([一-鿿零一二三四五六七八九十百○]{1,3}月[一-鿿零一二三四五六七八九十○]{1,3}日)\\s*卒')
         .firstMatch(t);
     if (death != null) {
       person.deathDateLunar = '${death.group(1)}年 ${death.group(2)} 卒';
       final candidates = LunarService.estimateYearsFromGanzhi(death.group(1)!);
       if (candidates.isNotEmpty && person.birthDateSolar != null) {
-        // 출생연도 이후의 첫 후보
         final birthYearStr = RegExp(r'(\d{4})').firstMatch(person.birthDateSolar!);
         if (birthYearStr != null) {
           final by = int.parse(birthYearStr.group(1)!);
@@ -128,8 +125,22 @@ class JokboParser {
       }
     }
 
-    // 配 (배우자)
-    // 配○○郡 ○○氏 父 ○○○
+    // 居/籍/生於/生于 (출생·거주지) #16
+    final place = RegExp(
+            r'(?:居|籍|生於|生于|貫鄕|本生)\s*([一-鿿]{1,4}[道郡州府縣面里洞]?[一-鿿]{0,4}[面里洞山]?)')
+        .firstMatch(t);
+    if (place != null) {
+      final v = place.group(1);
+      if (v != null && v.isNotEmpty) person.birthPlace = v;
+    }
+
+    // 娶 (결혼) — 干支年 #16
+    final marry = RegExp('娶\\s*([$_gan][$_ji])?年?').firstMatch(t);
+    if (marry != null && marry.group(1) != null) {
+      person.marriageDate = '${marry.group(1)}年 (婚)';
+    }
+
+    // 配 (배우자)  配○○郡 ○○氏 父 ○○○
     final pae = RegExp(
             r'配\s*([一-鿿]{1,4}[郡州府])?\s*([一-鿿]{1,3}氏)\s*(?:父\s*([一-鿿]{1,4}))?')
         .firstMatch(t);
@@ -157,6 +168,42 @@ class JokboParser {
     final jwa = RegExp(r'([一-鿿])坐([一-鿿])向').firstMatch(t);
     if (jwa != null) {
       person.burialOrientation = '${jwa.group(1)}坐${jwa.group(2)}向';
+    }
+
+    // 사위 (婿/壻) #16 — 婿 다음 이름 한자
+    final sonsInLaw = RegExp(r'[婿壻]\s*([一-鿿]{2,4})')
+        .allMatches(t)
+        .map((m) => m.group(1)!)
+        .toSet()
+        .toList();
+    if (sonsInLaw.isNotEmpty) {
+      person.sonsInLawNote = sonsInLaw
+          .map((n) => '$n (${dict.toHangul(n)})')
+          .join(', ');
+    }
+
+    // 사돈 (査頓/姻/親家) #16
+    final inLaws = RegExp(r'(?:査頓|姻|親家)\s*([一-鿿]{2,5})')
+        .allMatches(t)
+        .map((m) => m.group(1)!)
+        .toSet()
+        .toList();
+    if (inLaws.isNotEmpty) {
+      person.inLawsNote = inLaws
+          .map((n) => '$n (${dict.toHangul(n)})')
+          .join(', ');
+    }
+
+    // 자녀 (子/女 + 이름) — 본인 표기 이후 등장하는 자녀 표기 #16
+    // 첫 마커(본인)는 제외하고 이후 子/女 표기를 자녀로 간주.
+    final childMatches = RegExp(r'[子女]([一-鿿]{2,3})').allMatches(t).toList();
+    if (childMatches.length > 1) {
+      final kids = childMatches
+          .skip(1)
+          .map((m) => '${m.group(1)} (${dict.toHangul(m.group(1)!)})')
+          .toSet()
+          .toList();
+      if (kids.isNotEmpty) person.childrenNote = kids.join(', ');
     }
 
     return person;

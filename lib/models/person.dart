@@ -35,12 +35,17 @@ class Person {
   String? burialPlace;      // 墓 위치
   String? burialOrientation; // 좌향 (예: 子坐午向)
 
-  // 가족 관계
+  // 가족 관계 (관계 ID)
   String? fatherId;
   String? motherId;
   List<String> childrenIds;
   List<String> sonsInLawIds;   // 사위
   List<String> inLawsIds;      // 사돈
+
+  // 가족 관계 (추출 텍스트 — 족보 평문에서 추출한 정보) #16
+  String? childrenNote;        // 자녀 정보
+  String? sonsInLawNote;       // 사위 정보 (婿/壻)
+  String? inLawsNote;          // 사돈 정보 (査頓/姻)
 
   // 메타
   String? sourceImagePath;
@@ -79,6 +84,9 @@ class Person {
     List<String>? childrenIds,
     List<String>? sonsInLawIds,
     List<String>? inLawsIds,
+    this.childrenNote,
+    this.sonsInLawNote,
+    this.inLawsNote,
     this.sourceImagePath,
     this.rawText,
     DateTime? createdAt,
@@ -120,6 +128,9 @@ class Person {
         'children_ids': jsonEncode(childrenIds),
         'sons_in_law_ids': jsonEncode(sonsInLawIds),
         'in_laws_ids': jsonEncode(inLawsIds),
+        'children_note': childrenNote,
+        'sons_in_law_note': sonsInLawNote,
+        'in_laws_note': inLawsNote,
         'source_image_path': sourceImagePath,
         'raw_text': rawText,
         'created_at': createdAt.toIso8601String(),
@@ -163,6 +174,9 @@ class Person {
         inLawsIds: m['in_laws_ids'] != null
             ? List<String>.from(jsonDecode(m['in_laws_ids']))
             : [],
+        childrenNote: m['children_note'],
+        sonsInLawNote: m['sons_in_law_note'],
+        inLawsNote: m['in_laws_note'],
         sourceImagePath: m['source_image_path'],
         rawText: m['raw_text'],
         createdAt: DateTime.parse(m['created_at']),

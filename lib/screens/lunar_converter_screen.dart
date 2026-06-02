@@ -19,13 +19,16 @@ class _LunarConverterScreenState extends State<LunarConverterScreen> {
     setState(() => _result = LunarService.solarToLunar(_solar));
   }
 
+  String? _normalized;
+
   void _guessGanzhi() {
-    final g = _ganzhiCtrl.text.trim();
-    if (!LunarService.isValidGanzhi(g)) {
-      setState(() => _guessYears = []);
-      return;
-    }
-    setState(() => _guessYears = LunarService.estimateYearsFromGanzhi(g));
+    final input = _ganzhiCtrl.text.trim();
+    final gz = LunarService.normalizeGanzhi(input);
+    setState(() {
+      _normalized = gz;
+      _guessYears =
+          gz == null ? [] : LunarService.estimateYearsFromInput(input);
+    });
   }
 
   @override
@@ -60,12 +63,23 @@ class _LunarConverterScreenState extends State<LunarConverterScreen> {
         TextField(
           controller: _ganzhiCtrl,
           decoration: const InputDecoration(
-            labelText: '干支 (예: 乙卯, 己巳)',
+            labelText: '간지 입력 (한글/한자) — 예: 갑오년, 乙卯, 기사',
+            hintText: '갑오년',
             border: OutlineInputBorder(),
           ),
           onChanged: (_) => _guessGanzhi(),
         ),
         const SizedBox(height: 8),
+        if (_normalized != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text('표준 간지: $_normalized',
+                style: const TextStyle(
+                    color: HanjiColors.muk, fontWeight: FontWeight.bold)),
+          ),
+        if (_normalized != null && _guessYears.isEmpty)
+          const Text('해당 간지의 연도를 찾을 수 없습니다.',
+              style: TextStyle(color: HanjiColors.mukSoft)),
         if (_guessYears.isNotEmpty)
           Wrap(
             spacing: 8,

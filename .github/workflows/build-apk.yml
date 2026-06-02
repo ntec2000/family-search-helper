@@ -70,42 +70,42 @@ jobs:
       - name: Rename APKs for distribution
         run: |
           mkdir -p dist
-          cp build/app/outputs/flutter-apk/app-release.apk dist/family-search-helper-v1.0.6-universal.apk
-          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk dist/family-search-helper-v1.0.6-arm64.apk
-          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk dist/family-search-helper-v1.0.6-arm32.apk
-          cp build/app/outputs/flutter-apk/app-x86_64-release.apk dist/family-search-helper-v1.0.6-x86_64.apk
+          cp build/app/outputs/flutter-apk/app-release.apk dist/family-search-helper-v2.0.0-universal.apk
+          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk dist/family-search-helper-v2.0.0-arm64.apk
+          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk dist/family-search-helper-v2.0.0-arm32.apk
+          cp build/app/outputs/flutter-apk/app-x86_64-release.apk dist/family-search-helper-v2.0.0-x86_64.apk
           ls -lh dist/
 
       - name: Upload Universal APK (artifact)
         uses: actions/upload-artifact@v4
         with:
           name: family-search-helper-universal-apk
-          path: dist/family-search-helper-v1.0.6-universal.apk
+          path: dist/family-search-helper-v2.0.0-universal.apk
           retention-days: 90
 
       - name: Upload Split APKs (artifact)
         uses: actions/upload-artifact@v4
         with:
           name: family-search-helper-split-apks
-          path: dist/family-search-helper-v1.0.6-arm64.apk
+          path: dist/family-search-helper-v2.0.0-arm64.apk
           retention-days: 90
 
       - name: Publish Release (latest)
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.6
-          name: "가족역사기록 도우미 v1.0.6"
+          tag_name: v2.0.0
+          name: "가족역사기록 도우미 v2.0.0"
           body: |
-            # 가족역사기록 도우미 (Family Search Helper) v1.0.6
+            # 가족역사기록 도우미 (Family Search Helper) v2.0.0
 
             **개발자**: Peter S. Choi
             **문의**: ntec21c@gmail.com
 
             ## 다운로드
-            - **family-search-helper-v1.0.6-universal.apk** (~80MB, 모든 기기 호환 — 권장)
-            - **family-search-helper-v1.0.6-arm64.apk** (~55MB, 최신 폰 전용, 권장)
-            - **family-search-helper-v1.0.6-arm32.apk** (구형 폰)
-            - **family-search-helper-v1.0.6-x86_64.apk** (에뮬레이터용)
+            - **family-search-helper-v2.0.0-universal.apk** (~80MB, 모든 기기 호환 — 권장)
+            - **family-search-helper-v2.0.0-arm64.apk** (~55MB, 최신 폰 전용, 권장)
+            - **family-search-helper-v2.0.0-arm32.apk** (구형 폰)
+            - **family-search-helper-v2.0.0-x86_64.apk** (에뮬레이터용)
 
             ## 설치
             1. APK 파일을 전화기로 전송 (이메일/카카오톡/USB 등)
@@ -124,16 +124,25 @@ jobs:
             - GEDCOM 5.5.1 내보내기 / FamilySearch OAuth 직접 동기화
             - 전통 한지·먹 테마
 
-            ## v1.0.6 변경사항 ([한자 인식 시작] 강제 종료 — 진짜 원인 해결)
-            - **근본 원인**: 한자(중국어) OCR 모델이 APK 안에 들어있지 않았음. ML Kit Flutter 플러그인은 한자 모듈을 `compileOnly`(컴파일만, APK 미포함)로만 선언하므로, [한자 인식 시작] 실행 순간 존재하지 않는 네이티브 코드를 호출 → Dart try/catch 로 잡히지 않는 **네이티브 강제 종료** 발생
-            - **수정**: `com.google.mlkit:text-recognition-chinese:16.0.1`(번들 모델)을 앱 빌드에 `implementation` 으로 직접 추가 → 한자 OCR 모델·네이티브 라이브러리를 APK 에 포함, 완전 오프라인·온디바이스 동작 (Google Play 서비스 모델 다운로드 불필요)
-            - 빌드 도구: Flutter 3.41 · AGP 8.9.1 · Gradle 8.11 · compileSdk 36 · NDK 27 · ML Kit 16.0.1(16KB 페이지 정렬)
-            - **검증(배포 전 시뮬레이션)**: 빌드된 APK 내부에 한자 인식 모델(`Hani_ctc` conv/lstm 모델 + 한자 인식 엔진)이 실제로 포함됐음을 직접 확인 + 모든 .so 16KB 정렬(zipalign -P 16) 통과 확인
+            ## v2.0.0 변경사항 (기능 대폭 확장 + 오류 수정)
+            - ✨ 카메라/갤러리 이미지에서 **필요한 부분만 잘라서(영역 선택)** 한자 인식
+            - ✨ **필기 인식** — 손으로 한자를 직접 써서 찾기 (온디바이스, 네이버 한자 입력 방식 참조)
+            - ✨ **[한자 도구] 메뉴** — 한글 이름→한자 후보 / 한자음(한글)으로 검색 / 필기 인식
+            - ✨ 이름 검색에 **한글 입력 + 검색 버튼** (예: '최상희' → 음절별 한자·한글음 후보)
+            - ✨ 만세력 **간지 한글 입력** 지원 (예: '갑오년' → 추정 연도)
+            - ✨ 가계도를 **한 화면에 맞춰** 표시 + 핀치 줌
+            - ✨ 추출 정보 확장 — 출생지·매장지·결혼일/장소·자녀·사위(婿)·사돈(査頓)
+            - ✨ 내보내기 텍스트 서식 개선 — 이름·자(字)·배우자 한글(한자) 병기 + 미리보기
+            - 🛠 **[다시 선택] 오류 수정** (갤러리 무한 로딩 해결)
+            - 🛠 **[직접 입력] 오류 수정** (빈 인물카드 생성·편집 가능)
+            - ✨ [앱 종료]·[새로고침] 기능, 새 로고(FamilySearch 가계도 아이콘 스타일), 전체 UI 모던 리프레시
+            - **기반**: 한자 OCR 모델을 APK 에 번들(`text-recognition-chinese:16.0.1`) — 완전 오프라인·온디바이스
+            - **검증(배포 전 시뮬레이션)**: 정적 분석 무오류 + 빌드된 APK 내부 한자 인식 모델 포함 + 모든 .so 16KB 정렬(zipalign -P 16) 통과 확인
           files: |
-            dist/family-search-helper-v1.0.6-universal.apk
-            dist/family-search-helper-v1.0.6-arm64.apk
-            dist/family-search-helper-v1.0.6-arm32.apk
-            dist/family-search-helper-v1.0.6-x86_64.apk
+            dist/family-search-helper-v2.0.0-universal.apk
+            dist/family-search-helper-v2.0.0-arm64.apk
+            dist/family-search-helper-v2.0.0-arm32.apk
+            dist/family-search-helper-v2.0.0-x86_64.apk
           draft: false
           prerelease: false
           make_latest: "true"

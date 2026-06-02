@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import '../models/person.dart';
 import '../services/db_service.dart';
 import '../services/gedcom_export.dart';
+import '../services/hanja_dict.dart';
 import '../services/familysearch_service.dart';
 import '../theme/traditional_theme.dart';
 import 'familysearch_login_screen.dart';
@@ -30,28 +32,94 @@ class _State extends State<ExportScreen> {
         subject: '가족역사기록 GEDCOM');
   }
 
-  Future<void> _exportText() async {
-    final list = await DbService.instance.listPersons();
+  /// 한자 → "한글 (한자)" 표기. 한자가 비어있으면 빈 문자열.
+  static String _kh(String? hanja) {
+    if (hanja == null || hanja.trim().isEmpty) return '';
+    final h = HanjaDict.instance.toHangul(hanja);
+    return h == hanja ? hanja : '$h ($hanja)';
+  }
+
+  /// #15 보기 좋게 정렬된 텍스트 생성.
+  String _buildText(List<Person> list) {
     final buf = StringBuffer();
-    for (final p in list) {
-      buf.writeln('━━━━━━━━━━━━━━━━━━━━━━━━');
-      buf.writeln('${p.nameHangul} ${p.nameHanja} ${p.nameRoman}');
-      buf.writeln('성별: ${p.gender == 'M' ? '남' : '여'}');
-      if (p.bongwan != null) buf.writeln('本貫: ${p.bongwan}');
-      if (p.ja != null) buf.writeln('字: ${p.ja}');
-      if (p.birthDateSolar != null || p.birthDateLunar != null) {
-        buf.writeln('출생: ${p.birthDateSolar ?? ''} ${p.birthDateLunar ?? ''} ${p.birthPlace ?? ''}');
-      }
+    buf.writeln('가족역사기록');
+    buf.writeln();
+    for (var i = 0; i < list.length; i++) {
+      final p = list[i];
+      // 이름: 한글 한자
+      final name = [p.nameHangul, p.nameHanja]
+          .where((s) => s.trim().isNotEmpty)
+          .join(' ');
+      buf.writeln('━━━━━━━━━━━━━━━━━━━━');
+      buf.writeln('${i + 1}. $name');
+      buf.writeln('  성별   : ${p.gender == 'M' ? '남' : p.gender == 'F' ? '여' : '미상'}');
+      if (p.bongwan != null) buf.writeln('  본관   : ${_kh(p.bongwan)}');
+      if (p.ja != null) buf.writeln('  字(자) : ${_kh(p.ja)}');
+      if (p.ho != null) buf.writeln('  號(호) : ${_kh(p.ho)}');
+      final birth = [
+        p.birthDateSolar,
+        p.birthDateLunar,
+        p.birthPlace,
+      ].where((s) => s != null && s.isNotEmpty).join(' · ');
+      if (birth.isNotEmpty) buf.writeln('  출생   : $birth');
       if (p.marriageDate != null || p.spouseHanja != null) {
-        buf.writeln('결혼: ${p.marriageDate ?? ''} / 배우자: ${p.spouseHanja ?? ''}');
+        buf.writeln(
+            '  결혼   : ${p.marriageDate ?? ''} / 배우자: ${_kh(p.spouseHanja)}'
+                .replaceAll(RegExp(r'\s+/'), ' /'));
       }
-      if (p.deathDateSolar != null || p.deathDateLunar != null) {
-        buf.writeln('사망: ${p.deathDateSolar ?? ''} ${p.deathDateLunar ?? ''} ${p.deathPlace ?? ''}');
+      final death = [
+        p.deathDateSolar,
+        p.deathDateLunar,
+        p.deathPlace,
+      ].where((s) => s != null && s.isNotEmpty).join(' · ');
+      if (death.isNotEmpty) buf.writeln('  사망   : $death');
+      if (p.burialPlace != null) {
+        final ori = p.burialOrientation != null ? ' (${p.burialOrientation})' : '';
+        buf.writeln('  매장   : ${p.burialPlace}$ori');
       }
-      if (p.burialPlace != null) buf.writeln('매장: ${p.burialPlace}');
+      if (p.childrenNote != null) buf.writeln('  자녀   : ${p.childrenNote}');
+      if (p.sonsInLawNote != null) buf.writeln('  사위   : ${p.sonsInLawNote}');
+      if (p.inLawsNote != null) buf.writeln('  사돈   : ${p.inLawsNote}');
       buf.writeln();
     }
-    await Share.share(buf.toString(), subject: '가족역사기록');
+    return buf.toString();
+  }
+
+  Future<void> _exportText() async {
+    final list = await DbService.instance.listPersons();
+    await Share.share(_buildText(list), subject: '가족역사기록');
+  }
+
+  void _previewText() async {
+    final list = await DbService.instance.listPersons();
+    final text = _buildText(list);
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('내보내기 미리보기'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: SingleChildScrollView(
+            child: SelectableText(text,
+                style: const TextStyle(fontSize: 13, height: 1.6)),
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('닫기')),
+          FilledButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              Share.share(text, subject: '가족역사기록');
+            },
+            icon: const Icon(Icons.share),
+            label: const Text('공유'),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _syncFamilySearch() async {
@@ -106,9 +174,9 @@ class _State extends State<ExportScreen> {
               child: ListTile(
                 leading: const Icon(Icons.text_snippet, color: HanjiColors.muk),
                 title: const Text('텍스트 (수동 입력용)'),
-                subtitle: const Text('복사·붙여넣기로 가족역사기록서에 입력'),
-                trailing: const Icon(Icons.share),
-                onTap: _exportText,
+                subtitle: const Text('정렬된 텍스트 · 字/배우자 한글 표기 · 복사·공유'),
+                trailing: const Icon(Icons.visibility),
+                onTap: _previewText,
               ),
             ),
             const SizedBox(height: 32),

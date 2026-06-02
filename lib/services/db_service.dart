@@ -15,7 +15,7 @@ class DbService {
     final path = p.join(dir.path, 'family_search.db');
     _db = await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: (db, v) async {
         await db.execute('''
           CREATE TABLE persons (
@@ -30,6 +30,7 @@ class DbService {
             burial_place TEXT, burial_orientation TEXT,
             father_id TEXT, mother_id TEXT,
             children_ids TEXT, sons_in_law_ids TEXT, in_laws_ids TEXT,
+            children_note TEXT, sons_in_law_note TEXT, in_laws_note TEXT,
             source_image_path TEXT, raw_text TEXT,
             created_at TEXT, updated_at TEXT
           )''');
@@ -43,6 +44,20 @@ class DbService {
         if (oldV < 2) {
           await db.execute(
               'CREATE TABLE IF NOT EXISTS app_config (k TEXT PRIMARY KEY, v TEXT)');
+        }
+        if (oldV < 3) {
+          // #16 추가 컬럼 — 기존 사용자 데이터 보존하며 안전하게 추가
+          for (final col in const [
+            'children_note',
+            'sons_in_law_note',
+            'in_laws_note',
+          ]) {
+            try {
+              await db.execute('ALTER TABLE persons ADD COLUMN $col TEXT');
+            } catch (_) {
+              // 이미 존재하면 무시
+            }
+          }
         }
       },
     );
