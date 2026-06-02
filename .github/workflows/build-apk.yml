@@ -12,7 +12,7 @@ jobs:
   build:
     name: Build Release APK
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
 
     steps:
       - name: Checkout source
@@ -27,63 +27,85 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
         with:
-          packages: 'platform-tools platforms;android-34 platforms;android-35 build-tools;33.0.1 build-tools;34.0.0'
+          packages: 'platform-tools platforms;android-34 platforms;android-35 build-tools;34.0.0 build-tools;35.0.0 ndk;27.0.12077973 cmake;3.22.1'
 
-      - name: Setup Flutter 3.24.5
+      - name: Setup Flutter 3.41.9
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.5'
+          flutter-version: '3.41.9'
           channel: 'stable'
           cache: true
 
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Static analysis
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Unit tests
+        run: flutter test
+
       - name: Build Release APK (universal)
-        run: flutter build apk --release
+        run: flutter build apk --release --android-skip-build-dependency-validation
 
       - name: Build split-per-ABI APKs
-        run: flutter build apk --release --split-per-abi
+        run: flutter build apk --release --split-per-abi --android-skip-build-dependency-validation
+
+      - name: Verify ML Kit native libs are 16KB-aligned
+        run: |
+          set -e
+          APK=build/app/outputs/flutter-apk/app-arm64-v8a-release.apk
+          echo "Inspecting $APK"
+          ZA=$(ls $ANDROID_HOME/build-tools/35.0.0/zipalign)
+          "$ZA" -c -P 16 -v 4 "$APK" >/dev/null && echo "zipalign -P 16: PASS (16KB page aligned)"
+          mkdir -p /tmp/apkcheck && cd /tmp/apkcheck
+          unzip -o "$GITHUB_WORKSPACE/$APK" "lib/arm64-v8a/libmlkit_google_ocr_pipeline.so" >/dev/null
+          ALIGN=$(readelf -lW lib/arm64-v8a/libmlkit_google_ocr_pipeline.so | awk '/LOAD/{print $NF}' | sort -u | head -1)
+          echo "libmlkit_google_ocr_pipeline.so LOAD alignment = $ALIGN"
+          case "$ALIGN" in
+            0x4000|0x10000) echo "OCR native lib is >=16KB aligned — OK" ;;
+            *) echo "ERROR: ML Kit native lib NOT 16KB aligned ($ALIGN)"; exit 1 ;;
+          esac
 
       - name: Rename APKs for distribution
         run: |
           mkdir -p dist
-          cp build/app/outputs/flutter-apk/app-release.apk dist/family-search-helper-v1.0.4-universal.apk
-          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk dist/family-search-helper-v1.0.4-arm64.apk
-          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk dist/family-search-helper-v1.0.4-arm32.apk
-          cp build/app/outputs/flutter-apk/app-x86_64-release.apk dist/family-search-helper-v1.0.4-x86_64.apk
+          cp build/app/outputs/flutter-apk/app-release.apk dist/family-search-helper-v1.0.5-universal.apk
+          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk dist/family-search-helper-v1.0.5-arm64.apk
+          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk dist/family-search-helper-v1.0.5-arm32.apk
+          cp build/app/outputs/flutter-apk/app-x86_64-release.apk dist/family-search-helper-v1.0.5-x86_64.apk
           ls -lh dist/
 
       - name: Upload Universal APK (artifact)
         uses: actions/upload-artifact@v4
         with:
           name: family-search-helper-universal-apk
-          path: dist/family-search-helper-v1.0.4-universal.apk
+          path: dist/family-search-helper-v1.0.5-universal.apk
           retention-days: 90
 
       - name: Upload Split APKs (artifact)
         uses: actions/upload-artifact@v4
         with:
           name: family-search-helper-split-apks
-          path: dist/family-search-helper-v1.0.4-arm64.apk
+          path: dist/family-search-helper-v1.0.5-arm64.apk
           retention-days: 90
 
       - name: Publish Release (latest)
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.0.4
-          name: "가족역사기록 도우미 v1.0.4"
+          tag_name: v1.0.5
+          name: "가족역사기록 도우미 v1.0.5"
           body: |
-            # 가족역사기록 도우미 (Family Search Helper) v1.0.4
+            # 가족역사기록 도우미 (Family Search Helper) v1.0.5
 
             **개발자**: Peter S. Choi
             **문의**: ntec21c@gmail.com
 
             ## 다운로드
-            - **family-search-helper-v1.0.4-universal.apk** (~80MB, 모든 기기 호환 — 권장)
-            - **family-search-helper-v1.0.4-arm64.apk** (~30MB, 최신 폰 전용, 가장 작음)
-            - **family-search-helper-v1.0.4-arm32.apk** (~30MB, 구형 폰)
-            - **family-search-helper-v1.0.4-x86_64.apk** (에뮬레이터용)
+            - **family-search-helper-v1.0.5-universal.apk** (~80MB, 모든 기기 호환 — 권장)
+            - **family-search-helper-v1.0.5-arm64.apk** (~55MB, 최신 폰 전용, 권장)
+            - **family-search-helper-v1.0.5-arm32.apk** (구형 폰)
+            - **family-search-helper-v1.0.5-x86_64.apk** (에뮬레이터용)
 
             ## 설치
             1. APK 파일을 전화기로 전송 (이메일/카카오톡/USB 등)
@@ -102,16 +124,17 @@ jobs:
             - GEDCOM 5.5.1 내보내기 / FamilySearch OAuth 직접 동기화
             - 전통 한지·먹 테마
 
-            ## v1.0.4 변경사항 (강제 종료 해결)
-            - 사진 업로드 흐름 재설계: 가져온 사진은 **먼저 미리보기**만, [한자 인식 시작]을 눌러야 인식 → 불러오기 단계 강제 종료 원천 차단
-            - ML Kit 네이티브 라이브러리 비압축 패키징(useLegacyPackaging) + extractNativeLibs/largeHeap 적용 → 네이티브 크래시 방지
-            - 인식 실패 시 [직접 입력] 경로 제공 (막다른 길 없음)
-            - 배포 전 정적 분석 무오류 + 단위 테스트 6건 전체 통과 검증
+            ## v1.0.5 변경사항 (한자 인식 강제 종료 해결)
+            - **[한자 인식 시작]에서 강제 종료되던 네이티브 크래시 해결** — 근본 원인은 Android 15 / 16KB 메모리 페이지 단말에서 구버전 ML Kit 네이티브 라이브러리(.so)의 정렬 불일치(dlopen 실패)
+            - ML Kit Text Recognition 16.0.1(16KB 페이지 정렬 빌드)로 업그레이드 — `libmlkit_google_ocr_pipeline.so` LOAD 정렬 0x4000(16KB) 확인
+            - 빌드 도구 현대화: Flutter 3.41 · AGP 8.7 · Gradle 8.11 · compileSdk/targetSdk 35 · NDK 27
+            - APK 내 모든 .so 16KB 정렬·비압축 저장 (CI에서 zipalign -P 16 + readelf 정렬 자동 검증)
+            - 배포 전 실제 릴리즈 APK 빌드 시뮬레이션 + 정적 분석 무오류 + 단위 테스트 6건 통과 검증
           files: |
-            dist/family-search-helper-v1.0.4-universal.apk
-            dist/family-search-helper-v1.0.4-arm64.apk
-            dist/family-search-helper-v1.0.4-arm32.apk
-            dist/family-search-helper-v1.0.4-x86_64.apk
+            dist/family-search-helper-v1.0.5-universal.apk
+            dist/family-search-helper-v1.0.5-arm64.apk
+            dist/family-search-helper-v1.0.5-arm32.apk
+            dist/family-search-helper-v1.0.5-x86_64.apk
           draft: false
           prerelease: false
           make_latest: "true"

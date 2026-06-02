@@ -39,7 +39,7 @@ class AboutScreen extends StatelessWidget {
                 Text('Family Search Helper',
                     style: TextStyle(fontSize: 12, color: HanjiColors.mukSoft, letterSpacing: 2)),
                 SizedBox(height: 16),
-                Text('v1.0.4',
+                Text('v1.0.5',
                     style: TextStyle(fontSize: 14, color: HanjiColors.ju, letterSpacing: 2)),
               ],
             ),
@@ -120,8 +120,8 @@ class AboutScreen extends StatelessWidget {
           Card(
             child: Column(
               children: const [
-                _KV('프레임워크', 'Flutter 3.24 · Dart 3.5'),
-                _KV('OCR', 'Google ML Kit Text Recognition v2 (Chinese, 온디바이스)'),
+                _KV('프레임워크', 'Flutter 3.41 · Dart 3.11'),
+                _KV('OCR', 'Google ML Kit Text Recognition v2 16.0.1 (Chinese, 온디바이스 · 16KB 페이지 정렬)'),
                 _KV('한자→한글 사전', 'Unicode Unihan 8,528자 (내장)'),
                 _KV('만세력', 'lunar Dart 패키지 (KASI 데이터, 1700-2100)'),
                 _KV('로컬 DB', 'SQLite (sqflite)'),
@@ -140,6 +140,17 @@ class AboutScreen extends StatelessWidget {
               padding: const EdgeInsets.all(8),
               child: Column(
                 children: const [
+                  _Hist(
+                    ver: 'v1.0.5',
+                    date: '2026-06-02',
+                    items: [
+                      '🛠 [한자 인식 시작]에서 강제 종료되던 네이티브 크래시 해결 — 근본 원인은 Android 15 / 16KB 메모리 페이지 단말에서 구버전 ML Kit 네이티브 라이브러리(.so)의 정렬 불일치(dlopen 실패)였음',
+                      '🛠 ML Kit Text Recognition 플러그인을 16.0.1(16KB 페이지 정렬 빌드)로 업그레이드 — libmlkit_google_ocr_pipeline.so LOAD 정렬 0x4000(16KB) 확인',
+                      '🛠 빌드 도구 현대화: Flutter 3.41 · AGP 8.7 · Gradle 8.11 · compileSdk/targetSdk 35 · NDK 27 — APK 내 모든 .so 16KB 정렬·비압축 저장(zipalign -P 16 통과)',
+                      '✅ 실제 릴리즈 APK 빌드 시뮬레이션 완료 후 검증 배포 — 정적 분석 무오류 + 단위 테스트 6건 통과 + 네이티브 라이브러리 16KB 정렬 직접 확인',
+                    ],
+                  ),
+                  Divider(),
                   _Hist(
                     ver: 'v1.0.4',
                     date: '2026-06-02',

@@ -1,7 +1,7 @@
 name: family_search_helper
 description: "가족역사기록 도우미 - 족보 한자 인식 및 가족역사기록서 작성 보조 앱"
 publish_to: 'none'
-version: 1.0.4+5
+version: 1.0.5+6
 
 environment:
   sdk: ^3.5.0
@@ -16,7 +16,7 @@ dependencies:
   image_picker: ^1.1.2
   image: ^4.2.0
   # ML Kit - compileSdk=34 호환 버전
-  google_mlkit_text_recognition: 0.13.0
+  google_mlkit_text_recognition: ^0.15.1
   flutter_plugin_android_lifecycle: 2.0.20
   sqflite: ^2.3.3
   path: ^1.9.0

@@ -6,8 +6,8 @@ plugins {
 
 android {
     namespace = "com.peterchoi.familysearchhelper"
-    compileSdk = 34
-    ndkVersion = flutter.ndkVersion
+    compileSdk = 35
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -18,7 +18,7 @@ android {
     defaultConfig {
         applicationId = "com.peterchoi.familysearchhelper"
         minSdk = 24
-        targetSdk = 34
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0.0"
         multiDexEnabled = true
@@ -29,20 +29,12 @@ android {
         abortOnError = false
     }
 
-    // ML Kit 네이티브 라이브러리(.so)를 압축 해제 상태로 패키징한다.
-    // 일부 기기에서 압축된 네이티브 라이브러리 로드 시 발생하는
-    // 네이티브 강제 종료(SIGSEGV)를 방지한다.
-    packaging {
-        jniLibs {
-            useLegacyPackaging = true
-        }
-    }
-
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("debug")
             isMinifyEnabled = false
             isShrinkResources = false
+            ndk { debugSymbolLevel = "none" }
         }
     }
     buildFeatures { buildConfig = false }

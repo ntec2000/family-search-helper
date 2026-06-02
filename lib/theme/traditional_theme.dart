@@ -44,7 +44,7 @@ class TraditionalTheme {
           letterSpacing: 2,
         ),
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: HanjiColors.hanjiLight,
         elevation: 1,
         shape: RoundedRectangleBorder(
