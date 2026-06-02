@@ -29,6 +29,15 @@ android {
         abortOnError = false
     }
 
+    // ML Kit 네이티브 라이브러리(.so)를 압축 해제 상태로 패키징한다.
+    // 일부 기기에서 압축된 네이티브 라이브러리 로드 시 발생하는
+    // 네이티브 강제 종료(SIGSEGV)를 방지한다.
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
+
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("debug")

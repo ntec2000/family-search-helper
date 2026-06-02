@@ -51,7 +51,7 @@ void main() {
       expect(p.ja, '古元');
       expect(p.birthDateLunar, contains('乙未'));
       expect(p.deathDateLunar, contains('乙丑'));
-      expect(p.spouseHanja, '朴氏');
+      expect(p.spouseHanja, contains('朴氏')); // 본관 포함 密陽朴氏
       expect(p.spouseFather, '重建');
       expect(p.burialPlace, contains('楊口郡'));
     });

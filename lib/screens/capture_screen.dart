@@ -24,12 +24,17 @@ class _CaptureScreenState extends State<CaptureScreen> {
   bool _busy = false;
   String _status = '';
 
+  /// 미리보기로 표시 중인 (촬영·선택한) 이미지 경로.
+  /// 이 값이 설정되면 이미지를 화면에 보여주기만 하고, OCR 은
+  /// 사용자가 "한자 인식 시작" 을 누를 때만 실행한다. (자동 실행 X)
+  String? _previewPath;
+
   @override
   void initState() {
     super.initState();
     if (widget.imagePath != null) {
-      WidgetsBinding.instance
-          .addPostFrameCallback((_) => _process(widget.imagePath!));
+      // 갤러리에서 가져온 이미지는 표시만 한다. (강제 종료 방지)
+      _previewPath = widget.imagePath;
     } else {
       _initCamera();
     }
@@ -62,11 +67,19 @@ class _CaptureScreenState extends State<CaptureScreen> {
     setState(() => _busy = true);
     try {
       final f = await _camera!.takePicture();
-      await _process(f.path);
+      // 촬영 후에도 자동 OCR 하지 않고 미리보기 → 사용자 확인 후 인식.
+      if (!mounted) return;
+      setState(() {
+        _previewPath = f.path;
+        _busy = false;
+      });
     } catch (e) {
-      if (mounted) setState(() => _status = '촬영 오류: $e');
-    } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _status = '촬영 오류: $e';
+        });
+      }
     }
   }
 
@@ -80,10 +93,10 @@ class _CaptureScreenState extends State<CaptureScreen> {
       throw Exception('지원하지 않는 이미지 형식이거나 파일이 손상되었습니다');
     }
     final oriented = img.bakeOrientation(decoded);
-    final normalized = oriented.width > 1800
-        ? img.copyResize(oriented, width: 1800)
+    final normalized = oriented.width > 1600
+        ? img.copyResize(oriented, width: 1600)
         : oriented;
-    final jpg = img.encodeJpg(normalized, quality: 90);
+    final jpg = img.encodeJpg(normalized, quality: 88);
     final dir = await getTemporaryDirectory();
     final out = File(
         p.join(dir.path, 'ocr_${DateTime.now().millisecondsSinceEpoch}.jpg'));
@@ -91,7 +104,10 @@ class _CaptureScreenState extends State<CaptureScreen> {
     return out.path;
   }
 
-  Future<void> _process(String path) async {
+  /// 사용자가 명시적으로 "한자 인식 시작" 을 눌렀을 때만 호출된다.
+  Future<void> _runOcr() async {
+    final path = _previewPath;
+    if (path == null || _busy) return;
     if (!mounted) return;
     setState(() {
       _busy = true;
@@ -133,7 +149,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
         builder: (_) => AlertDialog(
           title: const Text('인식 오류'),
           content: Text('이미지를 처리하는 중 문제가 발생했습니다.\n'
-              '다른 사진으로 다시 시도해 주세요.\n\n[$e]'),
+              '다른 사진으로 다시 시도하거나, 직접 입력을 이용해 주세요.\n\n[$e]'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -142,8 +158,26 @@ class _CaptureScreenState extends State<CaptureScreen> {
           ],
         ),
       );
-      if (mounted && Navigator.canPop(context)) Navigator.pop(context);
     }
+  }
+
+  /// OCR 없이 바로 직접 입력 화면으로 (인식 실패 대비 안전 경로).
+  void _manualEntry() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ResultScreen(
+            rawText: '', persons: const [], imagePath: _previewPath ?? ''),
+      ),
+    );
+  }
+
+  void _retake() {
+    setState(() {
+      _previewPath = null;
+      _status = '';
+    });
+    if (widget.imagePath == null) _initCamera();
   }
 
   @override
@@ -154,16 +188,24 @@ class _CaptureScreenState extends State<CaptureScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final hasPreview = _previewPath != null;
     return Scaffold(
-      appBar: AppBar(title: const Text('족보 촬영')),
+      appBar: AppBar(title: Text(hasPreview ? '이미지 확인' : '족보 촬영')),
       body: Stack(
         children: [
-          if (_camera != null && _camera!.value.isInitialized)
-            Positioned.fill(child: CameraPreview(_camera!))
-          else if (widget.imagePath != null)
+          // 1) 미리보기(촬영/선택한 이미지) — 표시만, 자동 인식 안 함
+          if (hasPreview)
             Positioned.fill(
-                child: Image.file(File(widget.imagePath!),
-                    fit: BoxFit.contain, cacheWidth: 1200))
+              child: Container(
+                color: Colors.black,
+                child: Image.file(File(_previewPath!),
+                    fit: BoxFit.contain, cacheWidth: 1200),
+              ),
+            )
+          // 2) 카메라 라이브 프리뷰
+          else if (_camera != null && _camera!.value.isInitialized)
+            Positioned.fill(child: CameraPreview(_camera!))
+          // 3) 로딩/상태
           else
             Center(
               child: Column(
@@ -173,11 +215,63 @@ class _CaptureScreenState extends State<CaptureScreen> {
                   if (_status.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: 16),
-                      child: Text(_status),
+                      child: Text(_status, textAlign: TextAlign.center),
                     ),
                 ],
               ),
             ),
+
+          // 미리보기 상태의 하단 동작 버튼
+          if (hasPreview && !_busy)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+                color: Colors.black.withOpacity(0.55),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: _runOcr,
+                        icon: const Icon(Icons.text_fields),
+                        label: const Text('한자 인식 시작',
+                            style: TextStyle(fontSize: 16)),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _retake,
+                            icon: const Icon(Icons.refresh,
+                                color: HanjiColors.hanji),
+                            label: const Text('다시 선택',
+                                style: TextStyle(color: HanjiColors.hanji)),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: _manualEntry,
+                            icon: const Icon(Icons.edit,
+                                color: HanjiColors.hanji),
+                            label: const Text('직접 입력',
+                                style: TextStyle(color: HanjiColors.hanji)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+          // 처리 중 오버레이
           if (_busy)
             Container(
               color: Colors.black54,
@@ -196,7 +290,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
             ),
         ],
       ),
-      floatingActionButton: _camera == null
+      floatingActionButton: (_camera == null || hasPreview)
           ? null
           : FloatingActionButton.large(
               onPressed: _busy ? null : _shoot,

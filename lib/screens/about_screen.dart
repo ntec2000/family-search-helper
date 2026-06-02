@@ -39,7 +39,7 @@ class AboutScreen extends StatelessWidget {
                 Text('Family Search Helper',
                     style: TextStyle(fontSize: 12, color: HanjiColors.mukSoft, letterSpacing: 2)),
                 SizedBox(height: 16),
-                Text('v1.0.3',
+                Text('v1.0.4',
                     style: TextStyle(fontSize: 14, color: HanjiColors.ju, letterSpacing: 2)),
               ],
             ),
@@ -140,6 +140,18 @@ class AboutScreen extends StatelessWidget {
               padding: const EdgeInsets.all(8),
               child: Column(
                 children: const [
+                  _Hist(
+                    ver: 'v1.0.4',
+                    date: '2026-06-02',
+                    items: [
+                      '🛠 사진 업로드 흐름 재설계 — 가져온 사진은 \'먼저 미리보기\'만 하고, [한자 인식 시작]을 누를 때만 인식 실행 (불러오기 단계 강제 종료 원천 차단)',
+                      '🛠 네이티브 라이브러리 비압축 패키징(useLegacyPackaging) 적용 — ML Kit 로딩 시 네이티브 크래시 방지',
+                      '🛠 AndroidManifest 에 extractNativeLibs=true, largeHeap 적용으로 메모리/네이티브 안정성 강화',
+                      '🛠 인식 실패 시에도 [직접 입력] 경로 제공 — 막다른 길 없이 계속 작업 가능',
+                      '✅ 빌드 전 정적 분석(flutter analyze) 무오류 + 단위 테스트 6건 전체 통과 검증 후 배포',
+                    ],
+                  ),
+                  Divider(),
                   _Hist(
                     ver: 'v1.0.3',
                     date: '2026-06-02',
