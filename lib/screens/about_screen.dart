@@ -15,8 +15,8 @@ class AboutScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('앱 정보')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      body: SafeArea(child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 48),
         children: [
           // ─── 헤더 ──────────────────────────
           Container(
@@ -122,7 +122,7 @@ class AboutScreen extends StatelessWidget {
               children: const [
                 _KV('프레임워크', 'Flutter 3.41 · Dart 3.11'),
                 _KV('OCR', 'Google ML Kit Text Recognition v2 16.0.1 (Chinese, 온디바이스 · 16KB 페이지 정렬)'),
-                _KV('한자→한글 사전', 'Unicode Unihan 8,528자 (내장)'),
+                _KV('한자→한글 사전', '내장 9,000자+ · 한글 음(여러 음 포함)·뜻(訓) 수록'),
                 _KV('만세력', 'lunar Dart 패키지 (KASI 데이터, 1700-2100)'),
                 _KV('로컬 DB', 'SQLite (sqflite)'),
                 _KV('내보내기', 'GEDCOM 5.5.1 / GEDCOM-X (FamilySearch 호환)'),
@@ -140,6 +140,22 @@ class AboutScreen extends StatelessWidget {
               padding: const EdgeInsets.all(8),
               child: Column(
                 children: const [
+                  _Hist(
+                    ver: 'v2.1.0',
+                    date: '2026-06-03',
+                    items: [
+                      '🛠 한글 필기 인식 정확도 개선 — 인식 영역에서 테두리 제외, 고해상도 캡처',
+                      '🛠 인식 결과·인물카드·한자음 검색·필기 인식 등 모든 화면 하단 잘림 수정 (스크롤·SafeArea 적용)',
+                      '✨ 모든 한자 항목을 한자(한글) 병기로 표시 — 배우자·배우자 부친 등 포함',
+                      '✨ 이름 로마자 자동 표기 — 한글 이름을 알파벳(로마자)으로 변환 표시',
+                      '✨ 인물카드 항목명 정비 — \'조상 신상정보\' / \'인물정보\' / \'출생 사망정보\' / \'가족정보\'',
+                      '✨ 출생·사망일을 음력/양력 구분 없이 날짜 하나로 단순 표시',
+                      '✨ 한자음 검색 예시를 \'최, 상, 희\' 로 변경, 인식된 예상 한자에 한글 음(여러 음)·뜻 표시',
+                      '✨ [인식 버튼] → [결과 확인] 으로 명칭 변경',
+                      '✨ 가계도 개선 — 본인·아버지·배우자·장인·자녀·사위·사돈을 관계 이름이 적힌 박스로 트리(선 연결) 표시',
+                    ],
+                  ),
+                  Divider(),
                   _Hist(
                     ver: 'v2.0.0',
                     date: '2026-06-02',
@@ -330,7 +346,7 @@ class AboutScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
         ],
-      ),
+      )),
     );
   }
 }

@@ -35,7 +35,7 @@ class _LunarConverterScreenState extends State<LunarConverterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('만세력')),
-      body: ListView(padding: const EdgeInsets.all(16), children: [
+      body: SafeArea(child: ListView(padding: const EdgeInsets.fromLTRB(16, 16, 16, 48), children: [
         const Text('① 양력 → 음력·간지',
             style: TextStyle(fontWeight: FontWeight.bold, color: HanjiColors.ju, fontSize: 16)),
         const Divider(),
@@ -87,7 +87,7 @@ class _LunarConverterScreenState extends State<LunarConverterScreen> {
                 .map((y) => Chip(label: Text('$y년')))
                 .toList(),
           ),
-      ]),
+      ])),
     );
   }
 }

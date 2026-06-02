@@ -58,14 +58,14 @@ class _HandwritingScreenState extends State<HandwritingScreen> {
     if (_strokes.isEmpty || _busy) return;
     setState(() {
       _busy = true;
-      _status = '인식 중...';
+      _status = '확인 중...';
       _candidates = [];
     });
     try {
-      // 1) 그린 캔버스를 흰 배경 PNG 로 렌더링
+      // 1) 그린 캔버스를 흰 배경 PNG 로 렌더링 (테두리 제외 → 인식 정확도 향상)
       final boundary = _boundaryKey.currentContext!.findRenderObject()
           as RenderRepaintBoundary;
-      final image = await boundary.toImage(pixelRatio: 3.0);
+      final image = await boundary.toImage(pixelRatio: 4.0);
       final byteData =
           await image.toByteData(format: ui.ImageByteFormat.png);
       image.dispose();
@@ -78,7 +78,7 @@ class _HandwritingScreenState extends State<HandwritingScreen> {
 
       // 2) 내장 한자 OCR 로 인식
       final result = await OcrService.recognize(f.path);
-      // 인식 텍스트에서 한자만 추출
+      // 인식 텍스트에서 한자만 추출 (중복 제거)
       final chars = <String>[];
       for (final r in result.text.runes) {
         final ch = String.fromCharCode(r);
@@ -90,8 +90,8 @@ class _HandwritingScreenState extends State<HandwritingScreen> {
         _busy = false;
         _candidates = chars;
         _status = chars.isEmpty
-            ? '인식하지 못했습니다. 더 크고 또렷하게 그려 주세요.'
-            : '인식된 한자 후보:';
+            ? '인식하지 못했습니다. 더 크고 또렷하게, 칸 가운데에 그려 주세요.'
+            : '인식된 예상 한자 (눌러서 선택):';
       });
     } catch (e) {
       setState(() {
@@ -128,108 +128,146 @@ class _HandwritingScreenState extends State<HandwritingScreen> {
               tooltip: '전체 지우기'),
         ],
       ),
-      body: Column(
-        children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 12, 16, 4),
-            child: Text(
-              '아래 칸에 한자를 손으로 크게 그린 뒤 [인식] 을 누르세요.\n'
-              '(네이버 한자 필기 입력과 같은 방식 · 내장 OCR 사용 · 인터넷 불필요)',
-              style: TextStyle(color: HanjiColors.mukSoft, height: 1.5, fontSize: 13),
+      body: SafeArea(
+        child: Column(
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 10, 16, 2),
+              child: Text(
+                '아래 칸 가운데에 한자를 손으로 크게 그린 뒤 [결과 확인] 을 누르세요.\n'
+                '(네이버 한자 필기 입력과 같은 방식 · 내장 OCR · 인터넷 불필요)',
+                style: TextStyle(
+                    color: HanjiColors.mukSoft, height: 1.4, fontSize: 12.5),
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: AspectRatio(
-              aspectRatio: 1,
-              child: RepaintBoundary(
-                key: _boundaryKey,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    border: Border.all(color: HanjiColors.mukSoft, width: 1.5),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: GestureDetector(
-                    onPanStart: (d) => _start(d.localPosition),
-                    onPanUpdate: (d) => _append(d.localPosition),
-                    child: CustomPaint(
-                      painter: _StrokePainter(_strokes),
-                      size: Size.infinite,
+            // 그리기 캔버스 — 화면이 작아도 버튼이 보이도록 높이 제한
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: LayoutBuilder(builder: (context, _) {
+                final side = MediaQuery.of(context).size;
+                final box = side.width.clamp(0, 320).toDouble() - 32;
+                final dim = box.clamp(180.0, 300.0);
+                return Center(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border:
+                          Border.all(color: HanjiColors.mukSoft, width: 1.5),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(11),
+                      // RepaintBoundary 는 테두리를 포함하지 않는 순수 흰 캔버스
+                      child: RepaintBoundary(
+                        key: _boundaryKey,
+                        child: Container(
+                          width: dim,
+                          height: dim,
+                          color: Colors.white,
+                          child: GestureDetector(
+                            onPanStart: (d) => _start(d.localPosition),
+                            onPanUpdate: (d) => _append(d.localPosition),
+                            child: CustomPaint(
+                              painter: _StrokePainter(_strokes),
+                              size: Size.infinite,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
+                );
+              }),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: _busy ? null : _recognize,
+                  icon: _busy
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: HanjiColors.hanji))
+                      : const Icon(Icons.check_circle_outline),
+                  label: Text(_busy ? '확인 중...' : '결과 확인'),
                 ),
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: _busy ? null : _recognize,
-                icon: _busy
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: HanjiColors.hanji))
-                    : const Icon(Icons.search),
-                label: Text(_busy ? '인식 중...' : '인식'),
+            if (_status.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 2),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(_status,
+                      style: const TextStyle(
+                          color: HanjiColors.ju, fontWeight: FontWeight.w600)),
+                ),
+              ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+                child: Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: _candidates
+                      .map((ch) => _CandidateCard(ch: ch, onTap: () => _pick(ch)))
+                      .toList(),
+                ),
               ),
             ),
-          ),
-          if (_status.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(_status,
-                    style: const TextStyle(
-                        color: HanjiColors.ju, fontWeight: FontWeight.w600)),
-              ),
-            ),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: _candidates
-                    .map((ch) => InkWell(
-                          onTap: () => _pick(ch),
-                          onLongPress: () => _pick(ch),
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 12),
-                            decoration: BoxDecoration(
-                              color: HanjiColors.hanjiLight,
-                              border:
-                                  Border.all(color: HanjiColors.muk, width: 1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(ch,
-                                    style: const TextStyle(
-                                        fontSize: 32,
-                                        color: HanjiColors.muk)),
-                                const SizedBox(height: 4),
-                                Text(HanjaDict.instance.reading(ch),
-                                    style: const TextStyle(
-                                        fontSize: 14,
-                                        color: HanjiColors.cheong)),
-                              ],
-                            ),
-                          ),
-                        ))
-                    .toList(),
-              ),
-            ),
-          ),
-        ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// #15 인식된 예상 한자 + 한글 음(복수) + 뜻(훈음)
+class _CandidateCard extends StatelessWidget {
+  final String ch;
+  final VoidCallback onTap;
+  const _CandidateCard({required this.ch, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final d = HanjaDict.instance;
+    final eum = d.readingsAll(ch);
+    final hun = d.meanings(ch);
+    return InkWell(
+      onTap: onTap,
+      onLongPress: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: 150,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: HanjiColors.hanjiLight,
+          border: Border.all(color: HanjiColors.muk, width: 1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(ch,
+                style: const TextStyle(fontSize: 36, color: HanjiColors.muk)),
+            const SizedBox(height: 4),
+            Text(eum.isEmpty ? '?' : '음: ${eum.join('·')}',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                    fontSize: 14,
+                    color: HanjiColors.cheong,
+                    fontWeight: FontWeight.bold)),
+            if (hun.isNotEmpty) ...[
+              const SizedBox(height: 2),
+              Text(hun.take(2).join(', '),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                      fontSize: 12, color: HanjiColors.mukSoft, height: 1.3)),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -243,7 +281,7 @@ class _StrokePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = Colors.black
-      ..strokeWidth = 10
+      ..strokeWidth = 14
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
       ..style = PaintingStyle.stroke;
@@ -251,7 +289,7 @@ class _StrokePainter extends CustomPainter {
       if (stroke.length < 2) {
         if (stroke.isNotEmpty) {
           canvas.drawPoints(ui.PointMode.points, stroke,
-              paint..strokeWidth = 12);
+              paint..strokeWidth = 16);
         }
         continue;
       }

@@ -33,10 +33,10 @@ class _State extends State<ExportScreen> {
   }
 
   /// 한자 → "한글 (한자)" 표기. 한자가 비어있으면 빈 문자열.
+  // #3 한자(한글) 표기. 한자가 비어있으면 빈 문자열.
   static String _kh(String? hanja) {
     if (hanja == null || hanja.trim().isEmpty) return '';
-    final h = HanjaDict.instance.toHangul(hanja);
-    return h == hanja ? hanja : '$h ($hanja)';
+    return HanjaDict.instance.annotate(hanja.trim());
   }
 
   /// #15 보기 좋게 정렬된 텍스트 생성.
@@ -85,10 +85,6 @@ class _State extends State<ExportScreen> {
     return buf.toString();
   }
 
-  Future<void> _exportText() async {
-    final list = await DbService.instance.listPersons();
-    await Share.share(_buildText(list), subject: '가족역사기록');
-  }
 
   void _previewText() async {
     final list = await DbService.instance.listPersons();
@@ -153,9 +149,9 @@ class _State extends State<ExportScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('내보내기 / 동기화')),
-      body: Stack(children: [
+      body: SafeArea(child: Stack(children: [
         ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 48),
           children: [
             const Text('① 파일로 내보내기 (로그인 불필요)',
                 style: TextStyle(fontWeight: FontWeight.bold, color: HanjiColors.ju)),
@@ -221,7 +217,7 @@ class _State extends State<ExportScreen> {
             child: const Center(
                 child: CircularProgressIndicator(color: HanjiColors.hanji)),
           ),
-      ]),
+      ])),
     );
   }
 }

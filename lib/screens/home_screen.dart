@@ -149,7 +149,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ],
       ),
-      body: Column(
+      body: SafeArea(child: Column(
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
@@ -175,7 +175,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             child: _persons.isEmpty
                 ? const _EmptyState()
                 : ListView.separated(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
                     itemCount: _persons.length,
                     separatorBuilder: (_, __) => const SizedBox(height: 8),
                     itemBuilder: (_, i) => _PersonTile(
@@ -192,7 +192,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   ),
           ),
         ],
-      ),
+      )),
       floatingActionButton: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [

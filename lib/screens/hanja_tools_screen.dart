@@ -4,7 +4,7 @@ import '../services/hanja_dict.dart';
 import '../theme/traditional_theme.dart';
 import 'handwriting_screen.dart';
 
-/// #12 / #13 / #14 한자 도구 화면.
+/// 한자 도구 화면.
 /// 탭 1) 한글 이름 → 음절별 한자 후보 (#12)
 /// 탭 2) 한자음(한글 한 글자) → 해당 한자 목록 (#13)
 /// 탭 3) 필기 인식 (#14)
@@ -26,12 +26,14 @@ class HanjaToolsScreen extends StatelessWidget {
             ],
           ),
         ),
-        body: const TabBarView(
-          children: [
-            _NameSearchTab(),
-            _ReadingSearchTab(),
-            _HandwritingTab(),
-          ],
+        body: const SafeArea(
+          child: TabBarView(
+            children: [
+              _NameSearchTab(),
+              _ReadingSearchTab(),
+              _HandwritingTab(),
+            ],
+          ),
         ),
       ),
     );
@@ -65,10 +67,11 @@ class _NameSearchTabState extends State<_NameSearchTab> {
 
   @override
   Widget build(BuildContext context) {
+    final bottom = MediaQuery.of(context).viewInsets.bottom;
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.fromLTRB(16, 16, 16, 48 + bottom),
       children: [
-        const Text('한글 이름을 입력하면 음절별로 해당하는 한자와 한글음을 종류별로 보여줍니다.',
+        const Text('한글 이름을 입력하면 음절별로 해당하는 한자와 한글음·뜻을 종류별로 보여줍니다.',
             style: TextStyle(color: HanjiColors.mukSoft, height: 1.5)),
         const SizedBox(height: 12),
         Row(children: [
@@ -183,10 +186,11 @@ class _ReadingSearchTabState extends State<_ReadingSearchTab> {
 
   @override
   Widget build(BuildContext context) {
+    final bottom = MediaQuery.of(context).viewInsets.bottom;
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.fromLTRB(16, 16, 16, 48 + bottom),
       children: [
-        const Text('한자음(한글 한 글자)을 입력하면 그 음을 가진 한자를 모두 보여줍니다.',
+        const Text('한자음(한글 한 글자)을 입력하면 그 음을 가진 한자를 음·뜻과 함께 모두 보여줍니다.',
             style: TextStyle(color: HanjiColors.mukSoft, height: 1.5)),
         const SizedBox(height: 12),
         Row(children: [
@@ -196,7 +200,7 @@ class _ReadingSearchTabState extends State<_ReadingSearchTab> {
               textInputAction: TextInputAction.search,
               onSubmitted: (_) => _search(),
               decoration: const InputDecoration(
-                hintText: '예) 희, 상, 수',
+                hintText: '예) 최, 상, 희',
                 prefixIcon: Icon(Icons.translate),
               ),
             ),
@@ -226,31 +230,68 @@ class _ReadingSearchTabState extends State<_ReadingSearchTab> {
   }
 }
 
+/// #15 한자 1자 + 한글음(여러개) + 뜻 표시 칩
 class _HanjaChip extends StatelessWidget {
   final String ch;
   final String reading;
   const _HanjaChip({required this.ch, required this.reading});
+
   @override
   Widget build(BuildContext context) {
+    final dict = HanjaDict.instance;
+    final readings = dict.readingsAll(ch);
+    final eumLabel = readings.isEmpty ? reading : readings.join('·');
+    final meanings = dict.meanings(ch);
+    final gloss = meanings.isEmpty ? '' : meanings.take(2).join(', ');
+
     return InkWell(
       borderRadius: BorderRadius.circular(10),
       onTap: () {
         Clipboard.setData(ClipboardData(text: ch));
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('$ch ($reading) 복사됨'),
+              content: Text('$ch ($eumLabel) 복사됨'),
               duration: const Duration(seconds: 1)),
         );
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        width: 132,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: HanjiColors.hanjiLight,
           border: Border.all(color: HanjiColors.hanjiDark),
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Text(ch,
-            style: const TextStyle(fontSize: 24, color: HanjiColors.muk)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(ch,
+                    style: const TextStyle(
+                        fontSize: 30, color: HanjiColors.muk, height: 1.0)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text('음: $eumLabel',
+                      style: const TextStyle(
+                          fontSize: 13,
+                          color: HanjiColors.ju,
+                          fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+            if (gloss.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(gloss,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                      fontSize: 12, color: HanjiColors.mukSoft, height: 1.3)),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -262,7 +303,7 @@ class _HandwritingTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -276,7 +317,7 @@ class _HandwritingTab extends StatelessWidget {
                     color: HanjiColors.muk)),
             const SizedBox(height: 8),
             const Text(
-              '한자음을 모를 때, 직접 그려서 인식할 수 있습니다.\n(네이버 한자 필기 입력 방식 참조 · 내장 OCR · 오프라인)',
+              '한자음을 모를 때, 직접 그려서 인식할 수 있습니다.\n(내장 OCR · 오프라인 · 한글 음과 뜻 함께 표시)',
               textAlign: TextAlign.center,
               style: TextStyle(color: HanjiColors.mukSoft, height: 1.5),
             ),

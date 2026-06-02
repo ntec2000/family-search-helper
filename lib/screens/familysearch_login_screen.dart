@@ -59,7 +59,7 @@ class _State extends State<FamilySearchLoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('FamilySearch 연동')),
-      body: ListView(padding: const EdgeInsets.all(16), children: [
+      body: SafeArea(child: ListView(padding: const EdgeInsets.fromLTRB(16, 16, 16, 48), children: [
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -144,7 +144,7 @@ class _State extends State<FamilySearchLoginScreen> {
               'https://www.familysearch.org/developers 에서 무료 등록 후 Client ID를 앱에 등록해야 합니다.',
               style: TextStyle(fontSize: 12)),
         ),
-      ]),
+      ])),
     );
   }
 }

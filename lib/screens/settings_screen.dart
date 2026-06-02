@@ -42,11 +42,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('설정')),
-      body: ListView(children: [
+      body: SafeArea(child: ListView(padding: const EdgeInsets.only(bottom: 48), children: [
         ListTile(
           leading: const Icon(Icons.info_outline, color: HanjiColors.muk),
           title: const Text('앱 정보 / 개발자 / 히스토리'),
-          subtitle: const Text('v2.0.0 · Peter S. Choi · ntec21c@gmail.com'),
+          subtitle: const Text('v2.1.0 · Peter S. Choi · ntec21c@gmail.com'),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => Navigator.push(
               context, MaterialPageRoute(builder: (_) => const AboutScreen())),
@@ -130,7 +130,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           onTap: () => Navigator.push(
               context, MaterialPageRoute(builder: (_) => const AboutScreen())),
         ),
-      ]),
+      ])),
     );
   }
 }
