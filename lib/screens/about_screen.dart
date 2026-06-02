@@ -39,7 +39,7 @@ class AboutScreen extends StatelessWidget {
                 Text('Family Search Helper',
                     style: TextStyle(fontSize: 12, color: HanjiColors.mukSoft, letterSpacing: 2)),
                 SizedBox(height: 16),
-                Text('v1.0.5',
+                Text('v1.0.6',
                     style: TextStyle(fontSize: 14, color: HanjiColors.ju, letterSpacing: 2)),
               ],
             ),
@@ -140,6 +140,16 @@ class AboutScreen extends StatelessWidget {
               padding: const EdgeInsets.all(8),
               child: Column(
                 children: const [
+                  _Hist(
+                    ver: 'v1.0.6',
+                    date: '2026-06-02',
+                    items: [
+                      '🛠 [한자 인식 시작]에서 강제 종료되던 진짜 원인 해결 — 한자(중국어) 인식 모델이 APK 에 들어있지 않았음. ML Kit Flutter 플러그인은 한자 모듈을 compileOnly(=컴파일만, APK 미포함)로만 선언하므로, 인식을 실행하는 순간 없는 네이티브 코드를 호출해 강제 종료(Dart try/catch 로 잡히지 않는 네이티브 크래시)가 발생했음',
+                      '🛠 com.google.mlkit:text-recognition-chinese:16.0.1 (번들 모델)을 앱 빌드에 implementation 으로 직접 추가 — 한자 OCR 모델·네이티브 라이브러리를 APK 에 포함하여 완전 오프라인·온디바이스로 동작 (Google Play 서비스 모델 다운로드 불필요)',
+                      '✅ 빌드된 APK 안에 한자 인식 모델 자산이 실제로 포함됐는지 직접 확인 + 네이티브 라이브러리 16KB 정렬 재확인 후 배포',
+                    ],
+                  ),
+                  Divider(),
                   _Hist(
                     ver: 'v1.0.5',
                     date: '2026-06-02',
