@@ -15,7 +15,7 @@ class DbService {
     final path = p.join(dir.path, 'family_search.db');
     _db = await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: (db, v) async {
         await db.execute('''
           CREATE TABLE persons (
@@ -36,6 +36,14 @@ class DbService {
         await db.execute(
             'CREATE INDEX idx_name_hangul ON persons(name_hangul)');
         await db.execute('CREATE INDEX idx_sega ON persons(sega)');
+        await db.execute(
+            'CREATE TABLE app_config (k TEXT PRIMARY KEY, v TEXT)');
+      },
+      onUpgrade: (db, oldV, newV) async {
+        if (oldV < 2) {
+          await db.execute(
+              'CREATE TABLE IF NOT EXISTS app_config (k TEXT PRIMARY KEY, v TEXT)');
+        }
       },
     );
   }
@@ -70,5 +78,18 @@ class DbService {
   Future<int> count() async {
     final r = await db.rawQuery('SELECT COUNT(*) AS c FROM persons');
     return Sqflite.firstIntValue(r) ?? 0;
+  }
+
+  // ─── 앱 설정 (키-값) ──────────────────────────────────────
+  Future<String?> getConfig(String key) async {
+    final rows =
+        await db.query('app_config', where: 'k = ?', whereArgs: [key]);
+    if (rows.isEmpty) return null;
+    return rows.first['v'] as String?;
+  }
+
+  Future<void> setConfig(String key, String value) async {
+    await db.insert('app_config', {'k': key, 'v': value},
+        conflictAlgorithm: ConflictAlgorithm.replace);
   }
 }

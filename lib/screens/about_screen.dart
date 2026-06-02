@@ -39,7 +39,7 @@ class AboutScreen extends StatelessWidget {
                 Text('Family Search Helper',
                     style: TextStyle(fontSize: 12, color: HanjiColors.mukSoft, letterSpacing: 2)),
                 SizedBox(height: 16),
-                Text('v1.0.0',
+                Text('v1.0.1',
                     style: TextStyle(fontSize: 14, color: HanjiColors.ju, letterSpacing: 2)),
               ],
             ),
@@ -140,6 +140,18 @@ class AboutScreen extends StatelessWidget {
               padding: const EdgeInsets.all(8),
               child: Column(
                 children: const [
+                  _Hist(
+                    ver: 'v1.0.1',
+                    date: '2026-06-02',
+                    items: [
+                      '✨ 작동 모드 선택 기능 추가 — 추출 전용 ↔ FamilySearch 연동',
+                      '✨ 설정 화면에 FamilySearch 연동 On/Off 토글 추가 (기본 꺼짐)',
+                      '✨ FamilySearch Client ID 를 앱 설정에서 직접 입력·저장 (SQLite)',
+                      '🔧 연동을 끄면 완전한 추출 전용 모드로 동작 (로그인 불필요)',
+                      '🔧 내보내기 화면이 연동 설정 상태를 반영하도록 정리',
+                    ],
+                  ),
+                  Divider(),
                   _Hist(
                     ver: 'v1.0.0',
                     date: '2026-06-01',

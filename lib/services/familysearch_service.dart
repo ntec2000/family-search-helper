@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../models/person.dart';
+import 'db_service.dart';
 
 /// FamilySearch.org 공식 API 연동 (OAuth 2.0)
 ///
@@ -14,9 +15,31 @@ import '../models/person.dart';
 /// 본 앱은 FamilySearch 가 없어도 GEDCOM 으로 수동 업로드 가능합니다.
 /// 로그인은 "직접 동기화"를 원할 때만 선택적으로 사용합니다.
 class FamilySearchService {
-  // ⚠️ 배포 전 https://www.familysearch.org/developers 에서 발급받아 교체
-  static const String clientId = 'YOUR_FAMILYSEARCH_CLIENT_ID';
+  // Client ID 는 설정 화면에서 사용자가 직접 입력합니다.
+  // https://www.familysearch.org/developers 에서 무료 발급.
+  static String clientId = '';
   static const String redirectUri = 'familysearchhelper://oauth';
+
+  /// 사용자가 설정에서 'FamilySearch 연동'을 켰는지 여부 (기본 꺼짐 = 추출 전용 모드)
+  static bool enabled = false;
+
+  /// 앱 시작 시 저장된 설정 로드
+  static Future<void> loadConfig() async {
+    enabled = (await DbService.instance.getConfig('fs_enabled')) == '1';
+    clientId = (await DbService.instance.getConfig('fs_client_id')) ?? '';
+  }
+
+  /// 설정 저장
+  static Future<void> saveConfig(
+      {required bool isEnabled, required String id}) async {
+    enabled = isEnabled;
+    clientId = id.trim();
+    await DbService.instance.setConfig('fs_enabled', isEnabled ? '1' : '0');
+    await DbService.instance.setConfig('fs_client_id', clientId);
+  }
+
+  /// 연동 모드가 실제로 사용 가능한 상태인지 (켜짐 + Client ID 입력됨)
+  static bool get isConfigured => enabled && clientId.isNotEmpty;
 
   // Sandbox(개발) vs Production
   static const bool useSandbox = true;

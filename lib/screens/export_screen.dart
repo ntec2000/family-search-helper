@@ -112,20 +112,33 @@ class _State extends State<ExportScreen> {
               ),
             ),
             const SizedBox(height: 32),
-            const Text('② FamilySearch 직접 동기화 (로그인 필요)',
+            const Text('② FamilySearch 직접 동기화',
                 style: TextStyle(fontWeight: FontWeight.bold, color: HanjiColors.ju)),
             const SizedBox(height: 8),
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.cloud_upload, color: HanjiColors.ju),
-                title: const Text('FamilySearch.org 직접 업로드'),
-                subtitle: Text(FamilySearchService.isLoggedIn
-                    ? '로그인됨 — 인물 등록 가능'
-                    : 'LDS 회원 계정 로그인 필요'),
-                trailing: const Icon(Icons.upload),
-                onTap: _busy ? null : _syncFamilySearch,
+            if (FamilySearchService.enabled)
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.cloud_upload, color: HanjiColors.ju),
+                  title: const Text('FamilySearch.org 직접 업로드'),
+                  subtitle: Text(!FamilySearchService.isConfigured
+                      ? 'Client ID 미입력 — 설정에서 입력하세요'
+                      : (FamilySearchService.isLoggedIn
+                          ? '로그인됨 — 인물 등록 가능'
+                          : 'LDS 회원 계정 로그인 필요')),
+                  trailing: const Icon(Icons.upload),
+                  onTap: (_busy || !FamilySearchService.isConfigured)
+                      ? null
+                      : _syncFamilySearch,
+                ),
+              )
+            else
+              const Card(
+                child: ListTile(
+                  leading: Icon(Icons.cloud_off, color: HanjiColors.muk),
+                  title: Text('FamilySearch 연동 꺼짐'),
+                  subtitle: Text('설정 → FamilySearch 연동에서 켜면 사용할 수 있습니다.'),
+                ),
               ),
-            ),
             if (_status.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 16),
