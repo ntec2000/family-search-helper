@@ -65,6 +65,9 @@ class ResultScreen extends StatelessWidget {
                 Container(
                   color: Colors.black,
                   child: InteractiveViewer(
+                    minScale: 1.0,
+                    maxScale: 6.0,
+                    panEnabled: true,
                     child: Image.file(File(imagePath), fit: BoxFit.contain),
                   ),
                 ),

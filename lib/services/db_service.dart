@@ -15,7 +15,7 @@ class DbService {
     final path = p.join(dir.path, 'family_search.db');
     _db = await openDatabase(
       path,
-      version: 4,
+      version: 5,
       onCreate: (db, v) async {
         await db.execute('''
           CREATE TABLE persons (
@@ -28,6 +28,8 @@ class DbService {
             marriage_date TEXT, marriage_place TEXT,
             spouse_hanja TEXT, spouse_hangul TEXT, spouse_father TEXT,
             spouse_mother TEXT, spouse_bongwan TEXT,
+            spouse_grandfather TEXT, spouse_great_grandfather TEXT,
+            spouse_maternal_grandfather TEXT, spouse_birth TEXT, spouse_death TEXT,
             death_date_lunar TEXT, death_date_solar TEXT, death_place TEXT,
             burial_place TEXT, burial_orientation TEXT,
             father_id TEXT, mother_id TEXT,
@@ -70,6 +72,22 @@ class DbService {
             'spouse_mother',
             'in_laws_spouse_note',
             'reason_statement',
+          ]) {
+            try {
+              await db.execute('ALTER TABLE persons ADD COLUMN $col TEXT');
+            } catch (_) {
+              // 이미 존재하면 무시
+            }
+          }
+        }
+        if (oldV < 5) {
+          // v2.3 추가 컬럼 — 처가(妻家) 계열(장인의 부·증조·아내 외조) + 배우자 생·졸
+          for (final col in const [
+            'spouse_grandfather',
+            'spouse_great_grandfather',
+            'spouse_maternal_grandfather',
+            'spouse_birth',
+            'spouse_death',
           ]) {
             try {
               await db.execute('ALTER TABLE persons ADD COLUMN $col TEXT');

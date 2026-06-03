@@ -31,6 +31,48 @@ class Genealogy {
     '음','부','여','인','제','맹','반','기','왕','육',
   };
 
+  /// 대표 성씨 한자 → 한글 (순수 Dart 내장 — 사전 미로드 환경에서도 동작).
+  static const surnameHanjaToHangul = <String, String>{
+    '金':'김','李':'이','朴':'박','崔':'최','鄭':'정','姜':'강','趙':'조','尹':'윤',
+    '張':'장','林':'임','韓':'한','吳':'오','徐':'서','申':'신','權':'권','黃':'황',
+    '安':'안','宋':'송','全':'전','洪':'홍','柳':'류','高':'고','文':'문','孫':'손',
+    '白':'백','許':'허','盧':'노','南':'남','沈':'심','禹':'우','具':'구','閔':'민',
+    '劉':'유','羅':'라','池':'지','車':'차','朱':'주','郭':'곽','成':'성','方':'방',
+    '桂':'계','都':'도','咸':'함','卞':'변','廉':'염','梁':'양','表':'표','馬':'마',
+    '蔡':'채','元':'원','千':'천','玄':'현','明':'명','邊':'변','嚴':'엄','蘇':'소',
+    '陳':'진','丁':'정','魏':'위','石':'석','宣':'선','薛':'설','卓':'탁','周':'주',
+    '延':'연','秋':'추','睦':'목','陰':'음','夫':'부','余':'여','印':'인','諸':'제',
+    '楊':'양','王':'왕','陸':'육','章':'장','尚':'상','孟':'맹','潘':'반','奇':'기',
+    '慶':'경','邕':'옹','龐':'방','賓':'빈',
+  };
+
+  /// 문서 전체에서 가문(본관) 성씨 자동 감지.
+  /// 예) "固城李氏思菴公派譜" → ('李','이').  찾지 못하면 null.
+  static (String hanja, String hangul)? detectClanSurname(String text) {
+    for (final m in RegExp(r'([㐀-鿿])氏').allMatches(text)) {
+      final ch = m.group(1)!;
+      final hg = surnameHanjaToHangul[ch];
+      if (hg != null) return (ch, hg);
+    }
+    return null;
+  }
+
+  /// 배우자 표기(예: "原州邊氏" / "邊氏")에서 (성한자, 성한글) 추출.
+  /// 장인·장인 부친 등 처가 인물에 성을 붙여 표기할 때 사용.
+  static (String hanja, String hangul)? spouseSurname(String? spouseHanja) {
+    if (spouseHanja == null) return null;
+    final m = RegExp(r'([㐀-鿿])氏$').firstMatch(spouseHanja.trim());
+    final ch = m != null
+        ? m.group(1)!
+        : (spouseHanja.trim().isNotEmpty
+            ? spouseHanja.trim().substring(spouseHanja.trim().length - 1)
+            : '');
+    if (ch.isEmpty) return null;
+    final hg = surnameHanjaToHangul[ch];
+    if (hg == null) return null;
+    return (ch, hg);
+  }
+
   /// 자유 텍스트 토큰 "海원 (해원)" / "崔海斗(최해두)" / "최씨" 등에서
   /// (한자이름, 한글이름) 추출.
   static (String hanja, String hangul) parseToken(String token) {

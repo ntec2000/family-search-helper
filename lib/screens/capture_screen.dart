@@ -8,7 +8,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../models/person.dart';
 import '../services/ocr_service.dart';
 import '../services/jokbo_parser.dart';
-import '../services/genealogy.dart';
+import '../services/hanja_dict.dart';
 import '../services/db_service.dart';
 import '../theme/traditional_theme.dart';
 import 'result_screen.dart';
@@ -199,53 +199,104 @@ class _CaptureScreenState extends State<CaptureScreen> {
     }
   }
 
-  /// v2.2 — 성씨 수동 입력 다이얼로그. (한자, 한글) 반환, 취소 시 null.
+  /// v2.3 — 성씨(姓) 수동 입력 다이얼로그.
+  /// 한글 성을 입력하고 \u0027입력\u0027 을 누르면 사전(HanjaDict)에서 해당 음의
+  /// 한자 후보를 아래에 칩으로 표시하고, 사용자가 한자를 선택하면
+  /// (선택 한자, 입력 한글) 을 반환한다. 취소 시 null.
   Future<(String, String)?> _askSurname() async {
-    final hanja = TextEditingController();
     final hangul = TextEditingController();
-    hangul.addListener(() {
-      final h = hangul.text.trim();
-      if (h.isNotEmpty) {
-        final hj = Genealogy.surnamesHangul.contains(h) ? h : hanja.text;
-        if (hj.isEmpty) {} // 자동 한자 추론은 사전 의존 — 수동 유지
-      }
-    });
+    final dict = HanjaDict.instance;
     return showDialog<(String, String)?>(
       context: context,
       barrierDismissible: false,
-      builder: (_) => AlertDialog(
-        title: const Text('성씨(姓) 입력'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('족보에서 성씨를 찾지 못했습니다.\n전체 인물(자녀 포함)에 적용할 성씨를 입력하세요.',
-                style: TextStyle(fontSize: 13, height: 1.5)),
-            const SizedBox(height: 12),
-            TextField(
-              controller: hangul,
-              decoration: const InputDecoration(
-                  labelText: '성 (한글) 예: 최', border: OutlineInputBorder(),
-                  isDense: true),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: hanja,
-              decoration: const InputDecoration(
-                  labelText: '성 (한자) 예: 崔', border: OutlineInputBorder(),
-                  isDense: true),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context, null),
-              child: const Text('건너뛰기')),
-          FilledButton(
-              onPressed: () => Navigator.pop(
-                  context, (hanja.text.trim(), hangul.text.trim())),
-              child: const Text('적용')),
-        ],
-      ),
+      builder: (ctx) {
+        List<String> candidates = [];
+        String? selected;
+        bool searched = false;
+        return StatefulBuilder(
+          builder: (ctx, setLocal) {
+            void runSearch() {
+              final h = hangul.text.trim();
+              final list = h.isEmpty ? <String>[] : dict.byReading(h);
+              setLocal(() {
+                candidates = list;
+                searched = true;
+                selected = null;
+              });
+            }
+
+            return AlertDialog(
+              title: const Text('성씨(姓) 입력'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                        '족보에서 성씨를 찾지 못했습니다.\n전체 인물(자녀 포함)에 적용할 성씨를 입력하세요.',
+                        style: TextStyle(fontSize: 13, height: 1.5)),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: hangul,
+                            textInputAction: TextInputAction.search,
+                            onSubmitted: (_) => runSearch(),
+                            decoration: const InputDecoration(
+                                labelText: '성 (한글) 예: 최',
+                                border: OutlineInputBorder(),
+                                isDense: true),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        FilledButton(
+                            onPressed: runSearch, child: const Text('입력')),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    if (searched && candidates.isEmpty)
+                      const Text('해당 음의 한자 후보가 없습니다. 한글만 적용됩니다.',
+                          style: TextStyle(fontSize: 12, color: Colors.grey)),
+                    if (candidates.isNotEmpty) ...[
+                      const Text('해당 한자를 선택하세요',
+                          style: TextStyle(fontSize: 12, height: 1.4)),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        children: candidates.map((c) {
+                          final on = c == selected;
+                          return ChoiceChip(
+                            label: Text(c, style: const TextStyle(fontSize: 18)),
+                            selected: on,
+                            onSelected: (_) => setLocal(() => selected = c),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(ctx, null),
+                    child: const Text('건너뛰기')),
+                FilledButton(
+                    onPressed: () {
+                      final h = hangul.text.trim();
+                      if (h.isEmpty) {
+                        Navigator.pop(ctx, null);
+                        return;
+                      }
+                      Navigator.pop(ctx, (selected ?? '', h));
+                    },
+                    child: const Text('적용')),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -314,8 +365,13 @@ class _CaptureScreenState extends State<CaptureScreen> {
             Positioned.fill(
               child: Container(
                 color: Colors.black,
-                child: Image.file(File(_previewPath!),
-                    fit: BoxFit.contain, cacheWidth: 1200),
+                child: InteractiveViewer(
+                  minScale: 1.0,
+                  maxScale: 6.0,
+                  panEnabled: true,
+                  child: Image.file(File(_previewPath!),
+                      fit: BoxFit.contain, cacheWidth: 1600),
+                ),
               ),
             )
           // 2) 카메라 라이브 프리뷰

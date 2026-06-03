@@ -31,6 +31,12 @@ class Person {
   String? spouseFather;     // 配 ○○○氏 父 ○○○ (장인)
   String? spouseMother;     // v2.2 — 장모(배우자 모친) "○○○의 부인"
   String? spouseBongwan;
+  // v2.3 — 처가(妻家) 계열: 配 블록의 祖/曾祖/外祖는 배우자(아내)의 조상이다.
+  String? spouseGrandfather;        // 配 祖   — 장인의 아버지
+  String? spouseGreatGrandfather;   // 配 曾祖 — 장인의 할아버지(처증조)
+  String? spouseMaternalGrandfather;// 配 外祖 — 아내의 외할아버지
+  String? spouseBirth;              // 配 干支生 (배우자 출생)
+  String? spouseDeath;              // 配 干支卒 (배우자 사망)
 
   // 사망/매장
   String? deathDateLunar;
@@ -85,6 +91,11 @@ class Person {
     this.spouseFather,
     this.spouseMother,
     this.spouseBongwan,
+    this.spouseGrandfather,
+    this.spouseGreatGrandfather,
+    this.spouseMaternalGrandfather,
+    this.spouseBirth,
+    this.spouseDeath,
     this.deathDateLunar,
     this.deathDateSolar,
     this.deathPlace,
@@ -134,6 +145,11 @@ class Person {
         'spouse_father': spouseFather,
         'spouse_mother': spouseMother,
         'spouse_bongwan': spouseBongwan,
+        'spouse_grandfather': spouseGrandfather,
+        'spouse_great_grandfather': spouseGreatGrandfather,
+        'spouse_maternal_grandfather': spouseMaternalGrandfather,
+        'spouse_birth': spouseBirth,
+        'spouse_death': spouseDeath,
         'death_date_lunar': deathDateLunar,
         'death_date_solar': deathDateSolar,
         'death_place': deathPlace,
@@ -179,6 +195,11 @@ class Person {
         spouseFather: m['spouse_father'],
         spouseMother: m['spouse_mother'],
         spouseBongwan: m['spouse_bongwan'],
+        spouseGrandfather: m['spouse_grandfather'],
+        spouseGreatGrandfather: m['spouse_great_grandfather'],
+        spouseMaternalGrandfather: m['spouse_maternal_grandfather'],
+        spouseBirth: m['spouse_birth'],
+        spouseDeath: m['spouse_death'],
         deathDateLunar: m['death_date_lunar'],
         deathDateSolar: m['death_date_solar'],
         deathPlace: m['death_place'],

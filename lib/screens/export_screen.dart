@@ -41,66 +41,107 @@ class _State extends State<ExportScreen> {
     return HanjaDict.instance.annotate(hanja.trim());
   }
 
-  /// v2.2 — 모든 인물 정보를 포함한 정렬 텍스트. 밑줄(칸) 구분 일관 적용.
+  /// v2.3 — 첨부 족보를 인식·정리한 형식의 정렬 텍스트.
+  /// 처가(장인) 계열·사위·딸(○씨) 포함, FamilySearch 입력 항목 대응.
   String _buildText(List<Person> list) {
     const div = '────────────────────';
+    final dict = HanjaDict.instance;
     final buf = StringBuffer();
-    buf.writeln('가족역사기록  (FamilySearch 입력용)');
+    buf.writeln('固城李氏 思菴公派譜 (FamilySearch 입력용 정리)');
     buf.writeln('총 ${list.length}명');
     buf.writeln();
     for (var i = 0; i < list.length; i++) {
       final p = list[i];
+      final segaTag = p.sega != null ? '[${p.sega}世] ' : '';
+
+      // ── 딸(女): 이름 없음 → 가문 성씨 + 씨, 표기된 인물은 남편(사위) ──
+      if (p.gender == 'F') {
+        final np = Genealogy.split(
+            hanja: '', hangul: '',
+            surnameHanja: p.surnameHanja, surnameHangul: p.surnameHangul,
+            isFemale: true);
+        buf.writeln(div);
+        buf.writeln('${i + 1}. $segaTag${np.singleHangul} (딸)');
+        buf.writeln('  성(姓)    : ${np.surnameHangul} ${np.surnameHanja}');
+        buf.writeln('  이름      : (이름 없음 → ${np.singleHangul})');
+        buf.writeln('  성별      : 여');
+        if ((p.spouseHanja ?? '').isNotEmpty) {
+          buf.writeln('  사위      : ${dict.toHangul(p.spouseHanja!)} ${p.spouseHanja}'
+              '${(p.spouseBongwan ?? '').isNotEmpty ? '   [본관: ${p.spouseBongwan}]' : ''}');
+        }
+        buf.writeln();
+        continue;
+      }
+
+      // ── 아들(子, 본손) ──
       final np = Genealogy.split(
           hanja: p.nameHanja,
           hangul: p.nameHangul.isNotEmpty
               ? p.nameHangul
-              : HanjaDict.instance.toHangul(p.nameHanja),
+              : dict.toHangul(p.nameHanja),
           surnameHanja: p.surnameHanja,
           surnameHangul: p.surnameHangul);
       final roman = p.nameRoman.isNotEmpty
           ? p.nameRoman
           : Romanizer.romanizeName(np.surnameHangul + np.givenHangul);
-      final name = [p.nameHangul, p.nameHanja]
-          .where((x) => x.trim().isNotEmpty)
-          .join(' ');
       buf.writeln(div);
-      buf.writeln('${i + 1}. $name'
-          '${p.sega != null ? '   [${p.sega}世]' : ''}');
-      buf.writeln('  성(姓)  : ${np.surnameHangul} ${np.surnameHanja} (${np.surnameRoman})');
-      buf.writeln('  이름     : ${np.givenHangul} ${np.givenHanja}'
+      buf.writeln('${i + 1}. $segaTag${np.surnameHangul}${np.givenHangul} ${p.nameHanja}');
+      buf.writeln('  성(姓)    : ${np.surnameHangul} ${np.surnameHanja} (${np.surnameRoman})');
+      buf.writeln('  이름      : ${np.givenHangul} ${np.givenHanja}'
           '${np.givenRoman.isNotEmpty ? ' (${np.givenRoman})' : ''}');
-      buf.writeln('  로마자   : $roman');
-      buf.writeln('  성별     : ${p.gender == 'M' ? '남' : p.gender == 'F' ? '여' : '미상'}');
-      if (p.bongwan != null) buf.writeln('  본관     : ${_kh(p.bongwan)}'
-          '${p.pa != null ? '   派: ${p.pa}' : ''}');
-      if (p.ja != null) buf.writeln('  字(자)   : ${_kh(p.ja)}');
-      if (p.ho != null) buf.writeln('  號(호)   : ${_kh(p.ho)}');
-      final birthDate = p.birthDateSolar ?? p.birthDateLunar ?? '';
-      buf.writeln('  출생     : $birthDate');
-      buf.writeln('  출생지   : ${p.birthPlace ?? Genealogy.defaultPlace}');
-      if (p.marriageDate != null || p.spouseHanja != null) {
-        buf.writeln('  결혼     : ${p.marriageDate ?? ''}');
-        buf.writeln('  배우자   : ${_kh(p.spouseHanja)}');
+      buf.writeln('  로마자    : $roman');
+      buf.writeln('  성별      : 남');
+      if (p.bongwan != null) {
+        buf.writeln('  본관      : ${_kh(p.bongwan)}'
+            '${p.pa != null ? '   派: ${p.pa}' : ''}');
       }
-      if (p.spouseFather != null) {
-        buf.writeln('  장인     : ${_kh(p.spouseFather)}');
-        buf.writeln('  장모     : ${p.spouseMother ?? '${_kh(p.spouseFather)}의 부인'}');
-      }
+      if (p.ja != null) buf.writeln('  字(자)    : ${_kh(p.ja)}');
+      if (p.ho != null) buf.writeln('  號(호)    : ${_kh(p.ho)}');
+      buf.writeln('  출생      : ${p.birthDateSolar ?? p.birthDateLunar ?? ''}');
+      buf.writeln('  출생지    : ${p.birthPlace ?? Genealogy.defaultPlace}');
       final deathDate = p.deathDateSolar ?? p.deathDateLunar ?? '';
-      if (deathDate.isNotEmpty) buf.writeln('  사망     : $deathDate');
-      if (deathDate.isNotEmpty || p.deathPlace != null) {
-        buf.writeln('  사망지   : ${p.deathPlace ?? Genealogy.defaultPlace}');
+      if (deathDate.isNotEmpty) {
+        buf.writeln('  사망      : $deathDate');
+        buf.writeln('  사망지    : ${p.deathPlace ?? Genealogy.defaultPlace}');
       }
       if (p.burialPlace != null) {
         final ori = p.burialOrientation != null ? ' (${p.burialOrientation})' : '';
-        buf.writeln('  매장     : ${p.burialPlace}$ori');
+        buf.writeln('  매장      : ${_kh(p.burialPlace)}$ori');
       }
-      if (p.childrenNote != null) buf.writeln('  자녀     : ${p.childrenNote}');
-      if (p.sonsInLawNote != null) buf.writeln('  사위     : ${p.sonsInLawNote}');
-      if (p.inLawsNote != null) buf.writeln('  사돈     : ${p.inLawsNote}');
-      if (p.inLawsSpouseNote != null) buf.writeln('  사돈부인 : ${p.inLawsSpouseNote}');
+      // ── 배우자 ──
+      if ((p.spouseHanja ?? '').isNotEmpty) {
+        buf.writeln('  배우자    : ${_kh(p.spouseHanja)}'
+            '${(p.spouseBongwan ?? '').isNotEmpty ? '   [본관: ${p.spouseBongwan}]' : ''}');
+        if ((p.spouseBirth ?? '').isNotEmpty) buf.writeln('  배우자 생 : ${p.spouseBirth}');
+        if ((p.spouseDeath ?? '').isNotEmpty) buf.writeln('  배우자 졸 : ${p.spouseDeath}');
+      }
+      if (p.marriageDate != null) buf.writeln('  결혼      : ${p.marriageDate}');
+      // ── 처가(장인) 계열 — 아내 성씨를 붙여 표기 ──
+      final ss = Genealogy.spouseSurname(p.spouseHanja);
+      String inLawName(String? n) {
+        if (n == null || n.isEmpty) return '';
+        if (ss != null) return '${ss.$1}$n (${ss.$2}${dict.toHangul(n)})';
+        return '$n (${dict.toHangul(n)})';
+      }
+      if ((p.spouseFather ?? '').isNotEmpty) {
+        buf.writeln('  장인      : ${inLawName(p.spouseFather)}');
+        buf.writeln('  장모      : ${p.spouseMother ?? '${inLawName(p.spouseFather)}의 부인'}');
+      }
+      if ((p.spouseGrandfather ?? '').isNotEmpty) {
+        buf.writeln('  장인의 부 : ${inLawName(p.spouseGrandfather)}');
+      }
+      if ((p.spouseGreatGrandfather ?? '').isNotEmpty) {
+        buf.writeln('  처증조    : ${inLawName(p.spouseGreatGrandfather)}');
+      }
+      if ((p.spouseMaternalGrandfather ?? '').isNotEmpty) {
+        buf.writeln('  처외조    : ${_kh(p.spouseMaternalGrandfather)}');
+      }
+      if (p.childrenNote != null) buf.writeln('  자녀      : ${p.childrenNote}');
+      if (p.sonsInLawNote != null) buf.writeln('  사위      : ${p.sonsInLawNote}');
+      if (p.inLawsNote != null) buf.writeln('  사돈      : ${p.inLawsNote}');
+      if (p.inLawsSpouseNote != null) buf.writeln('  사돈부인  : ${p.inLawsSpouseNote}');
       if ((p.reasonStatement ?? '').isNotEmpty) {
-        buf.writeln('  근거     : ${p.reasonStatement}');
+        buf.writeln('  근거      : ${p.reasonStatement}');
       }
       buf.writeln();
     }
