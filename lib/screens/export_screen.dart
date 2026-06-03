@@ -69,6 +69,7 @@ class _State extends State<ExportScreen> {
           buf.writeln('  사위      : ${dict.toHangul(p.spouseHanja!)} ${p.spouseHanja}'
               '${(p.spouseBongwan ?? '').isNotEmpty ? '   [본관: ${p.spouseBongwan}]' : ''}');
         }
+        if ((p.note ?? '').isNotEmpty) buf.writeln('  특이사항  : ${p.note}');
         buf.writeln();
         continue;
       }
@@ -140,6 +141,7 @@ class _State extends State<ExportScreen> {
       if (p.sonsInLawNote != null) buf.writeln('  사위      : ${p.sonsInLawNote}');
       if (p.inLawsNote != null) buf.writeln('  사돈      : ${p.inLawsNote}');
       if (p.inLawsSpouseNote != null) buf.writeln('  사돈부인  : ${p.inLawsSpouseNote}');
+      if ((p.note ?? '').isNotEmpty) buf.writeln('  특이사항  : ${p.note}');
       if ((p.reasonStatement ?? '').isNotEmpty) {
         buf.writeln('  근거      : ${p.reasonStatement}');
       }

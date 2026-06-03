@@ -15,7 +15,7 @@ class DbService {
     final path = p.join(dir.path, 'family_search.db');
     _db = await openDatabase(
       path,
-      version: 5,
+      version: 6,
       onCreate: (db, v) async {
         await db.execute('''
           CREATE TABLE persons (
@@ -35,7 +35,7 @@ class DbService {
             father_id TEXT, mother_id TEXT,
             children_ids TEXT, sons_in_law_ids TEXT, in_laws_ids TEXT,
             children_note TEXT, sons_in_law_note TEXT, in_laws_note TEXT,
-            in_laws_spouse_note TEXT, reason_statement TEXT,
+            in_laws_spouse_note TEXT, reason_statement TEXT, note TEXT,
             source_image_path TEXT, raw_text TEXT,
             created_at TEXT, updated_at TEXT
           )''');
@@ -94,6 +94,14 @@ class DbService {
             } catch (_) {
               // 이미 존재하면 무시
             }
+          }
+        }
+        if (oldV < 6) {
+          // v2.4 추가 컬럼 — 특이사항/메모(出系·양자·한글 오기 등)
+          try {
+            await db.execute('ALTER TABLE persons ADD COLUMN note TEXT');
+          } catch (_) {
+            // 이미 존재하면 무시
           }
         }
       },

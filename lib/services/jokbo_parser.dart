@@ -87,23 +87,38 @@ class JokboParser {
     if (nameMatch == null) return null;
     final isFemale = nameMatch.group(1) == '女';
     person.gender = isFemale ? 'F' : 'M';
-    final headName = nameMatch.group(3)!;
+    var headName = nameMatch.group(3)!;
+    // 이름 뒤에 구조 키워드가 붙어버린 경우 잘라낸다 (예: 承勳出 → 承勳)
+    for (final kw in const ['出', '字', '配', '生', '卒', '墓', '忌', '號', '娶', '贈', '系']) {
+      final ki = headName.indexOf(kw);
+      if (ki > 0) headName = headName.substring(0, ki);
+    }
 
     // 配(배우자) 위치 기준으로 본인부 / 배우자부 분리
     final paeIdx = t.indexOf('配');
     final personPart = paeIdx >= 0 ? t.substring(0, paeIdx) : t;
     final spousePart = paeIdx >= 0 ? t.substring(paeIdx) : '';
 
-    // ── 딸(女): 표기된 이름은 남편(사위), 딸 본인은 이름 없음 → 가문 성씨+씨 ──
+    // ── 딸(女): 표기된 한자는 남편(사위) 이름, 딸 본인은 이름이 없으므로
+    //    아버지(가문) 성을 따라 "○씨" 로 표기한다. 사위 본관(○○人)도 추출.
+    //    표기가 본관(○○人)뿐이면 사위 이름은 미상으로 둔다.
     if (isFemale) {
       person.nameHanja = '';
       person.nameHangul = '';
-      person.spouseHanja = headName; // 남편(사위)
-      person.spouseHangul = dict.toHangul(headName);
-      // 사위 본관: ○○人 (예: 安東人, 金海人, 全州人)
-      final bg = RegExp(r'([一-鿿]{1,3})人').firstMatch(t);
-      if (bg != null) person.spouseBongwan = bg.group(1);
-      // 딸의 성은 가문 성씨를 상속
+      final body = t.replaceFirst(RegExp(r'^女\s*'), '');
+      final bgM = RegExp(r'([一-鿿]{2,3})人').firstMatch(body);
+      String husband;
+      if (bgM != null) {
+        person.spouseBongwan = bgM.group(1); // 사위 본관 (安東·金海·全州 등)
+        final pre = body.substring(0, bgM.start); // 본관 앞쪽 = 사위 이름
+        husband = RegExp(r'[一-鿿]+').allMatches(pre).map((m) => m.group(0)!).join();
+      } else {
+        husband = RegExp(r'[一-鿿]+').allMatches(body).map((m) => m.group(0)!).join();
+      }
+      if (husband.length > 4) husband = husband.substring(0, 4);
+      person.spouseHanja = husband.isEmpty ? null : husband;
+      person.spouseHangul = husband.isEmpty ? null : dict.toHangul(husband);
+      // 딸의 성은 가문 성씨 상속 (이름 없음 → 내보내기에서 "○씨")
       if ((clanHanja ?? '').isNotEmpty) person.surnameHanja = clanHanja;
       if ((clanHangul ?? '').isNotEmpty) person.surnameHangul = clanHangul;
       return person;
@@ -112,6 +127,13 @@ class JokboParser {
     // ── 아들(子, 본손) ──
     person.nameHanja = headName;
     person.nameHangul = dict.toHangul(headName);
+
+    // 出系(출계, 양자로 나감): "出系 ○○后" → 특이사항 메모
+    final chulgye = RegExp(r'出\s*系\s*([一-鿿]{2,4})\s*后').firstMatch(t);
+    if (chulgye != null) {
+      final who = chulgye.group(1)!;
+      person.note = '出系 $who后 — ${dict.toHangul(who)}의 후사(後嗣)로 출계(양자)';
+    }
 
     // 字 / 號 / 諡號 (본인부에서만)
     final ja = RegExp(r'字([一-鿿]{1,3})').firstMatch(personPart);
@@ -241,6 +263,21 @@ class JokboParser {
     if (inLawWives.isNotEmpty) {
       person.inLawsSpouseNote =
           inLawWives.map((n) => '$n (${dict.toHangul(n)})').join(', ');
+    }
+
+    // 한글 표기 오기 점검: 블록 내 한글 음(같은 글자 수)이 한자 사전음과 다르면 메모
+    final hangulShown = RegExp(r'[가-힣]{2,3}').firstMatch(personPart);
+    if (hangulShown != null && person.nameHanja.isNotEmpty) {
+      final shown = hangulShown.group(0)!;
+      final reading = dict.toHangul(person.nameHanja);
+      final isReadable = reading != person.nameHanja; // 사전 로드 시에만 의미
+      if (isReadable &&
+          shown.length == person.nameHanja.runes.length &&
+          shown != reading) {
+        person.note = ((person.note ?? '') +
+                ' / 한글표기 \'$shown\' ↔ 한자음 \'$reading\' 불일치(확인요망)')
+            .trim();
+      }
     }
 
     // 성(姓) 분리 — 본인 이름은 외자/이름만(예: 格) → 가문 성씨 상속

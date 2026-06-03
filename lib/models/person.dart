@@ -61,6 +61,9 @@ class Person {
   // v2.2 — FamilySearch 정합용 근거 진술 (Reason This Information Is Correct)
   String? reasonStatement;
 
+  // v2.4 — 특이사항/메모 (出系·양자·한글 오기 등)
+  String? note;
+
   // 메타
   String? sourceImagePath;
   String? rawText;
@@ -111,6 +114,7 @@ class Person {
     this.inLawsNote,
     this.inLawsSpouseNote,
     this.reasonStatement,
+    this.note,
     this.sourceImagePath,
     this.rawText,
     DateTime? createdAt,
@@ -165,6 +169,7 @@ class Person {
         'in_laws_note': inLawsNote,
         'in_laws_spouse_note': inLawsSpouseNote,
         'reason_statement': reasonStatement,
+        'note': note,
         'source_image_path': sourceImagePath,
         'raw_text': rawText,
         'created_at': createdAt.toIso8601String(),
@@ -221,6 +226,7 @@ class Person {
         inLawsNote: m['in_laws_note'],
         inLawsSpouseNote: m['in_laws_spouse_note'],
         reasonStatement: m['reason_statement'],
+        note: m['note'],
         sourceImagePath: m['source_image_path'],
         rawText: m['raw_text'],
         createdAt: DateTime.parse(m['created_at']),
