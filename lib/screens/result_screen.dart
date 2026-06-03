@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import '../models/person.dart';
 import '../services/hanja_dict.dart';
+import '../services/db_service.dart';
 import '../theme/traditional_theme.dart';
 import 'person_card_screen.dart';
 
@@ -21,6 +22,28 @@ class ResultScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('인식 결과 (${persons.length}명)'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.person_add_alt_1),
+            tooltip: '인물 추가',
+            onPressed: () async {
+              final now = DateTime.now();
+              final np = Person(
+                id: 'manual_${now.millisecondsSinceEpoch}',
+                sourceImagePath: imagePath,
+                createdAt: now,
+                updatedAt: now,
+              );
+              await DbService.instance.upsertPerson(np);
+              if (context.mounted) {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => PersonCardScreen(personId: np.id)));
+              }
+            },
+          ),
+        ],
       ),
       body: SafeArea(
         child: DefaultTabController(

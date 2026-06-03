@@ -7,6 +7,8 @@ import '../models/person.dart';
 import '../services/db_service.dart';
 import '../services/gedcom_export.dart';
 import '../services/hanja_dict.dart';
+import '../services/genealogy.dart';
+import '../services/romanizer.dart';
 import '../services/familysearch_service.dart';
 import '../theme/traditional_theme.dart';
 import 'familysearch_login_screen.dart';
@@ -39,53 +41,71 @@ class _State extends State<ExportScreen> {
     return HanjaDict.instance.annotate(hanja.trim());
   }
 
-  /// #15 보기 좋게 정렬된 텍스트 생성.
+  /// v2.2 — 모든 인물 정보를 포함한 정렬 텍스트. 밑줄(칸) 구분 일관 적용.
   String _buildText(List<Person> list) {
+    const div = '────────────────────';
     final buf = StringBuffer();
-    buf.writeln('가족역사기록');
+    buf.writeln('가족역사기록  (FamilySearch 입력용)');
+    buf.writeln('총 ${list.length}명');
     buf.writeln();
     for (var i = 0; i < list.length; i++) {
       final p = list[i];
-      // 이름: 한글 한자
+      final np = Genealogy.split(
+          hanja: p.nameHanja,
+          hangul: p.nameHangul.isNotEmpty
+              ? p.nameHangul
+              : HanjaDict.instance.toHangul(p.nameHanja),
+          surnameHanja: p.surnameHanja,
+          surnameHangul: p.surnameHangul);
+      final roman = p.nameRoman.isNotEmpty
+          ? p.nameRoman
+          : Romanizer.romanizeName(np.surnameHangul + np.givenHangul);
       final name = [p.nameHangul, p.nameHanja]
-          .where((s) => s.trim().isNotEmpty)
+          .where((x) => x.trim().isNotEmpty)
           .join(' ');
-      buf.writeln('━━━━━━━━━━━━━━━━━━━━');
-      buf.writeln('${i + 1}. $name');
-      buf.writeln('  성별   : ${p.gender == 'M' ? '남' : p.gender == 'F' ? '여' : '미상'}');
-      if (p.bongwan != null) buf.writeln('  본관   : ${_kh(p.bongwan)}');
-      if (p.ja != null) buf.writeln('  字(자) : ${_kh(p.ja)}');
-      if (p.ho != null) buf.writeln('  號(호) : ${_kh(p.ho)}');
-      final birth = [
-        p.birthDateSolar,
-        p.birthDateLunar,
-        p.birthPlace,
-      ].where((s) => s != null && s.isNotEmpty).join(' · ');
-      if (birth.isNotEmpty) buf.writeln('  출생   : $birth');
+      buf.writeln(div);
+      buf.writeln('${i + 1}. $name'
+          '${p.sega != null ? '   [${p.sega}世]' : ''}');
+      buf.writeln('  성(姓)  : ${np.surnameHangul} ${np.surnameHanja} (${np.surnameRoman})');
+      buf.writeln('  이름     : ${np.givenHangul} ${np.givenHanja}'
+          '${np.givenRoman.isNotEmpty ? ' (${np.givenRoman})' : ''}');
+      buf.writeln('  로마자   : $roman');
+      buf.writeln('  성별     : ${p.gender == 'M' ? '남' : p.gender == 'F' ? '여' : '미상'}');
+      if (p.bongwan != null) buf.writeln('  본관     : ${_kh(p.bongwan)}'
+          '${p.pa != null ? '   派: ${p.pa}' : ''}');
+      if (p.ja != null) buf.writeln('  字(자)   : ${_kh(p.ja)}');
+      if (p.ho != null) buf.writeln('  號(호)   : ${_kh(p.ho)}');
+      final birthDate = p.birthDateSolar ?? p.birthDateLunar ?? '';
+      buf.writeln('  출생     : $birthDate');
+      buf.writeln('  출생지   : ${p.birthPlace ?? Genealogy.defaultPlace}');
       if (p.marriageDate != null || p.spouseHanja != null) {
-        buf.writeln(
-            '  결혼   : ${p.marriageDate ?? ''} / 배우자: ${_kh(p.spouseHanja)}'
-                .replaceAll(RegExp(r'\s+/'), ' /'));
+        buf.writeln('  결혼     : ${p.marriageDate ?? ''}');
+        buf.writeln('  배우자   : ${_kh(p.spouseHanja)}');
       }
-      final death = [
-        p.deathDateSolar,
-        p.deathDateLunar,
-        p.deathPlace,
-      ].where((s) => s != null && s.isNotEmpty).join(' · ');
-      if (death.isNotEmpty) buf.writeln('  사망   : $death');
+      if (p.spouseFather != null) {
+        buf.writeln('  장인     : ${_kh(p.spouseFather)}');
+        buf.writeln('  장모     : ${p.spouseMother ?? '${_kh(p.spouseFather)}의 부인'}');
+      }
+      final deathDate = p.deathDateSolar ?? p.deathDateLunar ?? '';
+      if (deathDate.isNotEmpty) buf.writeln('  사망     : $deathDate');
+      if (deathDate.isNotEmpty || p.deathPlace != null) {
+        buf.writeln('  사망지   : ${p.deathPlace ?? Genealogy.defaultPlace}');
+      }
       if (p.burialPlace != null) {
         final ori = p.burialOrientation != null ? ' (${p.burialOrientation})' : '';
-        buf.writeln('  매장   : ${p.burialPlace}$ori');
+        buf.writeln('  매장     : ${p.burialPlace}$ori');
       }
-      if (p.childrenNote != null) buf.writeln('  자녀   : ${p.childrenNote}');
-      if (p.sonsInLawNote != null) buf.writeln('  사위   : ${p.sonsInLawNote}');
-      if (p.inLawsNote != null) buf.writeln('  사돈   : ${p.inLawsNote}');
+      if (p.childrenNote != null) buf.writeln('  자녀     : ${p.childrenNote}');
+      if (p.sonsInLawNote != null) buf.writeln('  사위     : ${p.sonsInLawNote}');
+      if (p.inLawsNote != null) buf.writeln('  사돈     : ${p.inLawsNote}');
+      if (p.inLawsSpouseNote != null) buf.writeln('  사돈부인 : ${p.inLawsSpouseNote}');
+      if ((p.reasonStatement ?? '').isNotEmpty) {
+        buf.writeln('  근거     : ${p.reasonStatement}');
+      }
       buf.writeln();
     }
     return buf.toString();
   }
-
-
   void _previewText() async {
     final list = await DbService.instance.listPersons();
     final text = _buildText(list);

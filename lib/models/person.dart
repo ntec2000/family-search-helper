@@ -7,6 +7,9 @@ class Person {
   String nameHanja;       // 崔海斗
   String nameHangul;      // 최해두
   String nameRoman;       // CHOI HAE-DU
+  // v2.2 — 성(姓)/이름 분리 표기 및 성씨 상속
+  String? surnameHanja;   // 姓 한자 — 예: 崔
+  String? surnameHangul;  // 성 한글 — 예: 최
   String? ja;             // 字 (자)
   String? ho;             // 號 (호)
   String? siho;           // 諡號 (시호)
@@ -17,7 +20,7 @@ class Person {
 
   // 출생
   String? birthDateLunar;   // 干支 음력 표기
-  String? birthDateSolar;   // 1929-11-07
+  String? birthDateSolar;   // 1929-11-07 / "대략 1800" (추정)
   String? birthPlace;       // 경북 경주시 강동면
 
   // 결혼
@@ -25,7 +28,8 @@ class Person {
   String? marriagePlace;
   String? spouseHanja;
   String? spouseHangul;
-  String? spouseFather;     // 配 ○○○氏 父 ○○○
+  String? spouseFather;     // 配 ○○○氏 父 ○○○ (장인)
+  String? spouseMother;     // v2.2 — 장모(배우자 모친) "○○○의 부인"
   String? spouseBongwan;
 
   // 사망/매장
@@ -46,6 +50,10 @@ class Person {
   String? childrenNote;        // 자녀 정보
   String? sonsInLawNote;       // 사위 정보 (婿/壻)
   String? inLawsNote;          // 사돈 정보 (査頓/姻)
+  String? inLawsSpouseNote;    // v2.2 — 사돈부인 정보
+
+  // v2.2 — FamilySearch 정합용 근거 진술 (Reason This Information Is Correct)
+  String? reasonStatement;
 
   // 메타
   String? sourceImagePath;
@@ -58,6 +66,8 @@ class Person {
     this.nameHanja = '',
     this.nameHangul = '',
     this.nameRoman = '',
+    this.surnameHanja,
+    this.surnameHangul,
     this.ja,
     this.ho,
     this.siho,
@@ -73,6 +83,7 @@ class Person {
     this.spouseHanja,
     this.spouseHangul,
     this.spouseFather,
+    this.spouseMother,
     this.spouseBongwan,
     this.deathDateLunar,
     this.deathDateSolar,
@@ -87,6 +98,8 @@ class Person {
     this.childrenNote,
     this.sonsInLawNote,
     this.inLawsNote,
+    this.inLawsSpouseNote,
+    this.reasonStatement,
     this.sourceImagePath,
     this.rawText,
     DateTime? createdAt,
@@ -102,6 +115,8 @@ class Person {
         'name_hanja': nameHanja,
         'name_hangul': nameHangul,
         'name_roman': nameRoman,
+        'surname_hanja': surnameHanja,
+        'surname_hangul': surnameHangul,
         'ja': ja,
         'ho': ho,
         'siho': siho,
@@ -117,6 +132,7 @@ class Person {
         'spouse_hanja': spouseHanja,
         'spouse_hangul': spouseHangul,
         'spouse_father': spouseFather,
+        'spouse_mother': spouseMother,
         'spouse_bongwan': spouseBongwan,
         'death_date_lunar': deathDateLunar,
         'death_date_solar': deathDateSolar,
@@ -131,6 +147,8 @@ class Person {
         'children_note': childrenNote,
         'sons_in_law_note': sonsInLawNote,
         'in_laws_note': inLawsNote,
+        'in_laws_spouse_note': inLawsSpouseNote,
+        'reason_statement': reasonStatement,
         'source_image_path': sourceImagePath,
         'raw_text': rawText,
         'created_at': createdAt.toIso8601String(),
@@ -142,6 +160,8 @@ class Person {
         nameHanja: m['name_hanja'] ?? '',
         nameHangul: m['name_hangul'] ?? '',
         nameRoman: m['name_roman'] ?? '',
+        surnameHanja: m['surname_hanja'],
+        surnameHangul: m['surname_hangul'],
         ja: m['ja'],
         ho: m['ho'],
         siho: m['siho'],
@@ -157,6 +177,7 @@ class Person {
         spouseHanja: m['spouse_hanja'],
         spouseHangul: m['spouse_hangul'],
         spouseFather: m['spouse_father'],
+        spouseMother: m['spouse_mother'],
         spouseBongwan: m['spouse_bongwan'],
         deathDateLunar: m['death_date_lunar'],
         deathDateSolar: m['death_date_solar'],
@@ -177,6 +198,8 @@ class Person {
         childrenNote: m['children_note'],
         sonsInLawNote: m['sons_in_law_note'],
         inLawsNote: m['in_laws_note'],
+        inLawsSpouseNote: m['in_laws_spouse_note'],
+        reasonStatement: m['reason_statement'],
         sourceImagePath: m['source_image_path'],
         rawText: m['raw_text'],
         createdAt: DateTime.parse(m['created_at']),

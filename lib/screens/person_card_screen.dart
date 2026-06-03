@@ -4,6 +4,7 @@ import '../models/person.dart';
 import '../services/db_service.dart';
 import '../services/hanja_dict.dart';
 import '../services/romanizer.dart';
+import '../services/genealogy.dart';
 import '../theme/traditional_theme.dart';
 
 class PersonCardScreen extends StatefulWidget {
@@ -16,11 +17,15 @@ class PersonCardScreen extends StatefulWidget {
 class _PersonCardScreenState extends State<PersonCardScreen> {
   Person? _p;
   final _form = GlobalKey<FormState>();
-  late TextEditingController _hanja, _hangul, _roman, _ja, _ho, _bongwan;
+  late TextEditingController _hanja, _hangul, _roman, _ja, _ho, _bongwan, _pa;
+  late TextEditingController _surnameHanja, _surnameHangul, _sega;
   late TextEditingController _birth, _birthPlace;
   late TextEditingController _death, _deathPlace;
-  late TextEditingController _marriage, _marriagePlace, _spouse, _spouseFather, _burial;
-  late TextEditingController _children, _sonsInLaw, _inLaws;
+  late TextEditingController _marriage, _marriagePlace, _spouse, _spouseFather,
+      _spouseMother, _burial;
+  late TextEditingController _children, _sonsInLaw, _inLaws, _inLawsSpouse;
+  late TextEditingController _reason;
+  String _gender = 'U';
 
   @override
   void initState() {
@@ -33,20 +38,31 @@ class _PersonCardScreenState extends State<PersonCardScreen> {
     if (p == null) return;
     setState(() {
       _p = p;
+      _gender = p.gender;
       _hanja = TextEditingController(text: p.nameHanja);
       _hangul = TextEditingController(
           text: p.nameHangul.isEmpty
               ? HanjaDict.instance.toHangul(p.nameHanja)
               : p.nameHangul);
-      // #4 로마자 자동 인식 (비어있으면 한글 이름으로부터 생성)
       final roman = p.nameRoman.isNotEmpty
           ? p.nameRoman
           : Romanizer.romanizeName(_hangulOf(p));
       _roman = TextEditingController(text: roman);
+      // v2.2 성씨 분리 (비어있으면 이름에서 자동 추론)
+      final np = Genealogy.split(
+          hanja: p.nameHanja,
+          hangul: _hangulOf(p),
+          surnameHanja: p.surnameHanja,
+          surnameHangul: p.surnameHangul);
+      _surnameHanja = TextEditingController(
+          text: p.surnameHanja ?? np.surnameHanja);
+      _surnameHangul = TextEditingController(
+          text: p.surnameHangul ?? np.surnameHangul);
+      _sega = TextEditingController(text: p.sega?.toString() ?? '');
       _ja = TextEditingController(text: p.ja ?? '');
       _ho = TextEditingController(text: p.ho ?? '');
       _bongwan = TextEditingController(text: p.bongwan ?? '');
-      // #9 날짜만 보이게 — 음력/양력 구분 없이 한 칸
+      _pa = TextEditingController(text: p.pa ?? '');
       _birth = TextEditingController(
           text: p.birthDateSolar ?? p.birthDateLunar ?? '');
       _birthPlace = TextEditingController(text: p.birthPlace ?? '');
@@ -57,16 +73,21 @@ class _PersonCardScreenState extends State<PersonCardScreen> {
       _marriagePlace = TextEditingController(text: p.marriagePlace ?? '');
       _spouse = TextEditingController(text: p.spouseHanja ?? '');
       _spouseFather = TextEditingController(text: p.spouseFather ?? '');
+      _spouseMother = TextEditingController(text: p.spouseMother ?? '');
       _burial = TextEditingController(text: p.burialPlace ?? '');
       _children = TextEditingController(text: p.childrenNote ?? '');
       _sonsInLaw = TextEditingController(text: p.sonsInLawNote ?? '');
       _inLaws = TextEditingController(text: p.inLawsNote ?? '');
+      _inLawsSpouse = TextEditingController(text: p.inLawsSpouseNote ?? '');
+      _reason = TextEditingController(text: p.reasonStatement ?? '');
     });
   }
 
   String _hangulOf(Person p) => p.nameHangul.isNotEmpty
       ? p.nameHangul
       : HanjaDict.instance.toHangul(p.nameHanja);
+
+  String? _orNull(String s) => s.trim().isEmpty ? null : s.trim();
 
   Future<void> _save() async {
     if (_p == null) return;
@@ -76,24 +97,32 @@ class _PersonCardScreenState extends State<PersonCardScreen> {
           ? HanjaDict.instance.toHangul(_hanja.text)
           : _hangul.text
       ..nameRoman = _roman.text
-      ..ja = _ja.text.isEmpty ? null : _ja.text
-      ..ho = _ho.text.isEmpty ? null : _ho.text
-      ..bongwan = _bongwan.text.isEmpty ? null : _bongwan.text
-      ..birthDateSolar = _birth.text.isEmpty ? null : _birth.text
-      ..birthPlace = _birthPlace.text.isEmpty ? null : _birthPlace.text
-      ..deathDateSolar = _death.text.isEmpty ? null : _death.text
-      ..deathPlace = _deathPlace.text.isEmpty ? null : _deathPlace.text
-      ..marriageDate = _marriage.text.isEmpty ? null : _marriage.text
-      ..marriagePlace = _marriagePlace.text.isEmpty ? null : _marriagePlace.text
-      ..spouseHanja = _spouse.text.isEmpty ? null : _spouse.text
+      ..surnameHanja = _orNull(_surnameHanja.text)
+      ..surnameHangul = _orNull(_surnameHangul.text)
+      ..sega = int.tryParse(_sega.text.trim())
+      ..gender = _gender
+      ..ja = _orNull(_ja.text)
+      ..ho = _orNull(_ho.text)
+      ..bongwan = _orNull(_bongwan.text)
+      ..pa = _orNull(_pa.text)
+      ..birthDateSolar = _orNull(_birth.text)
+      ..birthPlace = _orNull(_birthPlace.text)
+      ..deathDateSolar = _orNull(_death.text)
+      ..deathPlace = _orNull(_deathPlace.text)
+      ..marriageDate = _orNull(_marriage.text)
+      ..marriagePlace = _orNull(_marriagePlace.text)
+      ..spouseHanja = _orNull(_spouse.text)
       ..spouseHangul = _spouse.text.isEmpty
           ? null
           : HanjaDict.instance.toHangul(_spouse.text)
-      ..spouseFather = _spouseFather.text.isEmpty ? null : _spouseFather.text
-      ..burialPlace = _burial.text.isEmpty ? null : _burial.text
-      ..childrenNote = _children.text.isEmpty ? null : _children.text
-      ..sonsInLawNote = _sonsInLaw.text.isEmpty ? null : _sonsInLaw.text
-      ..inLawsNote = _inLaws.text.isEmpty ? null : _inLaws.text
+      ..spouseFather = _orNull(_spouseFather.text)
+      ..spouseMother = _orNull(_spouseMother.text)
+      ..burialPlace = _orNull(_burial.text)
+      ..childrenNote = _orNull(_children.text)
+      ..sonsInLawNote = _orNull(_sonsInLaw.text)
+      ..inLawsNote = _orNull(_inLaws.text)
+      ..inLawsSpouseNote = _orNull(_inLawsSpouse.text)
+      ..reasonStatement = _orNull(_reason.text)
       ..updatedAt = DateTime.now();
     await DbService.instance.upsertPerson(_p!);
     if (mounted) {
@@ -106,21 +135,42 @@ class _PersonCardScreenState extends State<PersonCardScreen> {
     setState(() => _roman.text = Romanizer.romanizeName(_hangul.text));
   }
 
+  /// 한글 이름에서 성(姓) 자동 채우기.
+  void _autoSurname() {
+    final np = Genealogy.split(
+        hanja: _hanja.text, hangul: _hangul.text);
+    setState(() {
+      if (np.surnameHangul.isNotEmpty) _surnameHangul.text = np.surnameHangul;
+      if (np.surnameHanja.isNotEmpty) _surnameHanja.text = np.surnameHanja;
+    });
+  }
+
   void _shareAsText() {
     if (_p == null) return;
     final d = HanjaDict.instance;
     final p = _p!;
+    final birthPlace = p.birthPlace ?? Genealogy.defaultPlace;
+    final deathPlace = p.deathPlace ?? Genealogy.defaultPlace;
     final txt = StringBuffer()
       ..writeln('━━ 가족역사기록서 입력용 ━━')
       ..writeln('이름: ${p.nameHangul} ${p.nameHanja} ${p.nameRoman}')
-      ..writeln('성별: ${p.gender == 'M' ? '남' : '여'}')
-      ..writeln('출생: ${_birth.text} ${p.birthPlace ?? ''}')
-      ..writeln('결혼: ${p.marriageDate ?? ''}  배우자: ${d.annotate(p.spouseHanja ?? '')}')
-      ..writeln('배우자 부친: ${d.annotate(p.spouseFather ?? '')}')
-      ..writeln('사망: ${_death.text} ${p.deathPlace ?? ''}')
+      ..writeln('성(姓): ${_surnameHangul.text} ${_surnameHanja.text}')
+      ..writeln('성별: ${p.gender == 'M' ? '남' : p.gender == 'F' ? '여' : '미상'}'
+          '${p.sega != null ? '   世: ${p.sega}' : ''}')
+      ..writeln('출생: ${_birth.text}   출생지: $birthPlace')
+      ..writeln('결혼: ${p.marriageDate ?? ''}   배우자: ${d.annotate(p.spouseHanja ?? '')}')
+      ..writeln('장인: ${d.annotate(p.spouseFather ?? '')}'
+          '   장모: ${p.spouseMother ?? '${d.annotate(p.spouseFather ?? '')}의 부인'}')
+      ..writeln('사망: ${_death.text}   사망지: $deathPlace')
       ..writeln('매장: ${p.burialPlace ?? ''}')
       ..writeln('字: ${d.annotate(p.ja ?? '')}   號: ${d.annotate(p.ho ?? '')}')
-      ..writeln('本貫: ${d.annotate(p.bongwan ?? '')}');
+      ..writeln('本貫: ${d.annotate(p.bongwan ?? '')}   派: ${p.pa ?? ''}')
+      ..writeln('자녀: ${p.childrenNote ?? ''}')
+      ..writeln('사위: ${p.sonsInLawNote ?? ''}')
+      ..writeln('사돈: ${p.inLawsNote ?? ''}   사돈부인: ${p.inLawsSpouseNote ?? ''}');
+    if ((p.reasonStatement ?? '').isNotEmpty) {
+      txt.writeln('근거(Reason): ${p.reasonStatement}');
+    }
     Share.share(txt.toString(), subject: '${p.nameHangul} 가족역사기록');
   }
 
@@ -140,7 +190,6 @@ class _PersonCardScreenState extends State<PersonCardScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          // #10 하단까지 보이도록 충분한 바닥 여백 + 키보드 회피
           padding: EdgeInsets.fromLTRB(16, 16, 16, 48 + bottomInset),
           child: Form(
             key: _form,
@@ -148,6 +197,18 @@ class _PersonCardScreenState extends State<PersonCardScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _section('인물 정보'),
+                _genderRow(),
+                Row(children: [
+                  Expanded(
+                      child: _row(_surnameHangul, '성 (한글)',
+                          suffix: IconButton(
+                            tooltip: '이름에서 성 자동 채우기',
+                            icon: const Icon(Icons.auto_fix_high, size: 20),
+                            onPressed: _autoSurname,
+                          ))),
+                  const SizedBox(width: 8),
+                  Expanded(child: _row(_surnameHanja, '성 (한자)', annotate: true)),
+                ]),
                 _row(_hanja, '이름 (한자)', annotate: true),
                 _row(_hangul, '이름 (한글)'),
                 _row(_roman, '이름 (로마자)',
@@ -158,21 +219,33 @@ class _PersonCardScreenState extends State<PersonCardScreen> {
                     )),
                 _row(_ja, '字 (자)', annotate: true),
                 _row(_ho, '號 (호)', annotate: true),
-                _row(_bongwan, '本貫 (본관)', annotate: true),
+                Row(children: [
+                  Expanded(child: _row(_bongwan, '本貫 (본관)', annotate: true)),
+                  const SizedBox(width: 8),
+                  Expanded(child: _row(_pa, '派 (파)')),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                      width: 80,
+                      child: _row(_sega, '世 (세)', keyboard: TextInputType.number)),
+                ]),
                 _section('출생·사망 정보'),
-                _row(_birth, '출생일'),
-                _row(_birthPlace, '출생지'),
-                _row(_death, '사망일'),
-                _row(_deathPlace, '사망지'),
+                _row(_birth, '출생일 (추정 시 "대략 ○○○○")'),
+                _row(_birthPlace, '출생지 (미상 시 ${Genealogy.defaultPlace})'),
+                _row(_death, '사망일 (추정 가능 시 "대략 ○○○○")'),
+                _row(_deathPlace, '사망지 (미상 시 ${Genealogy.defaultPlace})'),
                 _row(_burial, '매장지 (墓)', annotate: true),
                 _section('가족 정보'),
                 _row(_marriage, '결혼일'),
                 _row(_marriagePlace, '결혼 장소'),
                 _row(_spouse, '배우자 (한자)', annotate: true),
-                _row(_spouseFather, '배우자 부친', annotate: true),
+                _row(_spouseFather, '장인 (배우자 부친)', annotate: true),
+                _row(_spouseMother, '장모 (배우자 모친 / "○○○의 부인")'),
                 _row(_children, '자녀 (子女)', annotate: true),
                 _row(_sonsInLaw, '사위 (婿)', annotate: true),
                 _row(_inLaws, '사돈 (査頓)', annotate: true),
+                _row(_inLawsSpouse, '사돈부인'),
+                _section('FamilySearch 정합'),
+                _row(_reason, '근거 진술 (Reason This Is Correct)', maxLines: 3),
                 const SizedBox(height: 24),
                 if (_p!.rawText != null)
                   ExpansionTile(
@@ -205,13 +278,35 @@ class _PersonCardScreenState extends State<PersonCardScreen> {
                 letterSpacing: 1)),
       );
 
-  // annotate=true 이면 입력된 한자의 한글음을 helperText 로 병기 (#3)
+  Widget _genderRow() => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(children: [
+          const Text('성별  ',
+              style: TextStyle(color: HanjiColors.muk, fontWeight: FontWeight.w600)),
+          const SizedBox(width: 8),
+          SegmentedButton<String>(
+            segments: const [
+              ButtonSegment(value: 'M', label: Text('남')),
+              ButtonSegment(value: 'F', label: Text('여')),
+              ButtonSegment(value: 'U', label: Text('미상')),
+            ],
+            selected: {_gender},
+            onSelectionChanged: (s) => setState(() => _gender = s.first),
+          ),
+        ]),
+      );
+
   Widget _row(TextEditingController c, String label,
-          {bool annotate = false, Widget? suffix}) =>
+          {bool annotate = false,
+          Widget? suffix,
+          int maxLines = 1,
+          TextInputType? keyboard}) =>
       Padding(
         padding: const EdgeInsets.symmetric(vertical: 6),
         child: TextFormField(
           controller: c,
+          maxLines: maxLines,
+          keyboardType: keyboard,
           onChanged: annotate ? (_) => setState(() {}) : null,
           decoration: InputDecoration(
             labelText: label,
@@ -228,7 +323,7 @@ class _PersonCardScreenState extends State<PersonCardScreen> {
   String? _hangulHelper(String text) {
     if (text.trim().isEmpty) return null;
     final h = HanjaDict.instance.toHangul(text);
-    if (h == text) return null; // 한자가 없으면 표시 안 함
+    if (h == text) return null;
     return '한글음: $h';
   }
 }

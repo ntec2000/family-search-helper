@@ -2,6 +2,7 @@ import 'package:uuid/uuid.dart';
 import '../models/person.dart';
 import 'hanja_dict.dart';
 import 'lunar_service.dart';
+import 'genealogy.dart';
 
 /// 족보 OCR 텍스트 파서.
 /// 표준 족보 표기 규칙:
@@ -34,6 +35,8 @@ class JokboParser {
       final p = _parsePersonBlock(block, sourceImagePath: sourceImagePath);
       if (p != null) persons.add(p);
     }
+    // v2.2 — 세(世) 기반 출생연도 추정 보완
+    Genealogy.fillGenerationEstimates(persons);
     return persons;
   }
 
@@ -89,6 +92,13 @@ class JokboParser {
     // 諡號 (시호)
     final siho = RegExp(r'諡號?([一-鿿]{1,3})').firstMatch(t);
     if (siho != null) person.siho = siho.group(1);
+
+    // 世 (세대 번호) — v2.2 세대 기반 연도 추정용
+    final segaM = RegExp(r'([0-9]+|[一二三四五六七八九十百]+)\s*世').firstMatch(t);
+    if (segaM != null) {
+      final n = _segaToInt(segaM.group(1)!);
+      if (n != null) person.sega = n;
+    }
 
     // 生 (출생) - 干支 + 월일 + 生
     final birth = RegExp(
@@ -194,6 +204,17 @@ class JokboParser {
           .join(', ');
     }
 
+    // 사돈부인 (査頓婦/姻家婦) v2.2
+    final inLawWives = RegExp(r'(?:査頓婦|姻家婦|사돈부인)\s*([一-鿿]{2,5})')
+        .allMatches(t)
+        .map((m) => m.group(1)!)
+        .toSet()
+        .toList();
+    if (inLawWives.isNotEmpty) {
+      person.inLawsSpouseNote =
+          inLawWives.map((n) => '$n (${dict.toHangul(n)})').join(', ');
+    }
+
     // 자녀 (子/女 + 이름) — 본인 표기 이후 등장하는 자녀 표기 #16
     // 첫 마커(본인)는 제외하고 이후 子/女 표기를 자녀로 간주.
     final childMatches = RegExp(r'[子女]([一-鿿]{2,3})').allMatches(t).toList();
@@ -206,7 +227,26 @@ class JokboParser {
       if (kids.isNotEmpty) person.childrenNote = kids.join(', ');
     }
 
+    // v2.2 — 성(姓) 자동 분리 (자녀 상속 표기용)
+    final np = Genealogy.split(
+        hanja: person.nameHanja, hangul: person.nameHangul);
+    if (np.surnameHanja.isNotEmpty) person.surnameHanja = np.surnameHanja;
+    if (np.surnameHangul.isNotEmpty) person.surnameHangul = np.surnameHangul;
+
     return person;
+  }
+
+  /// 한자/아라비아 숫자 세(世) → 정수.
+  static int? _segaToInt(String s) {
+    final a = int.tryParse(s);
+    if (a != null) return a;
+    const m = {'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9};
+    if (s == '十') return 10;
+    if (s.length == 1) return m[s];
+    if (s.length == 2 && s[0] == '十') return 10 + (m[s[1]] ?? 0);
+    if (s.length == 2 && s[1] == '十') return (m[s[0]] ?? 0) * 10;
+    if (s.length == 3 && s[1] == '十') return (m[s[0]] ?? 0) * 10 + (m[s[2]] ?? 0);
+    return null;
   }
 }
 

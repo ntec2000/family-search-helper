@@ -15,22 +15,25 @@ class DbService {
     final path = p.join(dir.path, 'family_search.db');
     _db = await openDatabase(
       path,
-      version: 3,
+      version: 4,
       onCreate: (db, v) async {
         await db.execute('''
           CREATE TABLE persons (
             id TEXT PRIMARY KEY,
             name_hanja TEXT, name_hangul TEXT, name_roman TEXT,
+            surname_hanja TEXT, surname_hangul TEXT,
             ja TEXT, ho TEXT, siho TEXT, bongwan TEXT, pa TEXT, sega INTEGER,
             gender TEXT,
             birth_date_lunar TEXT, birth_date_solar TEXT, birth_place TEXT,
             marriage_date TEXT, marriage_place TEXT,
-            spouse_hanja TEXT, spouse_hangul TEXT, spouse_father TEXT, spouse_bongwan TEXT,
+            spouse_hanja TEXT, spouse_hangul TEXT, spouse_father TEXT,
+            spouse_mother TEXT, spouse_bongwan TEXT,
             death_date_lunar TEXT, death_date_solar TEXT, death_place TEXT,
             burial_place TEXT, burial_orientation TEXT,
             father_id TEXT, mother_id TEXT,
             children_ids TEXT, sons_in_law_ids TEXT, in_laws_ids TEXT,
             children_note TEXT, sons_in_law_note TEXT, in_laws_note TEXT,
+            in_laws_spouse_note TEXT, reason_statement TEXT,
             source_image_path TEXT, raw_text TEXT,
             created_at TEXT, updated_at TEXT
           )''');
@@ -51,6 +54,22 @@ class DbService {
             'children_note',
             'sons_in_law_note',
             'in_laws_note',
+          ]) {
+            try {
+              await db.execute('ALTER TABLE persons ADD COLUMN $col TEXT');
+            } catch (_) {
+              // 이미 존재하면 무시
+            }
+          }
+        }
+        if (oldV < 4) {
+          // v2.2 추가 컬럼 — 성씨 분리·장모·사돈부인·근거 진술
+          for (final col in const [
+            'surname_hanja',
+            'surname_hangul',
+            'spouse_mother',
+            'in_laws_spouse_note',
+            'reason_statement',
           ]) {
             try {
               await db.execute('ALTER TABLE persons ADD COLUMN $col TEXT');

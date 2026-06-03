@@ -8,6 +8,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../models/person.dart';
 import '../services/ocr_service.dart';
 import '../services/jokbo_parser.dart';
+import '../services/genealogy.dart';
 import '../services/db_service.dart';
 import '../theme/traditional_theme.dart';
 import 'result_screen.dart';
@@ -141,8 +142,28 @@ class _CaptureScreenState extends State<CaptureScreen> {
 
       if (!mounted) return;
       setState(() => _status = '족보 정보 분석 중...');
-      // 3) 파싱 + 저장
+      // 3) 파싱
       final persons = JokboParser.parse(ocr.text, sourceImagePath: safePath);
+
+      // 3-1) 성씨 누락 시 수동 입력 → 전체 인물에 동일 적용 (v2.2)
+      final needsSurname =
+          persons.any((p) => (p.surnameHanja ?? '').isEmpty &&
+              (p.surnameHangul ?? '').isEmpty);
+      if (needsSurname && persons.isNotEmpty && mounted) {
+        final entered = await _askSurname();
+        if (entered != null) {
+          final sHanja = entered.$1, sHangul = entered.$2;
+          for (final p in persons) {
+            if ((p.surnameHanja ?? '').isEmpty &&
+                (p.surnameHangul ?? '').isEmpty) {
+              p.surnameHanja = sHanja.isEmpty ? null : sHanja;
+              p.surnameHangul = sHangul.isEmpty ? null : sHangul;
+            }
+          }
+        }
+      }
+
+      // 3-2) 저장
       for (final person in persons) {
         await DbService.instance.upsertPerson(person);
       }
@@ -176,6 +197,56 @@ class _CaptureScreenState extends State<CaptureScreen> {
         ),
       );
     }
+  }
+
+  /// v2.2 — 성씨 수동 입력 다이얼로그. (한자, 한글) 반환, 취소 시 null.
+  Future<(String, String)?> _askSurname() async {
+    final hanja = TextEditingController();
+    final hangul = TextEditingController();
+    hangul.addListener(() {
+      final h = hangul.text.trim();
+      if (h.isNotEmpty) {
+        final hj = Genealogy.surnamesHangul.contains(h) ? h : hanja.text;
+        if (hj.isEmpty) {} // 자동 한자 추론은 사전 의존 — 수동 유지
+      }
+    });
+    return showDialog<(String, String)?>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        title: const Text('성씨(姓) 입력'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('족보에서 성씨를 찾지 못했습니다.\n전체 인물(자녀 포함)에 적용할 성씨를 입력하세요.',
+                style: TextStyle(fontSize: 13, height: 1.5)),
+            const SizedBox(height: 12),
+            TextField(
+              controller: hangul,
+              decoration: const InputDecoration(
+                  labelText: '성 (한글) 예: 최', border: OutlineInputBorder(),
+                  isDense: true),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: hanja,
+              decoration: const InputDecoration(
+                  labelText: '성 (한자) 예: 崔', border: OutlineInputBorder(),
+                  isDense: true),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, null),
+              child: const Text('건너뛰기')),
+          FilledButton(
+              onPressed: () => Navigator.pop(
+                  context, (hanja.text.trim(), hangul.text.trim())),
+              child: const Text('적용')),
+        ],
+      ),
+    );
   }
 
   /// #6 — 직접 입력. 빈 인물 1명을 새로 만들어 DB 에 저장한 뒤

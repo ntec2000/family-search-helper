@@ -1,7 +1,7 @@
 name: family_search_helper
 description: "가족역사기록 도우미 - 족보 한자 인식 및 가족역사기록서 작성 보조 앱"
 publish_to: 'none'
-version: 2.1.0+9
+version: 2.2.0+10
 
 environment:
   sdk: ^3.5.0

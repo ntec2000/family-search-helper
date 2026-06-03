@@ -60,6 +60,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
   }
 
+  /// v2.2 — 인물 직접 추가. 빈 인물을 만들고 인물카드(동일 입력항목)로 이동.
+  Future<void> _addPerson() async {
+    final now = DateTime.now();
+    final person = Person(
+      id: 'manual_${now.millisecondsSinceEpoch}',
+      createdAt: now,
+      updatedAt: now,
+    );
+    await DbService.instance.upsertPerson(person);
+    if (!mounted) return;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (_) => PersonCardScreen(personId: person.id)),
+    );
+    _reload();
+  }
+
   /// #2 — 앱 종료
   Future<void> _confirmExit() async {
     final ok = await showDialog<bool>(
@@ -127,6 +145,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       appBar: AppBar(
         title: const Text('가족역사기록 도우미'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.person_add_alt_1),
+            tooltip: '인물 추가',
+            onPressed: _addPerson,
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: '새로고침',

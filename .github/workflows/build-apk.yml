@@ -70,42 +70,42 @@ jobs:
       - name: Rename APKs for distribution
         run: |
           mkdir -p dist
-          cp build/app/outputs/flutter-apk/app-release.apk dist/family-search-helper-v2.1.0-universal.apk
-          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk dist/family-search-helper-v2.1.0-arm64.apk
-          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk dist/family-search-helper-v2.1.0-arm32.apk
-          cp build/app/outputs/flutter-apk/app-x86_64-release.apk dist/family-search-helper-v2.1.0-x86_64.apk
+          cp build/app/outputs/flutter-apk/app-release.apk dist/family-search-helper-v2.2.0-universal.apk
+          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk dist/family-search-helper-v2.2.0-arm64.apk
+          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk dist/family-search-helper-v2.2.0-arm32.apk
+          cp build/app/outputs/flutter-apk/app-x86_64-release.apk dist/family-search-helper-v2.2.0-x86_64.apk
           ls -lh dist/
 
       - name: Upload Universal APK (artifact)
         uses: actions/upload-artifact@v4
         with:
           name: family-search-helper-universal-apk
-          path: dist/family-search-helper-v2.1.0-universal.apk
+          path: dist/family-search-helper-v2.2.0-universal.apk
           retention-days: 90
 
       - name: Upload Split APKs (artifact)
         uses: actions/upload-artifact@v4
         with:
           name: family-search-helper-split-apks
-          path: dist/family-search-helper-v2.1.0-arm64.apk
+          path: dist/family-search-helper-v2.2.0-arm64.apk
           retention-days: 90
 
       - name: Publish Release (latest)
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v2.1.0
-          name: "가족역사기록 도우미 v2.1.0"
+          tag_name: v2.2.0
+          name: "가족역사기록 도우미 v2.2.0"
           body: |
-            # 가족역사기록 도우미 (Family Search Helper) v2.1.0
+            # 가족역사기록 도우미 (Family Search Helper) v2.2.0
 
             **개발자**: Peter S. Choi
             **문의**: ntec21c@gmail.com
 
             ## 다운로드
-            - **family-search-helper-v2.1.0-universal.apk** (~80MB, 모든 기기 호환 — 권장)
-            - **family-search-helper-v2.1.0-arm64.apk** (~55MB, 최신 폰 전용, 권장)
-            - **family-search-helper-v2.1.0-arm32.apk** (구형 폰)
-            - **family-search-helper-v2.1.0-x86_64.apk** (에뮬레이터용)
+            - **family-search-helper-v2.2.0-universal.apk** (~80MB, 모든 기기 호환 — 권장)
+            - **family-search-helper-v2.2.0-arm64.apk** (~55MB, 최신 폰 전용, 권장)
+            - **family-search-helper-v2.2.0-arm32.apk** (구형 폰)
+            - **family-search-helper-v2.2.0-x86_64.apk** (에뮬레이터용)
 
             ## 설치
             1. APK 파일을 전화기로 전송 (이메일/카카오톡/USB 등)
@@ -124,23 +124,24 @@ jobs:
             - GEDCOM 5.5.1 내보내기 / FamilySearch OAuth 직접 동기화
             - 전통 한지·먹 테마
 
-            ## v2.1.0 변경사항 (필기 인식·화면 잘림·표기 개선)
-            - 🛠 한글 **필기 인식 정확도 개선** (인식 영역에서 테두리 제외 · 고해상도 캡처)
-            - 🛠 **모든 화면 하단 잘림 수정** — 인식 결과·인물카드·한자음 검색·필기 인식 등 스크롤/SafeArea 적용
-            - ✨ 모든 한자 항목을 **한자(한글) 병기**로 표시 (배우자·배우자 부친 포함)
-            - ✨ 이름 **로마자 자동 표기** (한글 이름 → 알파벳 변환)
-            - ✨ 인물카드 항목명 정비 — '조상 신상정보' / '인물정보' / '출생 사망정보' / '가족정보'
-            - ✨ 출생·사망일을 **음/양력 구분 없이 날짜 하나**로 단순 표시
-            - ✨ 한자음 검색 예시 '최, 상, 희' · **인식된 예상 한자에 한글 음(여러 음)·뜻 표시**
-            - ✨ [인식] → **[결과 확인]** 버튼 명칭 변경
-            - ✨ **가계도 트리 개선** — 본인·아버지·배우자·장인·자녀·사위·사돈을 관계 박스로 선 연결 표시
+            ## v2.2.0 변경사항 (가계도·성씨 분리·세대 추정·FamilySearch 정합)
+            - ✨ **가계도 전면 개선** — 아버지(중심) 기준 자녀를 아래에 선 연결, 장인 옆에 장모, 딸 아래 사위·사돈·사돈부인 표시
+            - ✨ **아들 성|이름 두 칸 + 로마자 두 칸** 구분 표시, 딸(이름 없음) **'○씨' 한 칸** + 로마자 한 칸 (밑줄 구분은 칸 넓이만큼)
+            - ✨ **성씨 상속** — 자식 이름만 있으면 아버지 성 적용, 인식 시 성씨 없으면 **수동 입력하여 전체 인물에 동일 적용**
+            - ✨ 자녀 **출생연도순(첫째·둘째…) 정렬 · 아들/딸 구분**
+            - ✨ **세대(世) 기반 출생연도 추정** (한 세대 ≈ 30년) — 추정 어려우면 '대략 ○○○○', 불가하면 공란
+            - ✨ 출생·사망지 미상 시 기본 **'대한민국'** 표기 (한글·로마자 병기)
+            - ✨ 인물카드에 **성(姓) 분리·장모·사돈부인·世·派·근거 진술(FamilySearch Reason)** 항목 추가
+            - ✨ 인식 후 **인물 추가·수정** 가능 (입력항목 동일 · 로마자 자동 변환)
+            - ✨ 가계도 박스 **탭 시 인물카드 이동** (이름→실제 레코드 자동 매칭)
+            - ✨ 내보내기 텍스트에 **모든 인물 정보 포함** 및 칸 구분선 정리
             - **기반**: 한자 OCR 모델을 APK 에 번들(`text-recognition-chinese:16.0.1`) — 완전 오프라인·온디바이스
             - **검증(배포 전 시뮬레이션)**: 정적 분석 무오류 + 단위 테스트 통과 + 빌드 APK 내부 한자 인식 모델 포함 + 모든 arm64 .so 16KB 페이지 정렬 확인
           files: |
-            dist/family-search-helper-v2.1.0-universal.apk
-            dist/family-search-helper-v2.1.0-arm64.apk
-            dist/family-search-helper-v2.1.0-arm32.apk
-            dist/family-search-helper-v2.1.0-x86_64.apk
+            dist/family-search-helper-v2.2.0-universal.apk
+            dist/family-search-helper-v2.2.0-arm64.apk
+            dist/family-search-helper-v2.2.0-arm32.apk
+            dist/family-search-helper-v2.2.0-x86_64.apk
           draft: false
           prerelease: false
           make_latest: "true"
