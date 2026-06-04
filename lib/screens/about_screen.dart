@@ -43,7 +43,7 @@ class AboutScreen extends StatelessWidget {
                 Text('Family Search Helper',
                     style: TextStyle(fontSize: 12, color: HanjiColors.mukSoft, letterSpacing: 2)),
                 SizedBox(height: 16),
-                Text('v3.0.0',
+                Text('v3.0.1',
                     style: TextStyle(fontSize: 14, color: HanjiColors.ju, letterSpacing: 2)),
               ],
             ),
@@ -144,6 +144,16 @@ class AboutScreen extends StatelessWidget {
               padding: const EdgeInsets.all(8),
               child: Column(
                 children: const [
+                  _Hist(
+                    ver: 'v3.0.1',
+                    date: '2026-06-04',
+                    items: [
+                      '🧹 인식 결과 화면·내보내기에서 아들의 형제 순서 라벨(첫째아들 등)을 제거하고 이름만 표시 — 순서 정보는 메모(특이사항)에만 보존',
+                      '📛 표기 형식 정리 — 아들: \'한자 (이름: 성+한글이름)\' (예: 昃 → 이측), 딸: 이름이 없으므로 \'첫째딸/둘째딸 (이름: ○씨)\'로 식별',
+                      '🔎 [성씨 입력] 다이얼로그를 화면 거의 전폭으로 넓혀 한자 후보가 잘리지 않고 모두 보이도록 개선',
+                    ],
+                  ),
+                  Divider(),
                   _Hist(
                     ver: 'v3.0.0',
                     date: '2026-06-04',

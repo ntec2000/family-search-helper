@@ -43,14 +43,16 @@ Future<(String, String)?> showSurnameInputDialog(BuildContext context) {
           final media = MediaQuery.of(ctx);
           // v2.9 #1 — 한자가 화면에 다 보이도록 다이얼로그를 넓게,
           //          칩 영역은 화면 높이에 맞춰 스크롤 가능하게.
-          final maxChipHeight = media.size.height * 0.42;
+          final maxChipHeight = media.size.height * 0.5;
 
           return AlertDialog(
+            // v3.0.1 — 한자가 잘리지 않도록 다이얼로그를 화면 거의 전폭으로 넓힌다.
             insetPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                const EdgeInsets.symmetric(horizontal: 8, vertical: 24),
+            contentPadding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
             title: const Text('성씨(姓) 입력'),
             content: SizedBox(
-              width: media.size.width, // 가능한 한 넓게 → 한자가 잘리지 않음
+              width: double.maxFinite, // 다이얼로그 전폭 사용 → 한자가 잘리지 않음
               child: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,

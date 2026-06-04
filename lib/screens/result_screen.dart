@@ -213,28 +213,25 @@ class _PersonList extends StatelessWidget {
                 !p.nameHangul.startsWith(sHangul))
             ? sHangul + p.nameHangul
             : p.nameHangul;
-        final nameLine = fullHanja.isNotEmpty
-            ? HanjaDict.instance.annotate(fullHanja)
-            : (isFemale
-                ? '${sHangul}씨 (딸)'
-                : (fullHangul.isEmpty ? '(이름 미상)' : fullHangul));
+        // v3.0.1 — 형제 순서 라벨은 아들에게는 표시하지 않고(이름만), 딸은
+        //          이름이 없으므로 '첫째딸/둘째딸'을 식별자로 사용한다.
+        final segaPrefix = p.sega != null ? '[${p.sega}世] ' : '';
+        final String nameLine;
+        if (isFemale) {
+          final ord = (p.relation ?? '').isNotEmpty ? p.relation! : '딸';
+          final nm = sHangul.isNotEmpty ? '$sHangul씨' : '이름 미상';
+          nameLine = '$segaPrefix$ord (이름: $nm)';
+        } else if (p.nameHanja.isNotEmpty) {
+          final nm = fullHangul.isNotEmpty ? fullHangul : p.nameHanja;
+          nameLine = '$segaPrefix${p.nameHanja} (이름: $nm)';
+        } else {
+          nameLine = '$segaPrefix${fullHangul.isEmpty ? '(이름 미상)' : fullHangul}';
+        }
         return Card(
           child: ListTile(
-            title: Row(
-              children: [
-                if ((p.relation ?? '').isNotEmpty) ...[
-                  _RelationTag(p.relation!, isFemale: isFemale),
-                  const SizedBox(width: 8),
-                ],
-                Expanded(
-                  child: Text(nameLine,
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
-                ),
-              ],
-            ),
+            title: Text(nameLine,
+                style: const TextStyle(fontWeight: FontWeight.bold)),
             subtitle: Text([
-              if ((p.relation ?? '').isNotEmpty) '관계(父 기준): ${p.relation}',
-              if (p.sega != null) '${p.sega}世',
               if (p.ja != null) '字 ${_a(p.ja)}',
               if (p.birthDateLunar != null) '生 ${p.birthDateLunar}',
               if (p.birthPlace != null) '生地 ${_a(p.birthPlace)}',
@@ -328,25 +325,3 @@ class _TextCompare extends StatelessWidget {
   }
 }
 
-/// v2.6(#6) — 아버지와의 가족관계(첫째아들/둘째딸 등) 태그
-class _RelationTag extends StatelessWidget {
-  final String relation;
-  final bool isFemale;
-  const _RelationTag(this.relation, {required this.isFemale});
-  @override
-  Widget build(BuildContext context) {
-    final bg = isFemale ? HanjiColors.ju : HanjiColors.muk;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(relation,
-          style: const TextStyle(
-              color: HanjiColors.hanji,
-              fontSize: 12,
-              fontWeight: FontWeight.bold)),
-    );
-  }
-}

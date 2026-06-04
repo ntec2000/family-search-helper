@@ -62,11 +62,10 @@ class _State extends State<ExportScreen> {
             isFemale: true);
         final dauRel = (p.relation ?? '').isNotEmpty ? p.relation! : '딸';
         buf.writeln(div);
-        buf.writeln('${i + 1}. $segaTag${np.singleHangul} ($dauRel)');
+        buf.writeln('${i + 1}. $segaTag$dauRel (이름: ${np.singleHangul})');
         buf.writeln('  성(姓)    : ${np.surnameHangul} ${np.surnameHanja}');
         buf.writeln('  이름      : (이름 없음 → ${np.singleHangul})');
         buf.writeln('  성별      : 여');
-        buf.writeln('  관계      : $dauRel (父 기준)');
         if ((p.spouseHanja ?? '').isNotEmpty) {
           buf.writeln('  사위      : ${dict.toHangul(p.spouseHanja!)} ${p.spouseHanja}'
               '${(p.spouseBongwan ?? '').isNotEmpty ? '   [본관: ${p.spouseBongwan}]' : ''}');
@@ -90,15 +89,12 @@ class _State extends State<ExportScreen> {
           ? p.nameRoman
           : Romanizer.romanizeName(np.surnameHangul + np.givenHangul);
       buf.writeln(div);
-      buf.writeln('${i + 1}. $segaTag${np.surnameHangul}${np.givenHangul} ${p.nameHanja}');
+      buf.writeln('${i + 1}. $segaTag${p.nameHanja} (이름: ${np.surnameHangul}${np.givenHangul})');
       buf.writeln('  성(姓)    : ${np.surnameHangul} ${np.surnameHanja} (${np.surnameRoman})');
       buf.writeln('  이름      : ${np.givenHangul} ${np.givenHanja}'
           '${np.givenRoman.isNotEmpty ? ' (${np.givenRoman})' : ''}');
       buf.writeln('  로마자    : $roman');
       buf.writeln('  성별      : 남');
-      if ((p.relation ?? '').isNotEmpty) {
-        buf.writeln('  관계      : ${p.relation} (父 기준)');
-      }
       if (p.bongwan != null) {
         buf.writeln('  본관      : ${_kh(p.bongwan)}'
             '${p.pa != null ? '   派: ${p.pa}' : ''}');
