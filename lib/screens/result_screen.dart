@@ -4,6 +4,7 @@ import '../models/person.dart';
 import '../services/hanja_dict.dart';
 import '../services/db_service.dart';
 import '../theme/traditional_theme.dart';
+import '../widgets/surname_input_dialog.dart';
 import 'person_card_screen.dart';
 
 class ResultScreen extends StatefulWidget {
@@ -75,6 +76,37 @@ class _ResultScreenState extends State<ResultScreen> {
         MaterialPageRoute(builder: (_) => PersonCardScreen(personId: np.id)));
   }
 
+  /// v2.6(#7) — 성을 알 수 없는 인물에 성씨(한글+한자)를 수동 적용한다.
+  /// 입력한 성씨를 족보의 기본 성으로 삼아, 성이 없는 모든 인물(자녀 포함)에
+  /// 적용하고 DB 에 저장한다. 화면의 이름 표기는 \"성+이름\" 으로 갱신된다.
+  Future<void> _applySurname() async {
+    final entered = await showSurnameInputDialog(context);
+    if (entered == null) return;
+    final sHanja = entered.$1, sHangul = entered.$2;
+    var applied = 0;
+    for (final p in _persons) {
+      final noHanja = (p.surnameHanja ?? '').isEmpty;
+      final noHangul = (p.surnameHangul ?? '').isEmpty;
+      if (noHanja || noHangul) {
+        if (noHanja && sHanja.isNotEmpty) p.surnameHanja = sHanja;
+        if (noHangul && sHangul.isNotEmpty) p.surnameHangul = sHangul;
+        p.updatedAt = DateTime.now();
+        try {
+          await DbService.instance.upsertPerson(p);
+        } catch (_) {/* 미저장 항목이면 무시 */}
+        applied++;
+      }
+    }
+    if (!mounted) return;
+    setState(() {});
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+          content: Text(applied == 0
+              ? '성씨를 적용할 인물이 없습니다.'
+              : '성씨 ${sHangul}${sHanja.isNotEmpty ? '($sHanja)' : ''} 을(를) $applied명에 적용했습니다.')),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final hangulText = HanjaDict.instance.toHangul(widget.rawText);
@@ -82,6 +114,11 @@ class _ResultScreenState extends State<ResultScreen> {
       appBar: AppBar(
         title: Text('인식 결과 (${_persons.length}명)'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.drive_file_rename_outline),
+            tooltip: '성씨 입력 (성 미상 인물에 적용)',
+            onPressed: _applySurname,
+          ),
           IconButton(
             icon: const Icon(Icons.person_add_alt_1),
             tooltip: '인물 추가',
@@ -160,16 +197,43 @@ class _PersonList extends StatelessWidget {
       itemBuilder: (_, i) {
         final p = persons[i];
         final isFemale = p.gender == 'F';
-        final nameLine = p.nameHanja.isNotEmpty
-            ? HanjaDict.instance.annotate(p.nameHanja)
+        // v2.6(#7) — 아들은 \"성+이름\" 으로 합쳐 표기 (성씨가 있으면).
+        final sHanja = p.surnameHanja ?? '';
+        var fullHanja = p.nameHanja;
+        if (!isFemale &&
+            sHanja.isNotEmpty &&
+            p.nameHanja.isNotEmpty &&
+            !p.nameHanja.startsWith(sHanja)) {
+          fullHanja = sHanja + p.nameHanja;
+        }
+        final sHangul = p.surnameHangul ?? '';
+        final fullHangul = (!isFemale &&
+                sHangul.isNotEmpty &&
+                p.nameHangul.isNotEmpty &&
+                !p.nameHangul.startsWith(sHangul))
+            ? sHangul + p.nameHangul
+            : p.nameHangul;
+        final nameLine = fullHanja.isNotEmpty
+            ? HanjaDict.instance.annotate(fullHanja)
             : (isFemale
-                ? '${p.surnameHangul ?? ''}씨 (딸)'
-                : (p.nameHangul.isEmpty ? '(이름 미상)' : p.nameHangul));
+                ? '${sHangul}씨 (딸)'
+                : (fullHangul.isEmpty ? '(이름 미상)' : fullHangul));
         return Card(
           child: ListTile(
-            title: Text(nameLine,
-                style: const TextStyle(fontWeight: FontWeight.bold)),
+            title: Row(
+              children: [
+                if ((p.relation ?? '').isNotEmpty) ...[
+                  _RelationTag(p.relation!, isFemale: isFemale),
+                  const SizedBox(width: 8),
+                ],
+                Expanded(
+                  child: Text(nameLine,
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
             subtitle: Text([
+              if ((p.relation ?? '').isNotEmpty) '관계(父 기준): ${p.relation}',
               if (p.sega != null) '${p.sega}世',
               if (p.ja != null) '字 ${_a(p.ja)}',
               if (p.birthDateLunar != null) '生 ${p.birthDateLunar}',
@@ -261,5 +325,28 @@ class _TextCompare extends StatelessWidget {
         ),
       ),
     ]);
+  }
+}
+
+/// v2.6(#6) — 아버지와의 가족관계(첫째아들/둘째딸 등) 태그
+class _RelationTag extends StatelessWidget {
+  final String relation;
+  final bool isFemale;
+  const _RelationTag(this.relation, {required this.isFemale});
+  @override
+  Widget build(BuildContext context) {
+    final bg = isFemale ? HanjiColors.ju : HanjiColors.muk;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(relation,
+          style: const TextStyle(
+              color: HanjiColors.hanji,
+              fontSize: 12,
+              fontWeight: FontWeight.bold)),
+    );
   }
 }

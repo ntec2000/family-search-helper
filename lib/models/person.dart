@@ -64,6 +64,9 @@ class Person {
   // v2.4 — 특이사항/메모 (出系·양자·한글 오기 등)
   String? note;
 
+  // v2.6 — 아버지와의 가족관계 (예: 첫째아들, 둘째아들, 첫째딸, 둘째딸)
+  String? relation;
+
   // 메타
   String? sourceImagePath;
   String? rawText;
@@ -115,6 +118,7 @@ class Person {
     this.inLawsSpouseNote,
     this.reasonStatement,
     this.note,
+    this.relation,
     this.sourceImagePath,
     this.rawText,
     DateTime? createdAt,
@@ -170,6 +174,7 @@ class Person {
         'in_laws_spouse_note': inLawsSpouseNote,
         'reason_statement': reasonStatement,
         'note': note,
+        'relation': relation,
         'source_image_path': sourceImagePath,
         'raw_text': rawText,
         'created_at': createdAt.toIso8601String(),
@@ -227,6 +232,7 @@ class Person {
         inLawsSpouseNote: m['in_laws_spouse_note'],
         reasonStatement: m['reason_statement'],
         note: m['note'],
+        relation: m['relation'],
         sourceImagePath: m['source_image_path'],
         rawText: m['raw_text'],
         createdAt: DateTime.parse(m['created_at']),

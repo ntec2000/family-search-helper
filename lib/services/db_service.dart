@@ -15,7 +15,7 @@ class DbService {
     final path = p.join(dir.path, 'family_search.db');
     _db = await openDatabase(
       path,
-      version: 6,
+      version: 7,
       onCreate: (db, v) async {
         await db.execute('''
           CREATE TABLE persons (
@@ -36,6 +36,7 @@ class DbService {
             children_ids TEXT, sons_in_law_ids TEXT, in_laws_ids TEXT,
             children_note TEXT, sons_in_law_note TEXT, in_laws_note TEXT,
             in_laws_spouse_note TEXT, reason_statement TEXT, note TEXT,
+            relation TEXT,
             source_image_path TEXT, raw_text TEXT,
             created_at TEXT, updated_at TEXT
           )''');
@@ -104,6 +105,14 @@ class DbService {
             // 이미 존재하면 무시
           }
         }
+        if (oldV < 7) {
+          // v2.6 추가 컬럼 — 아버지와의 가족관계(첫째아들/둘째딸 등)
+          try {
+            await db.execute('ALTER TABLE persons ADD COLUMN relation TEXT');
+          } catch (_) {
+            // 이미 존재하면 무시
+          }
+        }
       },
     );
   }
@@ -133,6 +142,11 @@ class DbService {
 
   Future<void> deletePerson(String id) async {
     await db.delete('persons', where: 'id = ?', whereArgs: [id]);
+  }
+
+  /// v2.6 — 등록된 인물 전체 삭제 (새로고침/초기화 시 사용)
+  Future<void> clearAll() async {
+    await db.delete('persons');
   }
 
   Future<int> count() async {

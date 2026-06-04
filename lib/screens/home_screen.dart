@@ -23,6 +23,9 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  // v2.6 — 네이티브 완전 종료용 채널 (MainActivity 와 일치)
+  static const _appChannel =
+      MethodChannel('com.peterchoi.familysearchhelper/app');
   List<Person> _persons = [];
   String _search = '';
   final _searchCtrl = TextEditingController();
@@ -50,16 +53,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     _reload();
   }
 
-  /// #3 — 메인화면 리플레쉬: 열려 있는 모든 하위 화면을 닫고 초기(디폴트) 화면으로 복귀.
-  void _refresh() {
+  /// v2.6 — 메인화면 새로고침: 등록된 인물 데이터를 모두 비우고,
+  /// 열려 있는 모든 하위 화면을 닫아 \"처음 입력받는\" 초기 상태로 되돌린다.
+  Future<void> _refresh() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('초기 화면으로 새로고침'),
+        content: const Text(
+            '등록된 인물 정보를 모두 삭제하고 처음 상태로 되돌립니다.\n계속하시겠습니까?'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('취소')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('모두 지우고 새로고침')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    // 등록된 인물 전부 클리어
+    await DbService.instance.clearAll();
+    if (!mounted) return;
     // 다른 화면이 스택에 쌓여 있으면 모두 제거하여 홈으로 되돌린다.
     Navigator.of(context).popUntil((r) => r.isFirst);
     _searchCtrl.clear();
     _search = '';
-    _reload();
+    await _reload();
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('초기 화면으로 새로고침했습니다')),
+        const SnackBar(content: Text('모든 데이터를 비우고 초기 화면으로 새로고침했습니다')),
       );
     }
   }
@@ -100,8 +124,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
     );
     if (ok == true) {
-      // 백그라운드 잔존 없이 프로세스 자체를 종료한다.
-      await SystemChannels.platform.invokeMethod('SystemNavigator.pop');
+      // 백그라운드 잔존 없이 프로세스/태스크 자체를 완전히 종료한다.
+      try {
+        await _appChannel.invokeMethod('exitApp');
+      } catch (_) {
+        // 네이티브 채널 실패 시 폴백
+        await SystemChannels.platform.invokeMethod('SystemNavigator.pop');
+      }
       exit(0);
     }
   }

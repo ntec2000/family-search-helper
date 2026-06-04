@@ -8,9 +8,9 @@ import 'package:permission_handler/permission_handler.dart';
 import '../models/person.dart';
 import '../services/ocr_service.dart';
 import '../services/jokbo_parser.dart';
-import '../services/hanja_dict.dart';
 import '../services/db_service.dart';
 import '../theme/traditional_theme.dart';
+import '../widgets/surname_input_dialog.dart';
 import 'result_screen.dart';
 import 'crop_screen.dart';
 import 'person_card_screen.dart';
@@ -150,7 +150,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
           persons.any((p) => (p.surnameHanja ?? '').isEmpty &&
               (p.surnameHangul ?? '').isEmpty);
       if (needsSurname && persons.isNotEmpty && mounted) {
-        final entered = await _askSurname();
+        final entered = await showSurnameInputDialog(context);
         if (entered != null) {
           final sHanja = entered.$1, sHangul = entered.$2;
           for (final p in persons) {
@@ -197,107 +197,6 @@ class _CaptureScreenState extends State<CaptureScreen> {
         ),
       );
     }
-  }
-
-  /// v2.3 — 성씨(姓) 수동 입력 다이얼로그.
-  /// 한글 성을 입력하고 \u0027입력\u0027 을 누르면 사전(HanjaDict)에서 해당 음의
-  /// 한자 후보를 아래에 칩으로 표시하고, 사용자가 한자를 선택하면
-  /// (선택 한자, 입력 한글) 을 반환한다. 취소 시 null.
-  Future<(String, String)?> _askSurname() async {
-    final hangul = TextEditingController();
-    final dict = HanjaDict.instance;
-    return showDialog<(String, String)?>(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) {
-        List<String> candidates = [];
-        String? selected;
-        bool searched = false;
-        return StatefulBuilder(
-          builder: (ctx, setLocal) {
-            void runSearch() {
-              final h = hangul.text.trim();
-              final list = h.isEmpty ? <String>[] : dict.byReading(h);
-              setLocal(() {
-                candidates = list;
-                searched = true;
-                selected = null;
-              });
-            }
-
-            return AlertDialog(
-              title: const Text('성씨(姓) 입력'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                        '족보에서 성씨를 찾지 못했습니다.\n전체 인물(자녀 포함)에 적용할 성씨를 입력하세요.',
-                        style: TextStyle(fontSize: 13, height: 1.5)),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: hangul,
-                            textInputAction: TextInputAction.search,
-                            onSubmitted: (_) => runSearch(),
-                            decoration: const InputDecoration(
-                                labelText: '성 (한글) 예: 최',
-                                border: OutlineInputBorder(),
-                                isDense: true),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        FilledButton(
-                            onPressed: runSearch, child: const Text('입력')),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    if (searched && candidates.isEmpty)
-                      const Text('해당 음의 한자 후보가 없습니다. 한글만 적용됩니다.',
-                          style: TextStyle(fontSize: 12, color: Colors.grey)),
-                    if (candidates.isNotEmpty) ...[
-                      const Text('해당 한자를 선택하세요',
-                          style: TextStyle(fontSize: 12, height: 1.4)),
-                      const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 4,
-                        children: candidates.map((c) {
-                          final on = c == selected;
-                          return ChoiceChip(
-                            label: Text(c, style: const TextStyle(fontSize: 18)),
-                            selected: on,
-                            onSelected: (_) => setLocal(() => selected = c),
-                          );
-                        }).toList(),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                    onPressed: () => Navigator.pop(ctx, null),
-                    child: const Text('건너뛰기')),
-                FilledButton(
-                    onPressed: () {
-                      final h = hangul.text.trim();
-                      if (h.isEmpty) {
-                        Navigator.pop(ctx, null);
-                        return;
-                      }
-                      Navigator.pop(ctx, (selected ?? '', h));
-                    },
-                    child: const Text('적용')),
-              ],
-            );
-          },
-        );
-      },
-    );
   }
 
   /// #6 — 직접 입력. 빈 인물 1명을 새로 만들어 DB 에 저장한 뒤

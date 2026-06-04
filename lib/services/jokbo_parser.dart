@@ -149,10 +149,17 @@ class JokboParser {
       if (ki > 0) headName = headName.substring(0, ki);
     }
 
-    // 차례(四子 = 넷째 아들) → 메모. 차례 숫자가 없으면 보통 첫째(장남/장녀).
-    if (orderChar != null && orderChar.length == 1) {
-      final lab = _ordinal[orderChar];
-      if (lab != null) addNote('$lab ${isFemale ? '딸' : '아들'}');
+    // 차례(四子 = 넷째 아들) → 아버지와의 관계(v2.6). 차례 숫자가 없으면 첫째(장남/장녀).
+    final orderLab = (orderChar != null &&
+            orderChar.length == 1 &&
+            _ordinal[orderChar] != null)
+        ? _ordinal[orderChar]!
+        : '첫째';
+    person.relation = '$orderLab${isFemale ? '딸' : '아들'}';
+    if (orderChar != null &&
+        orderChar.length == 1 &&
+        _ordinal[orderChar] != null) {
+      addNote('$orderLab ${isFemale ? '딸' : '아들'}');
     }
 
     // 配(배우자) 위치 기준으로 본인부 / 배우자부 분리

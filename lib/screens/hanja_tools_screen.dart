@@ -4,24 +4,23 @@ import '../services/hanja_dict.dart';
 import '../theme/traditional_theme.dart';
 import 'handwriting_screen.dart';
 
-/// 한자 도구 화면.
-/// 탭 1) 한글 이름 → 음절별 한자 후보 (#12)
-/// 탭 2) 한자음(한글 한 글자) → 해당 한자 목록 (#13)
-/// 탭 3) 필기 인식 (#14)
+/// 한자 도구 화면 (v2.6 — 이름 찾기 + 한자음 검색 통합).
+/// 탭 1) 통합 검색: 한글(이름·단어)을 입력하면 음절별로 해당 한자·한글음·뜻을 모두 표시.
+///        예) "최상희" → 최/상/희,  "후기성도" → 후/기/성/도 각 음절의 한자음을 찾아 표시.
+/// 탭 2) 필기 인식 (#14)
 class HanjaToolsScreen extends StatelessWidget {
   const HanjaToolsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 3,
+      length: 2,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('한자 도구'),
           bottom: const TabBar(
             tabs: [
-              Tab(text: '이름 찾기'),
-              Tab(text: '한자음 검색'),
+              Tab(text: '통합 검색'),
               Tab(text: '필기 인식'),
             ],
           ),
@@ -29,8 +28,7 @@ class HanjaToolsScreen extends StatelessWidget {
         body: const SafeArea(
           child: TabBarView(
             children: [
-              _NameSearchTab(),
-              _ReadingSearchTab(),
+              _UnifiedSearchTab(),
               _HandwritingTab(),
             ],
           ),
@@ -40,21 +38,31 @@ class HanjaToolsScreen extends StatelessWidget {
   }
 }
 
-/// #12 한글 이름 → 음절별 한자 후보 & 한글음
-class _NameSearchTab extends StatefulWidget {
-  const _NameSearchTab();
+/// v2.6 통합 검색 — 이름 찾기 + 한자음 검색 통합.
+/// 한글 문자열을 음절 단위로 분해하여, 각 음절의 한자음에 해당하는 한자를 모두 표시.
+class _UnifiedSearchTab extends StatefulWidget {
+  const _UnifiedSearchTab();
   @override
-  State<_NameSearchTab> createState() => _NameSearchTabState();
+  State<_UnifiedSearchTab> createState() => _UnifiedSearchTabState();
 }
 
-class _NameSearchTabState extends State<_NameSearchTab> {
+class _UnifiedSearchTabState extends State<_UnifiedSearchTab> {
   final _ctrl = TextEditingController();
-  Map<String, List<String>> _result = {};
+  // 음절(순서 유지) → 한자 후보 목록
+  final List<MapEntry<String, List<String>>> _result = [];
   bool _searched = false;
 
   void _search() {
+    final raw = _ctrl.text.trim();
+    // 한글 음절만 추출 (순서 유지)
+    final syllables =
+        RegExp(r'[가-힣]').allMatches(raw).map((m) => m.group(0)!).toList();
+    final dict = HanjaDict.instance;
     setState(() {
-      _result = HanjaDict.instance.nameToHanjaCandidates(_ctrl.text);
+      _result
+        ..clear()
+        ..addAll(syllables
+            .map((s) => MapEntry<String, List<String>>(s, dict.byReading(s))));
       _searched = true;
     });
   }
@@ -71,7 +79,9 @@ class _NameSearchTabState extends State<_NameSearchTab> {
     return ListView(
       padding: EdgeInsets.fromLTRB(16, 16, 16, 48 + bottom),
       children: [
-        const Text('한글 이름을 입력하면 음절별로 해당하는 한자와 한글음·뜻을 종류별로 보여줍니다.',
+        const Text(
+            '한글(이름·단어)을 입력하고 검색하면 각 음절의 한자음에 해당하는 한자를 음·뜻과 함께 모두 보여줍니다.\n'
+            '예) "최상희" → 최/상/희,  "후기성도" → 후/기/성/도',
             style: TextStyle(color: HanjiColors.mukSoft, height: 1.5)),
         const SizedBox(height: 12),
         Row(children: [
@@ -81,8 +91,8 @@ class _NameSearchTabState extends State<_NameSearchTab> {
               textInputAction: TextInputAction.search,
               onSubmitted: (_) => _search(),
               decoration: const InputDecoration(
-                hintText: '예) 최상희',
-                prefixIcon: Icon(Icons.badge_outlined),
+                hintText: '예) 최상희 · 후기성도',
+                prefixIcon: Icon(Icons.search),
               ),
             ),
           ),
@@ -98,10 +108,10 @@ class _NameSearchTabState extends State<_NameSearchTab> {
           const Padding(
             padding: EdgeInsets.only(top: 24),
             child: Center(
-                child: Text('한글 이름을 입력해 주세요.',
+                child: Text('한글(이름·단어)을 입력해 주세요.',
                     style: TextStyle(color: HanjiColors.mukSoft))),
           ),
-        ..._result.entries.map((e) => _SyllableCard(syll: e.key, hanja: e.value)),
+        ..._result.map((e) => _SyllableCard(syll: e.key, hanja: e.value)),
       ],
     );
   }
@@ -154,78 +164,6 @@ class _SyllableCard extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-/// #13 한자음(한글 한 글자) → 해당 한자 목록
-class _ReadingSearchTab extends StatefulWidget {
-  const _ReadingSearchTab();
-  @override
-  State<_ReadingSearchTab> createState() => _ReadingSearchTabState();
-}
-
-class _ReadingSearchTabState extends State<_ReadingSearchTab> {
-  final _ctrl = TextEditingController();
-  List<String> _result = [];
-  bool _searched = false;
-
-  void _search() {
-    final q = _ctrl.text.trim();
-    setState(() {
-      _result = q.isEmpty ? [] : HanjaDict.instance.byReading(q[0]);
-      _searched = true;
-    });
-  }
-
-  @override
-  void dispose() {
-    _ctrl.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final bottom = MediaQuery.of(context).viewInsets.bottom;
-    return ListView(
-      padding: EdgeInsets.fromLTRB(16, 16, 16, 48 + bottom),
-      children: [
-        const Text('한자음(한글 한 글자)을 입력하면 그 음을 가진 한자를 음·뜻과 함께 모두 보여줍니다.',
-            style: TextStyle(color: HanjiColors.mukSoft, height: 1.5)),
-        const SizedBox(height: 12),
-        Row(children: [
-          Expanded(
-            child: TextField(
-              controller: _ctrl,
-              textInputAction: TextInputAction.search,
-              onSubmitted: (_) => _search(),
-              decoration: const InputDecoration(
-                hintText: '예) 최, 상, 희',
-                prefixIcon: Icon(Icons.translate),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          FilledButton.icon(
-            onPressed: _search,
-            icon: const Icon(Icons.search),
-            label: const Text('검색'),
-          ),
-        ]),
-        const SizedBox(height: 16),
-        if (_searched)
-          Text('"${_ctrl.text.trim()}" — ${_result.length}자',
-              style: const TextStyle(
-                  color: HanjiColors.ju, fontWeight: FontWeight.bold)),
-        const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: _result
-              .map((c) => _HanjaChip(ch: c, reading: _ctrl.text.trim()))
-              .toList(),
-        ),
-      ],
     );
   }
 }

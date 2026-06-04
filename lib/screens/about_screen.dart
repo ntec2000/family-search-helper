@@ -43,7 +43,7 @@ class AboutScreen extends StatelessWidget {
                 Text('Family Search Helper',
                     style: TextStyle(fontSize: 12, color: HanjiColors.mukSoft, letterSpacing: 2)),
                 SizedBox(height: 16),
-                Text('v2.5.0',
+                Text('v2.6.0',
                     style: TextStyle(fontSize: 14, color: HanjiColors.ju, letterSpacing: 2)),
               ],
             ),
@@ -144,6 +144,19 @@ class AboutScreen extends StatelessWidget {
               padding: const EdgeInsets.all(8),
               child: Column(
                 children: const [
+                  _Hist(
+                    ver: 'v2.6.0',
+                    date: '2026-06-04',
+                    items: [
+                      '🛠 [앱 종료]가 백그라운드에 남던 문제 완전 해결 — 네이티브에서 태스크까지 제거하고 프로세스를 즉시 종료',
+                      '🛠 [초기화면으로 새로고침]이 등록된 인물 데이터를 모두 비우고 처음 입력받는 상태로 되돌리도록 변경 (확인 후 전체 클리어)',
+                      '✨ 한자 도구의 [이름 찾기]와 [한자음 검색]을 [통합 검색] 하나로 통합 — 한글(이름·단어)을 넣으면 음절별 한자음을 모두 표시 (예: 후기성도 → 후/기/성/도)',
+                      '✨ 필기 인식 개선 — 획을 더 가늘게(부드러운 곡선 보간) 표시하고, 고해상도 캡처로 인식 정확도 향상',
+                      '✨ 인식 결과 화면에 아버지와의 가족관계(첫째아들·둘째아들·첫째딸·둘째딸 등)를 태그로 표시',
+                      '✨ 결과 화면에서 성을 알 수 없는 인물의 성씨를 직접 입력 — 한글 성 입력 → [입력] → 한자 후보 선택 → 한글+한자 성을 족보 기본 성으로 삼아 자녀 이름을 \'성+이름\'으로 표시',
+                    ],
+                  ),
+                  Divider(),
                   _Hist(
                     ver: 'v2.5.0',
                     date: '2026-06-04',

@@ -65,7 +65,7 @@ class _HandwritingScreenState extends State<HandwritingScreen> {
       // 1) 그린 캔버스를 흰 배경 PNG 로 렌더링 (테두리 제외 → 인식 정확도 향상)
       final boundary = _boundaryKey.currentContext!.findRenderObject()
           as RenderRepaintBoundary;
-      final image = await boundary.toImage(pixelRatio: 4.0);
+      final image = await boundary.toImage(pixelRatio: 5.0);
       final byteData =
           await image.toByteData(format: ui.ImageByteFormat.png);
       image.dispose();
@@ -279,24 +279,32 @@ class _StrokePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    // v2.6 — 더 가는 획 + 부드러운 곡선 보간(인식 정확도/가독성 향상)
     final paint = Paint()
       ..color = Colors.black
-      ..strokeWidth = 7
+      ..strokeWidth = 4.5
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
       ..style = PaintingStyle.stroke;
+    final dotPaint = Paint()
+      ..color = Colors.black
+      ..strokeWidth = 6
+      ..strokeCap = StrokeCap.round;
     for (final stroke in strokes) {
       if (stroke.length < 2) {
         if (stroke.isNotEmpty) {
-          canvas.drawPoints(ui.PointMode.points, stroke,
-              paint..strokeWidth = 9);
+          canvas.drawPoints(ui.PointMode.points, stroke, dotPaint);
         }
         continue;
       }
+      // 점들의 중점을 지나는 2차 베지에로 부드럽게 연결한다.
       final path = Path()..moveTo(stroke.first.dx, stroke.first.dy);
-      for (final o in stroke.skip(1)) {
-        path.lineTo(o.dx, o.dy);
+      for (var i = 1; i < stroke.length - 1; i++) {
+        final mid = Offset((stroke[i].dx + stroke[i + 1].dx) / 2,
+            (stroke[i].dy + stroke[i + 1].dy) / 2);
+        path.quadraticBezierTo(stroke[i].dx, stroke[i].dy, mid.dx, mid.dy);
       }
+      path.lineTo(stroke.last.dx, stroke.last.dy);
       canvas.drawPath(path, paint);
     }
   }
