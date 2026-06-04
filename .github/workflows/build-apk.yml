@@ -96,7 +96,7 @@ jobs:
           tag_name: v2.9.0
           name: "가족역사기록 도우미 v2.9.0"
           body: |
-            # 가족역사기록 도우미 (Family Search Helper) v2.8.0
+            # 가족역사기록 도우미 (Family Search Helper) v2.9.0
 
             **개발자**: Peter S. Choi
             **문의**: ntec21c@gmail.com
