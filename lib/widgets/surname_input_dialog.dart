@@ -46,6 +46,10 @@ Future<(String, String)?> showSurnameInputDialog(BuildContext context) {
                         child: TextField(
                           controller: hangul,
                           textInputAction: TextInputAction.search,
+                          autofocus: true,
+                          // v2.8 — 입력하는 즉시 한자 후보를 갱신(라이브 검색)하여
+                          //        [입력] 버튼 동작 여부와 무관하게 후보가 표시되게 한다.
+                          onChanged: (_) => runSearch(),
                           onSubmitted: (_) => runSearch(),
                           decoration: const InputDecoration(
                               labelText: '성 (한글) 예: 최',

@@ -43,7 +43,7 @@ class AboutScreen extends StatelessWidget {
                 Text('Family Search Helper',
                     style: TextStyle(fontSize: 12, color: HanjiColors.mukSoft, letterSpacing: 2)),
                 SizedBox(height: 16),
-                Text('v2.7.0',
+                Text('v2.8.0',
                     style: TextStyle(fontSize: 14, color: HanjiColors.ju, letterSpacing: 2)),
               ],
             ),
@@ -144,6 +144,17 @@ class AboutScreen extends StatelessWidget {
               padding: const EdgeInsets.all(8),
               child: Column(
                 children: const [
+                  _Hist(
+                    ver: 'v2.8.0',
+                    date: '2026-06-04',
+                    items: [
+                      '🛠 [성씨 입력]에서 한글 성을 적으면 입력하는 즉시 한자 후보가 표시되도록 개선 — [입력] 버튼과 무관하게 후보가 나타나 \'반응 없음\' 문제 해결',
+                      '🛠 [족보작성] 이미지 입력 시 카메라가 자동 구동되어 화면이 멈추던 문제 해결 — [카메라로 촬영]·[갤러리에서 선택] 두 메뉴를 명확히 보여주고 선택할 때만 동작',
+                      '🛠 한자 인식 중 화면이 멈추던(앱 응답 없음) 문제 해결 — 무거운 이미지 전처리를 백그라운드로 분리하여 UI가 멈추지 않음',
+                      '🛠 시작 단계의 어떤 초기화 오류에도 빈 화면으로 멈추지 않도록 안정화 — 전체 먹통 현상 방지',
+                    ],
+                  ),
+                  Divider(),
                   _Hist(
                     ver: 'v2.7.0',
                     date: '2026-06-04',
