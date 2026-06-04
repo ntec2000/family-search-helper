@@ -98,7 +98,7 @@ class _State extends State<ExportScreen> {
       }
       if (p.ja != null) buf.writeln('  字(자)    : ${_kh(p.ja)}');
       if (p.ho != null) buf.writeln('  號(호)    : ${_kh(p.ho)}');
-      buf.writeln('  출생      : ${p.birthDateSolar ?? p.birthDateLunar ?? ''}');
+      buf.writeln('  출생      : ${p.birthDateSolar ?? p.birthDateLunar ?? '알 수 없음'}');
       buf.writeln('  출생지    : ${p.birthPlace ?? Genealogy.defaultPlace}');
       final deathDate = p.deathDateSolar ?? p.deathDateLunar ?? '';
       if (deathDate.isNotEmpty) {

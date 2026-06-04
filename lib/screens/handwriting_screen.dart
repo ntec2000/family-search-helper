@@ -281,7 +281,7 @@ class _StrokePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = Colors.black
-      ..strokeWidth = 14
+      ..strokeWidth = 7
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round
       ..style = PaintingStyle.stroke;
@@ -289,7 +289,7 @@ class _StrokePainter extends CustomPainter {
       if (stroke.length < 2) {
         if (stroke.isNotEmpty) {
           canvas.drawPoints(ui.PointMode.points, stroke,
-              paint..strokeWidth = 16);
+              paint..strokeWidth = 9);
         }
         continue;
       }

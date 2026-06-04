@@ -1,7 +1,9 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:share_plus/share_plus.dart';
 import '../models/person.dart';
 import '../services/db_service.dart';
 import '../theme/traditional_theme.dart';
@@ -48,8 +50,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     _reload();
   }
 
-  /// #3 — 메인화면 리플레쉬: 검색 초기화 후 초기 화면으로
+  /// #3 — 메인화면 리플레쉬: 열려 있는 모든 하위 화면을 닫고 초기(디폴트) 화면으로 복귀.
   void _refresh() {
+    // 다른 화면이 스택에 쌓여 있으면 모두 제거하여 홈으로 되돌린다.
+    Navigator.of(context).popUntil((r) => r.isFirst);
     _searchCtrl.clear();
     _search = '';
     _reload();
@@ -78,7 +82,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     _reload();
   }
 
-  /// #2 — 앱 종료
+  /// #2 — 앱 종료: 화면만 사라지는 것이 아니라 프로세스를 완전히 종료한다.
   Future<void> _confirmExit() async {
     final ok = await showDialog<bool>(
       context: context,
@@ -96,8 +100,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
     );
     if (ok == true) {
-      SystemNavigator.pop();
+      // 백그라운드 잔존 없이 프로세스 자체를 종료한다.
+      await SystemChannels.platform.invokeMethod('SystemNavigator.pop');
+      exit(0);
     }
+  }
+
+  /// v2.5 — 앱 공유 기능. 앱 소개와 설치 안내를 공유 시트로 전달한다.
+  Future<void> _shareApp() async {
+    const msg =
+        '가족역사기록 도우미 (Family Search Helper)\n'
+        '족보(族譜)의 한자를 인식하여 가족역사 정보를 추출하고 FamilySearch에 입력하도록 돕는 앱입니다.\n'
+        '개발: Peter S. Choi · 문의: ntec21c@gmail.com\n'
+        '배포처(APK): https://github.com/ntec2000/family-search-helper/releases';
+    await Share.share(msg, subject: '가족역사기록 도우미 (Family Search Helper)');
   }
 
   Future<void> _pickFromGallery() async {
@@ -131,6 +147,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       case 'export': page = const ExportScreen(); break;
       case 'familysearch': page = const FamilySearchLoginScreen(); break;
       case 'settings': page = const SettingsScreen(); break;
+      case 'share': _shareApp(); return;
       case 'exit': _confirmExit(); return;
     }
     if (page != null) {
@@ -163,6 +180,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               PopupMenuItem(value: 'hanja', child: Row(children: [Icon(Icons.translate, color: HanjiColors.muk), SizedBox(width: 12), Text('한자 도구')])),
               PopupMenuItem(value: 'lunar', child: Row(children: [Icon(Icons.calendar_month, color: HanjiColors.muk), SizedBox(width: 12), Text('만세력')])),
               PopupMenuItem(value: 'export', child: Row(children: [Icon(Icons.ios_share, color: HanjiColors.muk), SizedBox(width: 12), Text('내보내기')])),
+              PopupMenuItem(value: 'share', child: Row(children: [Icon(Icons.share, color: HanjiColors.muk), SizedBox(width: 12), Text('앱 공유')])),
               PopupMenuDivider(),
               PopupMenuItem(value: 'familysearch', child: Row(children: [Icon(Icons.church_outlined, color: HanjiColors.ju), SizedBox(width: 12), Text('FamilySearch 연동')])),
               PopupMenuItem(value: 'settings', child: Row(children: [Icon(Icons.settings_outlined, color: HanjiColors.muk), SizedBox(width: 12), Text('설정')])),

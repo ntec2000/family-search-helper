@@ -91,8 +91,8 @@ void main() {
       // 처가 계열
       expect(p.spouseFather, '國聖'); // 장인 (변국성)
       expect(p.spouseGrandfather, '同知'); // 장인의 부
-      expect(p.spouseGreatGrandfather, '判官尙'); // 처증조
-      expect(p.spouseMaternalGrandfather, '文化柳承春'); // 처외조
+      expect(p.spouseGreatGrandfather, '尙'); // 判官(관직) 제거 → 尙(변상) // 처증조
+      expect(p.spouseMaternalGrandfather, '柳承春'); // 文化(본관) 제거 → 류승춘 // 처외조
       // 본인 성씨는 가문 성(李/이) 상속
       expect(p.surnameHanja, '李');
       expect(p.surnameHangul, '이');
@@ -168,9 +168,12 @@ void main() {
       expect(p.spouseDeath, contains('甲子'));
       expect(p.spouseFather, '國聖');
       expect(p.spouseGrandfather, '同知');
-      expect(p.spouseGreatGrandfather, '判官尙');
-      expect(p.spouseMaternalGrandfather, '文化柳承春');
+      expect(p.spouseGreatGrandfather, '尙'); // 判官(관직) 제거 → 尙(변상)
+      expect(p.spouseMaternalGrandfather, '柳承春'); // 文化(본관) 제거 → 류승춘
       expect(p.surnameHanja, '李');
+      // v2.5 — 차례(四子=넷째 아들) + 字(관례명)는 메모에 기록
+      expect(p.note, contains('넷째 아들'));
+      expect(p.note, contains('字'));
     });
 
     test('[21世] 格 — 世·단순 干支生·성씨 상속', () {
@@ -189,8 +192,8 @@ void main() {
       expect(p.burialPlace, contains('白石面'));
       expect(p.spouseFather, '光岳');
       expect(p.spouseGrandfather, '東憶');
-      expect(p.spouseGreatGrandfather, '通政道經');
-      expect(p.spouseMaternalGrandfather, '濟州高');
+      expect(p.spouseGreatGrandfather, '道經'); // 通政(품계) 제거 → 윤도경
+      expect(p.spouseMaternalGrandfather, '高'); // 濟州(본관) 제거 → 고씨
     });
 
     test('[23世] 承勳 — 出系 특이사항(이름은 承勳, 出 미포함)', () {
@@ -204,6 +207,7 @@ void main() {
     test('[25世] 炳旭 — 出系 寅東后', () {
       final p = byName('炳旭');
       expect(p.note, contains('寅東'));
+      expect(p.note, contains('둘째 아들')); // v2.5 차례(二子)
       // 다른 25세 아들들도 정상 인식
       expect(list.any((e) => e.nameHanja == '炳吉'), true);
       expect(list.any((e) => e.nameHanja == '炳烈'), true);

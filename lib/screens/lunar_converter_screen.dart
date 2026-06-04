@@ -95,6 +95,19 @@ class _LunarConverterScreenState extends State<LunarConverterScreen> {
 class _ResultBox extends StatelessWidget {
   final Map<String, String> map;
   const _ResultBox({required this.map});
+
+  /// 만세력 변환 결과 키(영문)를 한글 표기로 변환한다.
+  static const _labels = <String, String>{
+    'lunar_year': '음력 연(年)',
+    'lunar_month': '음력 월(月)',
+    'lunar_day': '음력 일(日)',
+    'ganzhi_year': '간지(干支) 연 — 세차(歲次)',
+    'ganzhi_month': '간지(干支) 월 — 월건(月建)',
+    'ganzhi_day': '간지(干支) 일 — 일진(日辰)',
+    'animal': '띠(十二支)',
+    'lunar_text': '음력 표기',
+  };
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -109,7 +122,7 @@ class _ResultBox extends StatelessWidget {
         children: map.entries
             .map((e) => Padding(
                   padding: const EdgeInsets.symmetric(vertical: 2),
-                  child: Text('${e.key}: ${e.value}',
+                  child: Text('${_labels[e.key] ?? e.key}: ${e.value}',
                       style: const TextStyle(fontSize: 14, height: 1.6)),
                 ))
             .toList(),

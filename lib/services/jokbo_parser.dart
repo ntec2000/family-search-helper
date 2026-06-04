@@ -5,10 +5,12 @@ import 'lunar_service.dart';
 import 'genealogy.dart';
 
 /// 족보 OCR 텍스트 파서.
-/// 표준 족보 표기 규칙:
+/// 표준 족보 표기 규칙(v2.5 체계화):
 ///   子○○ / 女○○            : 인물(성별 + 이름). 子=아들, 女=딸(→사위 표기)
-///   子[二三四]○○            : 둘째/세째/네째 등 차례 표기(차례 글자는 이름에서 제외)
-///   字○○                    : 자(字)
+///   子[二三四…]○○           : 둘째/세째/네째 등 차례 표기. 차례 글자는 이름에서
+///                              제외하고 "○째 아들/딸" 로 메모에 기록. 차례 숫자가
+///                              없으면 보통 첫째(장남/장녀).
+///   字○○                    : 자(字) — 관례 때 받은 이름(본명 아님) → 메모에 기록
 ///   號○○                    : 호
 ///   干支(○月○日) 生/卒       : 본인 출생/사망 (월·일은 선택)
 ///   忌 ○月○日                : 기일(사망일, 연도 미상)
@@ -16,13 +18,32 @@ import 'genealogy.dart';
 ///   配○○郡 ○○氏 …父祖曾祖外祖: 배우자(아내) 정보 — 父/祖/曾祖/外祖는 모두
 ///                              아내 쪽(처가) 조상이다. 父=장인, 祖=장인의 아버지,
 ///                              曾祖=장인의 할아버지, 外祖=아내의 외할아버지.
+///                              · 父/祖/曾祖(=아내의 친가 직계)는 아내 성씨를 붙여
+///                                표기하고, 이름 앞 관직·품계(判官·通政 등)는 제거.
+///                              · 外祖(아내의 외가)는 자체 성씨를 가지므로 앞의
+///                                본관(지역) 두 글자를 제거하고 그대로 사용.
 ///   女○○ ○○人               : 딸 → 남편(사위) 이름 + 사위 본관. 딸 본인은 이름이
-///                              없으므로 가문 성씨를 따라 "○씨"로 표기.
+///                              없으므로 가문 성씨를 따라 "○씨" 로 표기.
 class JokboParser {
   static final _uuid = const Uuid();
 
   static const _gan = '甲乙丙丁戊己庚辛壬癸';
   static const _ji = '子丑寅卯辰巳午未申酉戌亥';
+
+  /// 처가 직계(父·祖·曾祖) 이름 앞에 붙는 관직명·품계 — 이름에서 제거.
+  /// 단, 同知 는 본 족보에서 이름(예: 변동지)으로 쓰이므로 제외한다.
+  static const _titles = <String>[
+    '判官', '通政', '通訓', '嘉善', '嘉靖', '折衝', '僉知', '僉正', '僉樞',
+    '副護軍', '副司果', '司果', '主簿', '參奉', '縣監', '郡守', '牧使', '府使',
+    '觀察使', '學生', '處士', '進士', '生員', '持平', '掌令', '正郞', '佐郞',
+    '判書', '參判', '參議', '承旨', '監役', '護軍', '宣傳官', '贈',
+  ];
+
+  /// 차례(숫자 한자) → 서수 라벨.
+  static const _ordinal = <String, String>{
+    '一': '첫째', '二': '둘째', '三': '셋째', '四': '넷째', '五': '다섯째',
+    '六': '여섯째', '七': '일곱째', '八': '여덟째', '九': '아홉째', '十': '열째',
+  };
 
   /// OCR 인식 텍스트(세로쓰기 → 정렬된 평문)를 받아 인물 카드 목록 추출
   static List<Person> parse(String rawText, {String? sourceImagePath}) {
@@ -68,6 +89,31 @@ class JokboParser {
     }).toList();
   }
 
+  /// 처가 직계(父·祖·曾祖) 이름 앞 관직·품계 제거.
+  static String _stripTitle(String s) {
+    var r = s.trim();
+    for (final t in _titles) {
+      if (r.startsWith(t) && r.length > t.length) {
+        r = r.substring(t.length).trim();
+        break;
+      }
+    }
+    return r;
+  }
+
+  /// 外祖(아내의 외가) 이름에서 앞의 본관(지역) 두 글자 제거.
+  /// 예) 文化柳承春 → 柳承春,  濟州高 → 高,  丁若萬 → 丁若萬(그대로)
+  static String _stripBongwanPrefix(String s) {
+    final r = s.trim();
+    final ch = r.runes.map(String.fromCharCode).toList();
+    // [본관(지역) 2자][성씨 1자][이름…] 구조이면 3번째 글자가 성씨 → 앞 2자 제거.
+    // (예: 文化柳承春 → 柳承春, 濟州高 → 高).  丁若萬처럼 3번째가 이름이면 유지.
+    if (ch.length >= 3 && Genealogy.surnamesHanja.contains(ch[2])) {
+      return ch.sublist(2).join();
+    }
+    return r;
+  }
+
   static Person? _parsePersonBlock(String block,
       {String? sourceImagePath, String? clanHanja, String? clanHangul}) {
     final t = block.trim();
@@ -80,6 +126,14 @@ class JokboParser {
       rawText: t,
     );
 
+    // 메모(특이사항) 누적 헬퍼
+    void addNote(String s) {
+      final v = s.trim();
+      if (v.isEmpty) return;
+      person.note =
+          (person.note == null || person.note!.isEmpty) ? v : '${person.note} / $v';
+    }
+
     // 성별 + (차례) + 이름: 子/女 [차례한자] 이름(한자 1~3자)
     final nameMatch =
         RegExp(r'^([子女])\s*([一二三四五六七八九十]+)?\s*([一-鿿]{1,3})')
@@ -87,11 +141,18 @@ class JokboParser {
     if (nameMatch == null) return null;
     final isFemale = nameMatch.group(1) == '女';
     person.gender = isFemale ? 'F' : 'M';
+    final orderChar = nameMatch.group(2);
     var headName = nameMatch.group(3)!;
     // 이름 뒤에 구조 키워드가 붙어버린 경우 잘라낸다 (예: 承勳出 → 承勳)
     for (final kw in const ['出', '字', '配', '生', '卒', '墓', '忌', '號', '娶', '贈', '系']) {
       final ki = headName.indexOf(kw);
       if (ki > 0) headName = headName.substring(0, ki);
+    }
+
+    // 차례(四子 = 넷째 아들) → 메모. 차례 숫자가 없으면 보통 첫째(장남/장녀).
+    if (orderChar != null && orderChar.length == 1) {
+      final lab = _ordinal[orderChar];
+      if (lab != null) addNote('$lab ${isFemale ? '딸' : '아들'}');
     }
 
     // 配(배우자) 위치 기준으로 본인부 / 배우자부 분리
@@ -105,7 +166,7 @@ class JokboParser {
     if (isFemale) {
       person.nameHanja = '';
       person.nameHangul = '';
-      final body = t.replaceFirst(RegExp(r'^女\s*'), '');
+      final body = t.replaceFirst(RegExp(r'^女\s*[一二三四五六七八九十]?\s*'), '');
       final bgM = RegExp(r'([一-鿿]{2,3})人').firstMatch(body);
       String husband;
       if (bgM != null) {
@@ -132,12 +193,15 @@ class JokboParser {
     final chulgye = RegExp(r'出\s*系\s*([一-鿿]{2,4})\s*后').firstMatch(t);
     if (chulgye != null) {
       final who = chulgye.group(1)!;
-      person.note = '出系 $who后 — ${dict.toHangul(who)}의 후사(後嗣)로 출계(양자)';
+      addNote('出系 $who后 — ${dict.toHangul(who)}의 후사(後嗣)로 출계(양자)');
     }
 
-    // 字 / 號 / 諡號 (본인부에서만)
+    // 字 / 號 / 諡號 (본인부에서만). 字는 본명이 아닌 관례명이므로 메모에도 기록.
     final ja = RegExp(r'字([一-鿿]{1,3})').firstMatch(personPart);
-    if (ja != null) person.ja = ja.group(1);
+    if (ja != null) {
+      person.ja = ja.group(1);
+      addNote('字(자) ${dict.toHangul(ja.group(1)!)}(${ja.group(1)}) — 관례 때 받은 이름(본명 아님)');
+    }
     final ho = RegExp(r'號([一-鿿]{1,3})').firstMatch(personPart);
     if (ho != null) person.ho = ho.group(1);
     final siho = RegExp(r'諡號?([一-鿿]{1,3})').firstMatch(personPart);
@@ -199,6 +263,11 @@ class JokboParser {
         person.spouseBongwan = pae.group(1);
         person.spouseHanja = pae.group(2);
         person.spouseHangul = dict.toHangul(pae.group(2)!);
+        // 아내는 이름을 거의 기록하지 않으므로 본관+성씨를 메모에 보존
+        if ((pae.group(1) ?? '').isNotEmpty) {
+          addNote('아내 본관: ${pae.group(1)}${pae.group(2)} '
+              '(${dict.toHangul(pae.group(1)! + pae.group(2)!)})');
+        }
       }
       // 배우자 출생/사망
       final sb = _matchGanzhiDate(spousePart, '生');
@@ -218,11 +287,17 @@ class JokboParser {
         return null;
       }
 
+      // 外祖(외가) — 자체 성씨 보유 → 앞 본관(지역) 두 글자만 제거
+      final outer = grab(RegExp(r'(?:聘\s*)?外祖\s*([一-鿿]{2,6})'));
       person.spouseMaternalGrandfather =
-          grab(RegExp(r'(?:聘\s*)?外祖\s*([一-鿿]{2,6})'));
-      person.spouseGreatGrandfather = grab(RegExp(r'曾祖\s*([一-鿿]{2,5})'));
-      person.spouseGrandfather = grab(RegExp(r'祖\s*([一-鿿]{2,4})'));
-      person.spouseFather = grab(RegExp(r'父\s*([一-鿿]{1,4})'));
+          outer == null ? null : _stripBongwanPrefix(outer);
+      // 曾祖/祖/父(친가 직계) — 관직·품계 제거(아내 성씨는 내보내기에서 부여)
+      final gGf = grab(RegExp(r'曾祖\s*([一-鿿]{2,5})'));
+      person.spouseGreatGrandfather = gGf == null ? null : _stripTitle(gGf);
+      final gf = grab(RegExp(r'祖\s*([一-鿿]{2,4})'));
+      person.spouseGrandfather = gf == null ? null : _stripTitle(gf);
+      final fa = grab(RegExp(r'父\s*([一-鿿]{1,4})'));
+      person.spouseFather = fa == null ? null : _stripTitle(fa);
     }
 
     // 娶 (결혼) — 干支年
@@ -274,9 +349,7 @@ class JokboParser {
       if (isReadable &&
           shown.length == person.nameHanja.runes.length &&
           shown != reading) {
-        person.note = ((person.note ?? '') +
-                ' / 한글표기 \'$shown\' ↔ 한자음 \'$reading\' 불일치(확인요망)')
-            .trim();
+        addNote("한글표기 '$shown' ↔ 한자음 '$reading' 불일치(확인요망)");
       }
     }
 
@@ -309,7 +382,7 @@ class JokboParser {
     final c = LunarService.estimateYearsFromGanzhi(gz);
     final r = c.where((y) => y <= DateTime.now().year).toList();
     if (r.isEmpty) return null;
-    return '${r.last} (干支 추정)';
+    return '대략 ${r.last}년 (干支 추정)';
   }
 
   static String? _estimateDeathYear(String gz, String? birthSolar) {
@@ -320,7 +393,7 @@ class JokboParser {
     final by = int.parse(bm.group(1)!);
     final dy = c.firstWhere((y) => y > by && y <= DateTime.now().year,
         orElse: () => -1);
-    return dy > 0 ? '$dy (干支 추정)' : null;
+    return dy > 0 ? '대략 $dy년 (干支 추정)' : null;
   }
 
   /// 한자/아라비아 숫자 세(世) → 정수.

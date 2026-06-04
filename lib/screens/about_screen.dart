@@ -27,19 +27,23 @@ class AboutScreen extends StatelessWidget {
             ),
             child: Column(
               children: const [
-                Text('家族歷史記錄 助手',
-                    style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: HanjiColors.muk,
-                        letterSpacing: 6)),
+                FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text('家族歷史記錄 助手',
+                        maxLines: 1,
+                        softWrap: false,
+                        style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: HanjiColors.muk,
+                            letterSpacing: 6))),
                 SizedBox(height: 8),
                 Text('가족역사기록 도우미',
                     style: TextStyle(fontSize: 18, color: HanjiColors.mukSoft)),
                 Text('Family Search Helper',
                     style: TextStyle(fontSize: 12, color: HanjiColors.mukSoft, letterSpacing: 2)),
                 SizedBox(height: 16),
-                Text('v2.0.0',
+                Text('v2.5.0',
                     style: TextStyle(fontSize: 14, color: HanjiColors.ju, letterSpacing: 2)),
               ],
             ),
@@ -140,6 +144,23 @@ class AboutScreen extends StatelessWidget {
               padding: const EdgeInsets.all(8),
               child: Column(
                 children: const [
+                  _Hist(
+                    ver: 'v2.5.0',
+                    date: '2026-06-04',
+                    items: [
+                      '✨ 이름·신상정보 추출을 최우선으로 — 字(자)는 본명이 아닌 \'관례 때 받은 이름\'으로 메모에 별도 표기',
+                      '✨ 아들/딸 차례 자동 인식 — 二子·三子·四子 등 한자 숫자로 순서를 \'둘째 아들\'처럼 메모에 기록 (장남은 숫자 없이 처음 등장)',
+                      '✨ 配(아내) 처가 직계 정리 — 父=장인·祖=처조·曾祖=처증조에 아내 성씨를 붙이고 관직(判官)·품계(通政)는 제거, 同知는 이름(변동지)으로 유지',
+                      '✨ 外祖(아내 외조부)는 본관(앞 지역) 제거 후 자체 성씨로 표기 (文化柳承春 → 류승춘, 濟州高 → 고씨)',
+                      '✨ 만세력 변환 결과를 영문 키가 아닌 한글(세차·월건·일진·띄 등)로 표시',
+                      '✨ [앱 공유] 기능 추가 — 앱 소개·배포처를 공유 시트로 전달',
+                      '🛠 [새로고침]이 열려 있던 화면을 모두 닫고 초기(디폴트) 화면으로 복귀하도록 수정',
+                      '🛠 [앱 종료]가 화면만 사라지고 백그라운드에 남던 문제 수정 — 프로세스를 완전히 종료',
+                      '🛠 한자 필기 인식 획 굵기를 가늘게 조정하여 정밀 입력 개선',
+                      '🛠 앱 정보 타이틀(家族歷史記錄 助手)이 한 줄에 표시되도록 수정',
+                    ],
+                  ),
+                  Divider(),
                   _Hist(
                     ver: 'v2.4.0',
                     date: '2026-06-03',

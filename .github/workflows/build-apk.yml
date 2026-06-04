@@ -70,42 +70,42 @@ jobs:
       - name: Rename APKs for distribution
         run: |
           mkdir -p dist
-          cp build/app/outputs/flutter-apk/app-release.apk dist/family-search-helper-v2.4.0-universal.apk
-          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk dist/family-search-helper-v2.4.0-arm64.apk
-          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk dist/family-search-helper-v2.4.0-arm32.apk
-          cp build/app/outputs/flutter-apk/app-x86_64-release.apk dist/family-search-helper-v2.4.0-x86_64.apk
+          cp build/app/outputs/flutter-apk/app-release.apk dist/family-search-helper-v2.5.0-universal.apk
+          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk dist/family-search-helper-v2.5.0-arm64.apk
+          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk dist/family-search-helper-v2.5.0-arm32.apk
+          cp build/app/outputs/flutter-apk/app-x86_64-release.apk dist/family-search-helper-v2.5.0-x86_64.apk
           ls -lh dist/
 
       - name: Upload Universal APK (artifact)
         uses: actions/upload-artifact@v4
         with:
           name: family-search-helper-universal-apk
-          path: dist/family-search-helper-v2.4.0-universal.apk
+          path: dist/family-search-helper-v2.5.0-universal.apk
           retention-days: 90
 
       - name: Upload Split APKs (artifact)
         uses: actions/upload-artifact@v4
         with:
           name: family-search-helper-split-apks
-          path: dist/family-search-helper-v2.4.0-arm64.apk
+          path: dist/family-search-helper-v2.5.0-arm64.apk
           retention-days: 90
 
       - name: Publish Release (latest)
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v2.4.0
-          name: "가족역사기록 도우미 v2.4.0"
+          tag_name: v2.5.0
+          name: "가족역사기록 도우미 v2.5.0"
           body: |
-            # 가족역사기록 도우미 (Family Search Helper) v2.4.0
+            # 가족역사기록 도우미 (Family Search Helper) v2.5.0
 
             **개발자**: Peter S. Choi
             **문의**: ntec21c@gmail.com
 
             ## 다운로드
-            - **family-search-helper-v2.4.0-universal.apk** (~80MB, 모든 기기 호환 — 권장)
-            - **family-search-helper-v2.4.0-arm64.apk** (~55MB, 최신 폰 전용, 권장)
-            - **family-search-helper-v2.4.0-arm32.apk** (구형 폰)
-            - **family-search-helper-v2.4.0-x86_64.apk** (에뮬레이터용)
+            - **family-search-helper-v2.5.0-universal.apk** (~80MB, 모든 기기 호환 — 권장)
+            - **family-search-helper-v2.5.0-arm64.apk** (~55MB, 최신 폰 전용, 권장)
+            - **family-search-helper-v2.5.0-arm32.apk** (구형 폰)
+            - **family-search-helper-v2.5.0-x86_64.apk** (에뮬레이터용)
 
             ## 설치
             1. APK 파일을 전화기로 전송 (이메일/카카오톡/USB 등)
@@ -123,6 +123,18 @@ jobs:
               - FamilySearch 연동 모드: 로그인 후 가계도에 인물 직접 등록 (Client ID 입력 시)
             - GEDCOM 5.5.1 내보내기 / FamilySearch OAuth 직접 동기화
             - 전통 한지·먹 테마
+
+            ## v2.5.0 변경사항 (이름·신상정보 최우선·차례 인식·처가 정리·만세력 한글·앱 공유·종료/새로고침 수정)
+            - ✨ **이름·신상정보 추출 최우선** — 字(자)는 본명이 아닌 '관례 때 받은 이름'으로 메모에 별도 표기
+            - ✨ **아들/딸 차례 자동 인식** — 二子·三子·四子 등 한자 숫자로 '둘째 아들'처럼 순서를 메모에 기록 (장남은 숫자 없이 처음 등장)
+            - ✨ **配(아내) 처가 직계 정리** — 父=장인·祖=처조·曾祖=처증조에 아내 성씨를 붙이고 관직(判官)·품계(通政)는 제거, 同知는 이름(변동지)으로 유지
+            - ✨ **外祖(아내 외조부)는 본관(앞 지역) 제거 후 자체 성씨** — 文化柳承春→류승춘, 濟州高→고씨
+            - ✨ **만세력 변환 결과를 한글(세차·월건·일진·띠 등)로 표시**
+            - ✨ **[앱 공유] 기능 추가** — 앱 소개·배포처를 공유 시트로 전달
+            - 🛠 **[새로고침]** 이 열려 있던 모든 화면을 닫고 초기(디폴트) 화면으로 복귀
+            - 🛠 **[앱 종료]** 가 화면만 사라지고 백그라운드에 남던 문제 수정 — 프로세스 완전 종료
+            - 🛠 한자 필기 인식 획 굵기를 가늘게 조정
+            - 🛠 앱 정보 타이틀(家族歷史記錄 助手) 한 줄 표시
 
             ## v2.4.0 변경사항 (인물 아님 삭제·女 인식 정교화·出系 인식·이름 규칙 체계화)
             - ✨ **인식 후 사람 이름이 아닌 항목 삭제 버튼** — 오인식·관직명 등을 🗑 로 제거하여 인물만 정리
@@ -155,10 +167,10 @@ jobs:
             - **기반**: 한자 OCR 모델을 APK 에 번들(`text-recognition-chinese:16.0.1`) — 완전 오프라인·온디바이스
             - **검증(배포 전 시뮬레이션)**: 정적 분석 무오류 + 단위 테스트 통과 + 빌드 APK 내부 한자 인식 모델 포함 + 모든 arm64 .so 16KB 페이지 정렬 확인
           files: |
-            dist/family-search-helper-v2.4.0-universal.apk
-            dist/family-search-helper-v2.4.0-arm64.apk
-            dist/family-search-helper-v2.4.0-arm32.apk
-            dist/family-search-helper-v2.4.0-x86_64.apk
+            dist/family-search-helper-v2.5.0-universal.apk
+            dist/family-search-helper-v2.5.0-arm64.apk
+            dist/family-search-helper-v2.5.0-arm32.apk
+            dist/family-search-helper-v2.5.0-x86_64.apk
           draft: false
           prerelease: false
           make_latest: "true"
