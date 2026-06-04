@@ -43,7 +43,7 @@ class AboutScreen extends StatelessWidget {
                 Text('Family Search Helper',
                     style: TextStyle(fontSize: 12, color: HanjiColors.mukSoft, letterSpacing: 2)),
                 SizedBox(height: 16),
-                Text('v2.6.0',
+                Text('v2.7.0',
                     style: TextStyle(fontSize: 14, color: HanjiColors.ju, letterSpacing: 2)),
               ],
             ),
@@ -144,6 +144,20 @@ class AboutScreen extends StatelessWidget {
               padding: const EdgeInsets.all(8),
               child: Column(
                 children: const [
+                  _Hist(
+                    ver: 'v2.7.0',
+                    date: '2026-06-04',
+                    items: [
+                      '🛠 앱을 종료한 뒤 다시 시작하면 항상 처음(빈) 작업 상태로 시작하도록 변경 — 이전 세션의 인물 데이터가 남지 않음',
+                      '✨ 초기 화면에서 [갤러리/촬영]을 노출하지 않고 [족보작성] 버튼 하나로 통일 — 누르면 ①성씨(한글) 입력 → [입력] → ②한자 선택 화면 → ③한글 성·한자 성을 기본 성씨로 삼아 이미지 입력 화면으로 이동',
+                      '✨ 이미지 입력 화면에서 사진 촬영 또는 갤러리 업로드 후 인식하면, 이름 추출 규칙대로 인물 이름을 나열 (이름이 아닌 항목은 🗑 삭제 가능)',
+                      '✨ 미리 입력한 성씨를 가문(본관) 성씨로 강제 적용 — 자녀는 \'성+이름\', 딸은 \'○씨\'로 정확히 표기',
+                      '✨ 한자 도구 예시를 [예)후기성도]로 표시 — 단어 입력 시 음절별 예상 한자를 한 글자씩(한글음·뜻 포함) 표시',
+                      '✨ 한자 인식 정확도 향상 — 카메라 해상도 상향, 작은 글자 고해상도 업스케일, 대비 강화·회색조 전처리로 흐린 목판·먹 인쇄 인식률 개선',
+                      '✨ 족보 이름 추출 효율 개선 — 아들 표기 男 추가 인식, 차례(첫째·둘째…)·관직·처가 계열 규칙을 정확히 적용',
+                    ],
+                  ),
+                  Divider(),
                   _Hist(
                     ver: 'v2.6.0',
                     date: '2026-06-04',

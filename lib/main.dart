@@ -28,6 +28,9 @@ Future<void> main() async {
     // 자산 사전 / DB 로딩
     await HanjaDict.instance.load();
     await DbService.instance.open();
+    // v2.7 — 앱을 다시 시작하면 항상 처음(빈) 작업 상태로 시작한다.
+    //        이전 세션에서 등록한 인물 데이터가 남아있지 않도록 시작 시 전체 클리어.
+    await DbService.instance.clearAll();
     await FamilySearchService.loadConfig();
 
     runApp(const ProviderScope(child: FamilySearchHelperApp()));

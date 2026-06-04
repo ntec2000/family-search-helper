@@ -46,18 +46,29 @@ class JokboParser {
   };
 
   /// OCR 인식 텍스트(세로쓰기 → 정렬된 평문)를 받아 인물 카드 목록 추출
-  static List<Person> parse(String rawText, {String? sourceImagePath}) {
+  static List<Person> parse(String rawText,
+      {String? sourceImagePath,
+      String? clanHanjaOverride,
+      String? clanHangulOverride}) {
     final normalized = _normalize(rawText);
     // 문서 전체에서 가문(본관) 성씨 자동 감지 — 예: "固城李氏…" → 李/이
-    final clan = Genealogy.detectClanSurname(normalized);
+    final detected = Genealogy.detectClanSurname(normalized);
+    // v2.7 — [족보작성]에서 미리 입력받은 성씨가 있으면 자동 감지보다 우선 적용한다.
+    final clanHanja = (clanHanjaOverride != null && clanHanjaOverride.isNotEmpty)
+        ? clanHanjaOverride
+        : detected?.$1;
+    final clanHangul =
+        (clanHangulOverride != null && clanHangulOverride.isNotEmpty)
+            ? clanHangulOverride
+            : detected?.$2;
     final entries = _splitByPerson(normalized);
 
     final persons = <Person>[];
     for (final block in entries) {
       final p = _parsePersonBlock(block,
           sourceImagePath: sourceImagePath,
-          clanHanja: clan?.$1,
-          clanHangul: clan?.$2);
+          clanHanja: clanHanja,
+          clanHangul: clanHangul);
       if (p != null) persons.add(p);
     }
     // v2.2 — 세(世) 기반 출생연도 추정 보완
@@ -81,11 +92,12 @@ class JokboParser {
 
   static List<String> _splitByPerson(String text) {
     // 子 가 干支(甲子·壬子 등)의 일부일 때는 분리하지 않는다(앞 글자가 天干이면 제외)
-    final pattern = RegExp(r'(?<![甲乙丙丁戊己庚辛壬癸])(?=[子女])');
+    // 子·男=아들, 女=딸. (일부 족보는 아들을 男으로 표기)
+    final pattern = RegExp(r'(?<![甲乙丙丁戊己庚辛壬癸])(?=[子女男])');
     final parts = text.split(pattern).where((s) => s.trim().isNotEmpty).toList();
     return parts.where((p) {
       final t = p.trim();
-      return t.startsWith('子') || t.startsWith('女');
+      return t.startsWith('子') || t.startsWith('女') || t.startsWith('男');
     }).toList();
   }
 
@@ -135,8 +147,9 @@ class JokboParser {
     }
 
     // 성별 + (차례) + 이름: 子/女 [차례한자] 이름(한자 1~3자)
+    // 子/男=아들, 女=딸 + (차례) + 이름(한자 1~3자)
     final nameMatch =
-        RegExp(r'^([子女])\s*([一二三四五六七八九十]+)?\s*([一-鿿]{1,3})')
+        RegExp(r'^([子女男])\s*([一二三四五六七八九十]+)?\s*([一-鿿]{1,3})')
             .firstMatch(t);
     if (nameMatch == null) return null;
     final isFemale = nameMatch.group(1) == '女';

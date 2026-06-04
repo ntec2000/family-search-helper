@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:image/image.dart' as img;
+import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -17,7 +18,19 @@ import 'person_card_screen.dart';
 
 class CaptureScreen extends StatefulWidget {
   final String? imagePath;
-  const CaptureScreen({super.key, this.imagePath});
+
+  /// v2.7 — [족보작성] 흐름에서 미리 입력받은 성씨(姓).
+  /// 인식 결과의 가문(본관) 성씨로 강제 적용되어, 자녀 이름을 "성+이름"으로
+  /// 표기하고 딸은 "○씨"로 표기한다. (자동 감지보다 우선)
+  final String? surnameHanja;
+  final String? surnameHangul;
+
+  const CaptureScreen({
+    super.key,
+    this.imagePath,
+    this.surnameHanja,
+    this.surnameHangul,
+  });
 
   @override
   State<CaptureScreen> createState() => _CaptureScreenState();
@@ -32,6 +45,10 @@ class _CaptureScreenState extends State<CaptureScreen> {
   /// 이 값이 설정되면 이미지를 화면에 보여주기만 하고, OCR 은
   /// 사용자가 "한자 인식 시작" 을 누를 때만 실행한다. (자동 실행 X)
   String? _previewPath;
+
+  bool get _hasPresetSurname =>
+      (widget.surnameHangul ?? '').isNotEmpty ||
+      (widget.surnameHanja ?? '').isNotEmpty;
 
   @override
   void initState() {
@@ -48,21 +65,21 @@ class _CaptureScreenState extends State<CaptureScreen> {
     try {
       final perm = await Permission.camera.request();
       if (!perm.isGranted) {
-        if (mounted) setState(() => _status = '카메라 권한이 필요합니다');
+        if (mounted) setState(() => _status = '카메라 권한이 필요합니다. 갤러리에서 선택할 수 있습니다.');
         return;
       }
       final cams = await availableCameras();
       if (cams.isEmpty) {
-        if (mounted) setState(() => _status = '사용 가능한 카메라가 없습니다');
+        if (mounted) setState(() => _status = '사용 가능한 카메라가 없습니다. 갤러리에서 선택할 수 있습니다.');
         return;
       }
       final c =
-          CameraController(cams.first, ResolutionPreset.high, enableAudio: false);
+          CameraController(cams.first, ResolutionPreset.veryHigh, enableAudio: false);
       await c.initialize();
       if (!mounted) return;
       setState(() => _camera = c);
     } catch (e) {
-      if (mounted) setState(() => _status = '카메라 초기화 오류: $e');
+      if (mounted) setState(() => _status = '카메라 초기화 오류: $e\n갤러리에서 선택할 수 있습니다.');
     }
   }
 
@@ -87,6 +104,29 @@ class _CaptureScreenState extends State<CaptureScreen> {
     }
   }
 
+  /// v2.7 — 같은 화면에서 갤러리 이미지 선택(올리기). 선택하면 미리보기로 표시.
+  Future<void> _pickFromGallery() async {
+    if (_busy) return;
+    try {
+      final x = await ImagePicker().pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 2600,
+        maxHeight: 2600,
+        imageQuality: 95,
+      );
+      if (x != null && mounted) {
+        setState(() {
+          _previewPath = x.path;
+          _status = '';
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _status = '이미지를 불러오지 못했습니다: $e');
+      }
+    }
+  }
+
   /// #1 — 필요한 부분만 잘라서 추출. 현재 미리보기 이미지를 자르기 화면으로
   /// 보내고, 돌아온 잘린 이미지 경로로 미리보기를 교체한다.
   Future<void> _cropImage() async {
@@ -104,17 +144,36 @@ class _CaptureScreenState extends State<CaptureScreen> {
   /// ML Kit 네이티브 디코더가 일부 JPEG(프로그레시브·색프로파일·EXIF)에서
   /// 강제 종료되는 것을 방지하기 위해, Dart 측에서 표준 베이스라인 JPEG로
   /// 다시 인코딩한 임시 파일을 만들어 그 경로를 사용한다.
+  ///
+  /// v2.7 — 한자 인식 정확도 향상(#4):
+  ///   · 글자가 작은 족보는 고해상도로 업스케일(최대 폭 2400) 하여 획을 또렷하게
+  ///   · 흐린 목판·먹 인쇄 대응을 위해 채도를 낮추고(회색조 효과) 대비를 높임
+  ///   · 위 전처리 후 표준 베이스라인 JPEG(고품질)로 재인코딩
   Future<String> _normalizeImage(String path) async {
     final bytes = await File(path).readAsBytes();
     final decoded = img.decodeImage(bytes);
     if (decoded == null) {
       throw Exception('지원하지 않는 이미지 형식이거나 파일이 손상되었습니다');
     }
-    final oriented = img.bakeOrientation(decoded);
-    final normalized = oriented.width > 1600
-        ? img.copyResize(oriented, width: 1600)
-        : oriented;
-    final jpg = img.encodeJpg(normalized, quality: 88);
+    img.Image work = img.bakeOrientation(decoded);
+
+    // 해상도 정규화 — 너무 작으면 업스케일(획 또렷), 너무 크면 다운스케일(메모리).
+    final w = work.width;
+    if (w > 0 && w < 2200) {
+      work = img.copyResize(work,
+          width: 2200, interpolation: img.Interpolation.cubic);
+    } else if (w > 2600) {
+      work = img.copyResize(work, width: 2600);
+    }
+
+    // 대비 향상 + 채도 제거(회색조화) — 인쇄 농담이 옅은 족보의 한자 인식률 개선.
+    try {
+      work = img.adjustColor(work, contrast: 1.18, saturation: 0.0);
+    } catch (_) {
+      // 전처리 실패 시에도 원본 정규화 이미지로 진행 (안전 폴백)
+    }
+
+    final jpg = img.encodeJpg(work, quality: 92);
     final dir = await getTemporaryDirectory();
     final out = File(
         p.join(dir.path, 'ocr_${DateTime.now().millisecondsSinceEpoch}.jpg'));
@@ -132,7 +191,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
       _status = '이미지 준비 중...';
     });
     try {
-      // 1) 안전한 표준 JPEG 로 정규화 (네이티브 크래시 방지)
+      // 1) 안전한 표준 JPEG 로 정규화 + 인식 전처리 (네이티브 크래시 방지·정확도↑)
       final safePath = await _normalizeImage(path);
 
       if (!mounted) return;
@@ -142,22 +201,29 @@ class _CaptureScreenState extends State<CaptureScreen> {
 
       if (!mounted) return;
       setState(() => _status = '족보 정보 분석 중...');
-      // 3) 파싱
-      final persons = JokboParser.parse(ocr.text, sourceImagePath: safePath);
+      // 3) 파싱 — 미리 입력받은 성씨가 있으면 가문(본관) 성씨로 강제 적용
+      final persons = JokboParser.parse(
+        ocr.text,
+        sourceImagePath: safePath,
+        clanHanjaOverride: widget.surnameHanja,
+        clanHangulOverride: widget.surnameHangul,
+      );
 
-      // 3-1) 성씨 누락 시 수동 입력 → 전체 인물에 동일 적용 (v2.2)
-      final needsSurname =
-          persons.any((p) => (p.surnameHanja ?? '').isEmpty &&
-              (p.surnameHangul ?? '').isEmpty);
-      if (needsSurname && persons.isNotEmpty && mounted) {
-        final entered = await showSurnameInputDialog(context);
-        if (entered != null) {
-          final sHanja = entered.$1, sHangul = entered.$2;
-          for (final p in persons) {
-            if ((p.surnameHanja ?? '').isEmpty &&
-                (p.surnameHangul ?? '').isEmpty) {
-              p.surnameHanja = sHanja.isEmpty ? null : sHanja;
-              p.surnameHangul = sHangul.isEmpty ? null : sHangul;
+      // 3-1) 성씨가 미리 입력되지 않았고, 인식 결과에 성씨 누락이 있으면
+      //      수동 입력 → 전체 인물에 동일 적용 (v2.2)
+      if (!_hasPresetSurname) {
+        final needsSurname = persons.any((p) =>
+            (p.surnameHanja ?? '').isEmpty && (p.surnameHangul ?? '').isEmpty);
+        if (needsSurname && persons.isNotEmpty && mounted) {
+          final entered = await showSurnameInputDialog(context);
+          if (entered != null) {
+            final sHanja = entered.$1, sHangul = entered.$2;
+            for (final p in persons) {
+              if ((p.surnameHanja ?? '').isEmpty &&
+                  (p.surnameHangul ?? '').isEmpty) {
+                p.surnameHanja = sHanja.isEmpty ? null : sHanja;
+                p.surnameHangul = sHangul.isEmpty ? null : sHangul;
+              }
             }
           }
         }
@@ -209,6 +275,12 @@ class _CaptureScreenState extends State<CaptureScreen> {
       final person = Person(
         id: 'manual_${now.millisecondsSinceEpoch}',
         sourceImagePath: _previewPath,
+        surnameHanja: widget.surnameHanja?.isEmpty ?? true
+            ? null
+            : widget.surnameHanja,
+        surnameHangul: widget.surnameHangul?.isEmpty ?? true
+            ? null
+            : widget.surnameHangul,
         createdAt: now,
         updatedAt: now,
       );
@@ -235,7 +307,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
   /// (이전엔 갤러리 경우 빈 화면에서 무한 로딩되던 버그)
   void _retake() {
     if (widget.imagePath != null) {
-      // 갤러리 모드: 홈으로 돌아가 다시 선택
+      // 홈에서 직접 갤러리 이미지를 들고 진입한 경우: 홈으로 돌아가 다시 선택
       Navigator.pop(context);
       return;
     }
@@ -243,7 +315,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
       _previewPath = null;
       _status = '';
     });
-    _initCamera();
+    if (_camera == null) _initCamera();
   }
 
   @override
@@ -256,7 +328,17 @@ class _CaptureScreenState extends State<CaptureScreen> {
   Widget build(BuildContext context) {
     final hasPreview = _previewPath != null;
     return Scaffold(
-      appBar: AppBar(title: Text(hasPreview ? '이미지 확인' : '족보 촬영')),
+      appBar: AppBar(
+        title: Text(hasPreview ? '이미지 확인' : '족보 이미지 입력'),
+        actions: [
+          if (!hasPreview)
+            IconButton(
+              icon: const Icon(Icons.photo_library_outlined),
+              tooltip: '갤러리에서 선택',
+              onPressed: _busy ? null : _pickFromGallery,
+            ),
+        ],
+      ),
       body: Stack(
         children: [
           // 1) 미리보기(촬영/선택한 이미지) — 표시만, 자동 인식 안 함
@@ -276,19 +358,29 @@ class _CaptureScreenState extends State<CaptureScreen> {
           // 2) 카메라 라이브 프리뷰
           else if (_camera != null && _camera!.value.isInitialized)
             Positioned.fill(child: CameraPreview(_camera!))
-          // 3) 로딩/상태
+          // 3) 카메라 미사용/오류 — 안내 + 갤러리 선택 버튼
           else
             Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const CircularProgressIndicator(),
-                  if (_status.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: Text(_status, textAlign: TextAlign.center),
-                    ),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_status.isNotEmpty) ...[
+                      const Icon(Icons.image_outlined,
+                          size: 64, color: HanjiColors.mukSoft),
+                      const SizedBox(height: 12),
+                      Text(_status, textAlign: TextAlign.center),
+                      const SizedBox(height: 16),
+                      FilledButton.icon(
+                        onPressed: _pickFromGallery,
+                        icon: const Icon(Icons.photo_library_outlined),
+                        label: const Text('갤러리에서 선택'),
+                      ),
+                    ] else
+                      const CircularProgressIndicator(),
+                  ],
+                ),
               ),
             ),
 
@@ -304,6 +396,15 @@ class _CaptureScreenState extends State<CaptureScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    if (_hasPresetSurname)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Text(
+                          '적용 성씨: ${(widget.surnameHanja ?? '').isNotEmpty ? '${widget.surnameHanja} ' : ''}${widget.surnameHangul ?? ''}',
+                          style: const TextStyle(
+                              color: HanjiColors.hanji, fontSize: 13),
+                        ),
+                      ),
                     Row(
                       children: [
                         Expanded(

@@ -6,7 +6,7 @@ import 'handwriting_screen.dart';
 
 /// 한자 도구 화면 (v2.6 — 이름 찾기 + 한자음 검색 통합).
 /// 탭 1) 통합 검색: 한글(이름·단어)을 입력하면 음절별로 해당 한자·한글음·뜻을 모두 표시.
-///        예) "최상희" → 최/상/희,  "후기성도" → 후/기/성/도 각 음절의 한자음을 찾아 표시.
+///        예)후기성도 → 후/기/성/도 각 음절의 예상 한자(한글음)를 찾아 표시.
 /// 탭 2) 필기 인식 (#14)
 class HanjaToolsScreen extends StatelessWidget {
   const HanjaToolsScreen({super.key});
@@ -80,8 +80,9 @@ class _UnifiedSearchTabState extends State<_UnifiedSearchTab> {
       padding: EdgeInsets.fromLTRB(16, 16, 16, 48 + bottom),
       children: [
         const Text(
-            '한글(이름·단어)을 입력하고 검색하면 각 음절의 한자음에 해당하는 한자를 음·뜻과 함께 모두 보여줍니다.\n'
-            '예) "최상희" → 최/상/희,  "후기성도" → 후/기/성/도',
+            '한글(이름·단어)을 입력하고 검색하면 각 음절의 한자음(한글음)에 해당하는 예상 한자를\n'
+            '음·뜻과 함께 한 글자씩 모두 보여줍니다.\n'
+            '예)후기성도 → 후 / 기 / 성 / 도 (각 음절의 예상 한자 표시)',
             style: TextStyle(color: HanjiColors.mukSoft, height: 1.5)),
         const SizedBox(height: 12),
         Row(children: [
@@ -91,7 +92,7 @@ class _UnifiedSearchTabState extends State<_UnifiedSearchTab> {
               textInputAction: TextInputAction.search,
               onSubmitted: (_) => _search(),
               decoration: const InputDecoration(
-                hintText: '예) 최상희 · 후기성도',
+                hintText: '예)후기성도',
                 prefixIcon: Icon(Icons.search),
               ),
             ),

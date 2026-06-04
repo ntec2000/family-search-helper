@@ -2,11 +2,11 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
 import '../models/person.dart';
 import '../services/db_service.dart';
 import '../theme/traditional_theme.dart';
+import '../widgets/surname_input_dialog.dart';
 import 'capture_screen.dart';
 import 'person_card_screen.dart';
 import 'lunar_converter_screen.dart';
@@ -54,7 +54,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   /// v2.6 — 메인화면 새로고침: 등록된 인물 데이터를 모두 비우고,
-  /// 열려 있는 모든 하위 화면을 닫아 \"처음 입력받는\" 초기 상태로 되돌린다.
+  /// 열려 있는 모든 하위 화면을 닫아 "처음 입력받는" 초기 상태로 되돌린다.
   Future<void> _refresh() async {
     final ok = await showDialog<bool>(
       context: context,
@@ -106,6 +106,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     _reload();
   }
 
+  /// v2.7 — [족보작성] 진입 흐름.
+  /// 1) 성씨(한글) 입력 → [입력] → 한자 후보 선택(선택 화면)
+  /// 2) 완료하면 한글 성 + 한자 성을 기본 성씨로 삼아
+  /// 3) 이미지 입력 화면(촬영/갤러리)으로 이동 → 인식 → 이름 추출 규칙대로 나열
+  Future<void> _startCompose() async {
+    // (한자성, 한글성) — 건너뛰면 null
+    final surname = await showSurnameInputDialog(context);
+    if (!mounted) return;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CaptureScreen(
+          surnameHanja: surname?.$1,
+          surnameHangul: surname?.$2,
+        ),
+      ),
+    );
+    _reload();
+  }
+
   /// #2 — 앱 종료: 화면만 사라지는 것이 아니라 프로세스를 완전히 종료한다.
   Future<void> _confirmExit() async {
     final ok = await showDialog<bool>(
@@ -143,28 +163,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         '개발: Peter S. Choi · 문의: ntec21c@gmail.com\n'
         '배포처(APK): https://github.com/ntec2000/family-search-helper/releases';
     await Share.share(msg, subject: '가족역사기록 도우미 (Family Search Helper)');
-  }
-
-  Future<void> _pickFromGallery() async {
-    try {
-      final x = await ImagePicker().pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 2400,
-        maxHeight: 2400,
-        imageQuality: 88,
-      );
-      if (x != null && mounted) {
-        await Navigator.push(context,
-            MaterialPageRoute(builder: (_) => CaptureScreen(imagePath: x.path)));
-        _reload();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('이미지를 불러오지 못했습니다: $e')),
-        );
-      }
-    }
   }
 
   void _openMenu(String route) {
@@ -263,28 +261,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ],
       )),
-      floatingActionButton: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          FloatingActionButton.extended(
-            heroTag: 'gallery',
-            onPressed: _pickFromGallery,
-            icon: const Icon(Icons.photo_library_outlined),
-            label: const Text('갤러리'),
-            backgroundColor: HanjiColors.mukSoft,
-          ),
-          const SizedBox(width: 12),
-          FloatingActionButton.extended(
-            heroTag: 'camera',
-            onPressed: () async {
-              await Navigator.push(context,
-                  MaterialPageRoute(builder: (_) => const CaptureScreen()));
-              _reload();
-            },
-            icon: const Icon(Icons.photo_camera_outlined),
-            label: const Text('촬영'),
-          ),
-        ],
+      // v2.7 — 이미지 입력 전에는 [갤러리/촬영]을 노출하지 않고,
+      //        [족보작성] 하나만 보여준다. 누르면 성씨 입력 → 한자 선택 →
+      //        이미지 입력 화면으로 진행한다.
+      floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'compose',
+        onPressed: _startCompose,
+        icon: const Icon(Icons.menu_book),
+        label: const Text('족보작성'),
       ),
     );
   }
@@ -330,7 +314,7 @@ class _EmptyState extends StatelessWidget {
             SizedBox(height: 16),
             Text('族譜', style: TextStyle(fontSize: 36, color: HanjiColors.muk, letterSpacing: 8)),
             SizedBox(height: 8),
-            Text('족보 사진을 촬영하거나 갤러리에서 선택하여\n한자 인식을 시작하세요',
+            Text('아래 [족보작성] 버튼을 눌러 성씨를 입력한 뒤\n족보 사진을 촬영하거나 갤러리에서 선택하여\n한자 인식을 시작하세요',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: HanjiColors.mukSoft, height: 1.6)),
           ],
