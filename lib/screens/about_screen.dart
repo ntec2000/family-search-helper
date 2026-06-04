@@ -43,7 +43,7 @@ class AboutScreen extends StatelessWidget {
                 Text('Family Search Helper',
                     style: TextStyle(fontSize: 12, color: HanjiColors.mukSoft, letterSpacing: 2)),
                 SizedBox(height: 16),
-                Text('v2.9.0',
+                Text('v3.0.0',
                     style: TextStyle(fontSize: 14, color: HanjiColors.ju, letterSpacing: 2)),
               ],
             ),
@@ -144,6 +144,19 @@ class AboutScreen extends StatelessWidget {
               padding: const EdgeInsets.all(8),
               child: Column(
                 children: const [
+                  _Hist(
+                    ver: 'v3.0.0',
+                    date: '2026-06-04',
+                    items: [
+                      '📖 족보 이름 인식 규칙 전면 정밀화 — 본인 이름은 가문(아버지) 성 + 이름으로 조합(예: 昃 → 이측), 字(자)는 관례명으로 메모에 기록',
+                      '🔢 차례(형제 순서) 규칙 정확 적용 — 장남은 숫자 생략(첫째아들), 二·三·四 등 차례 한자가 있으면 해당 순서로 표기',
+                      '👧 딸 순서는 같은 아버지의 연속한 女 묶음 안에서 첫째딸·둘째딸…로 부여(아들이 등장하면 새 묶음으로 초기화)',
+                      '💍 配(아내)·父(장인)·祖·曾祖·外祖 처가 계열 표기 정밀화 — 사위 이름 미상 시 \'○씨의 남편(이름 미상)\'으로 표기',
+                      '📤 내보내기에 관계(첫째아들/둘째딸 등, 父 기준) 항목 추가 — 화면·텍스트 모두 형제 순서 표시',
+                      '✅ 224면 실제 족보 이미지 전수 시뮬레이션 통과(아들 12·딸 5 관계 검증) 후 빌드',
+                    ],
+                  ),
+                  Divider(),
                   _Hist(
                     ver: 'v2.9.0',
                     date: '2026-06-04',

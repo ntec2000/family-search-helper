@@ -242,4 +242,80 @@ void main() {
     });
   });
 
+
+  group('v3.0 시뮬레이션 — 차례(형제 순서) 규칙 전수 검증 [固城李氏 思菴公派譜 224면]', () {
+    // 실제 이미지(224면)를 규칙대로 선형화한 OCR 모사 텍스트.
+    // 차례 한자(二·三·四)는 子 와 이름 사이에 표기된다. 장남은 숫자 생략.
+    // 딸은 연속한 女 묶음 안의 등장 순서로 첫째딸·둘째딸…(아들이 나오면 초기화).
+    const page = '固城李氏 思菴公派譜 '
+        '子 四 昃 二十世 字良甫 丁未生 配原州邊氏 父國聖 '
+        '女 權頭 安東人 '
+        '子 格 二十一世 壬辰生 '
+        '子 聖甲 二十二世 甲子生 '
+        '子 二 核 二十一世 丁酉生 配坡平尹氏 父光岳 '
+        '女 權龜壽 安東人 '
+        '女 李集 全州人 '
+        '子 顯五 二十二世 庚午生 '
+        '子 承烈 二十三世 辛丑生 '
+        '子 二 承勳 二十三世 出系顯龍后 '
+        '子 賢東 二十四世 癸酉生 配交河盧氏 父愼 '
+        '子 炳吉 二十五世 '
+        '子 二 炳旭 出系寅東后 '
+        '子 三 炳烈 '
+        '子 四 炳直 '
+        '女 金免傑 金海人 '
+        '女 尹兢秀 海平人';
+
+    final list = JokboParser.parse(page);
+    Person son(String n) => list.firstWhere((e) => e.nameHanja == n);
+    Person dau(String husband) =>
+        list.firstWhere((e) => e.gender == 'F' && e.spouseHanja == husband);
+
+    test('아들 차례(첫째=장남, 숫자 표기는 해당 순서)', () {
+      expect(son('昃').relation, '넷째아들'); // 四
+      expect(son('格').relation, '첫째아들'); // 장남(숫자 생략)
+      expect(son('聖甲').relation, '첫째아들');
+      expect(son('核').relation, '둘째아들'); // 二
+      expect(son('顯五').relation, '첫째아들');
+      expect(son('承烈').relation, '첫째아들');
+      expect(son('承勳').relation, '둘째아들'); // 二
+      expect(son('賢東').relation, '첫째아들');
+      expect(son('炳吉').relation, '첫째아들');
+      expect(son('炳旭').relation, '둘째아들'); // 二
+      expect(son('炳烈').relation, '셋째아들'); // 三
+      expect(son('炳直').relation, '넷째아들'); // 四
+    });
+
+    test('딸 차례(연속한 女 묶음 안의 등장 순서)', () {
+      expect(dau('權頭').relation, '첫째딸'); // 昃의 딸
+      expect(dau('權龜壽').relation, '첫째딸'); // 核의 첫째딸
+      expect(dau('李集').relation, '둘째딸'); // 核의 둘째딸
+      expect(dau('金免傑').relation, '첫째딸'); // 賢東의 첫째딸
+      expect(dau('尹兢秀').relation, '둘째딸'); // 賢東의 둘째딸
+    });
+
+    test('본인 이름 = 가문 성 + 이름 (李 상속), 딸은 이름 없이 이씨', () {
+      expect(son('昃').surnameHanja, '李');
+      expect(son('昃').surnameHangul, '이');
+      for (final d in list.where((e) => e.gender == 'F')) {
+        expect(d.nameHanja, '');
+        expect(d.surnameHanja, '李');
+      }
+    });
+
+    test('出系(출계) 특이사항이 메모에 기록된다', () {
+      expect(son('承勳').note, contains('出系'));
+      expect(son('承勳').note, contains('顯龍'));
+      expect(son('炳旭').note, contains('寅東'));
+    });
+
+    test('配(처가) 계열은 배우자 필드로 귀속된다', () {
+      expect(son('昃').spouseBongwan, '原州');
+      expect(son('昃').spouseHanja, contains('邊氏'));
+      expect(son('昃').spouseFather, '國聖');
+      expect(son('核').spouseFather, '光岳');
+      expect(son('賢東').spouseFather, '愼');
+    });
+  });
+
 }

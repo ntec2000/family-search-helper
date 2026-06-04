@@ -46,7 +46,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ListTile(
           leading: const Icon(Icons.info_outline, color: HanjiColors.muk),
           title: const Text('앱 정보 / 개발자 / 히스토리'),
-          subtitle: const Text('v2.9.0 · Peter S. Choi · ntec21c@gmail.com'),
+          subtitle: const Text('v3.0.0 · Peter S. Choi · ntec21c@gmail.com'),
           trailing: const Icon(Icons.chevron_right),
           onTap: () => Navigator.push(
               context, MaterialPageRoute(builder: (_) => const AboutScreen())),

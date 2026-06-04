@@ -60,14 +60,18 @@ class _State extends State<ExportScreen> {
             hanja: '', hangul: '',
             surnameHanja: p.surnameHanja, surnameHangul: p.surnameHangul,
             isFemale: true);
+        final dauRel = (p.relation ?? '').isNotEmpty ? p.relation! : '딸';
         buf.writeln(div);
-        buf.writeln('${i + 1}. $segaTag${np.singleHangul} (딸)');
+        buf.writeln('${i + 1}. $segaTag${np.singleHangul} ($dauRel)');
         buf.writeln('  성(姓)    : ${np.surnameHangul} ${np.surnameHanja}');
         buf.writeln('  이름      : (이름 없음 → ${np.singleHangul})');
         buf.writeln('  성별      : 여');
+        buf.writeln('  관계      : $dauRel (父 기준)');
         if ((p.spouseHanja ?? '').isNotEmpty) {
           buf.writeln('  사위      : ${dict.toHangul(p.spouseHanja!)} ${p.spouseHanja}'
               '${(p.spouseBongwan ?? '').isNotEmpty ? '   [본관: ${p.spouseBongwan}]' : ''}');
+        } else if ((p.spouseBongwan ?? '').isNotEmpty) {
+          buf.writeln('  사위      : ${np.singleHangul}의 남편 (이름 미상)   [지역: ${p.spouseBongwan}人]');
         }
         if ((p.note ?? '').isNotEmpty) buf.writeln('  특이사항  : ${p.note}');
         buf.writeln();
@@ -92,6 +96,9 @@ class _State extends State<ExportScreen> {
           '${np.givenRoman.isNotEmpty ? ' (${np.givenRoman})' : ''}');
       buf.writeln('  로마자    : $roman');
       buf.writeln('  성별      : 남');
+      if ((p.relation ?? '').isNotEmpty) {
+        buf.writeln('  관계      : ${p.relation} (父 기준)');
+      }
       if (p.bongwan != null) {
         buf.writeln('  본관      : ${_kh(p.bongwan)}'
             '${p.pa != null ? '   派: ${p.pa}' : ''}');
