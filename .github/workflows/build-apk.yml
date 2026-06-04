@@ -70,31 +70,31 @@ jobs:
       - name: Rename APKs for distribution
         run: |
           mkdir -p dist
-          cp build/app/outputs/flutter-apk/app-release.apk dist/family-search-helper-v2.8.0-universal.apk
-          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk dist/family-search-helper-v2.8.0-arm64.apk
-          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk dist/family-search-helper-v2.8.0-arm32.apk
-          cp build/app/outputs/flutter-apk/app-x86_64-release.apk dist/family-search-helper-v2.8.0-x86_64.apk
+          cp build/app/outputs/flutter-apk/app-release.apk dist/family-search-helper-v2.9.0-universal.apk
+          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk dist/family-search-helper-v2.9.0-arm64.apk
+          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk dist/family-search-helper-v2.9.0-arm32.apk
+          cp build/app/outputs/flutter-apk/app-x86_64-release.apk dist/family-search-helper-v2.9.0-x86_64.apk
           ls -lh dist/
 
       - name: Upload Universal APK (artifact)
         uses: actions/upload-artifact@v4
         with:
           name: family-search-helper-universal-apk
-          path: dist/family-search-helper-v2.8.0-universal.apk
+          path: dist/family-search-helper-v2.9.0-universal.apk
           retention-days: 90
 
       - name: Upload Split APKs (artifact)
         uses: actions/upload-artifact@v4
         with:
           name: family-search-helper-split-apks
-          path: dist/family-search-helper-v2.8.0-arm64.apk
+          path: dist/family-search-helper-v2.9.0-arm64.apk
           retention-days: 90
 
       - name: Publish Release (latest)
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v2.8.0
-          name: "가족역사기록 도우미 v2.8.0"
+          tag_name: v2.9.0
+          name: "가족역사기록 도우미 v2.9.0"
           body: |
             # 가족역사기록 도우미 (Family Search Helper) v2.8.0
 
@@ -102,10 +102,10 @@ jobs:
             **문의**: ntec21c@gmail.com
 
             ## 다운로드
-            - **family-search-helper-v2.8.0-universal.apk** (~80MB, 모든 기기 호환 — 권장)
-            - **family-search-helper-v2.8.0-arm64.apk** (~55MB, 최신 폰 전용, 권장)
-            - **family-search-helper-v2.8.0-arm32.apk** (구형 폰)
-            - **family-search-helper-v2.8.0-x86_64.apk** (에뮬레이터용)
+            - **family-search-helper-v2.9.0-universal.apk** (~80MB, 모든 기기 호환 — 권장)
+            - **family-search-helper-v2.9.0-arm64.apk** (~55MB, 최신 폰 전용, 권장)
+            - **family-search-helper-v2.9.0-arm32.apk** (구형 폰)
+            - **family-search-helper-v2.9.0-x86_64.apk** (에뮬레이터용)
 
             ## 설치
             1. APK 파일을 전화기로 전송 (이메일/카카오톡/USB 등)
@@ -123,6 +123,12 @@ jobs:
               - FamilySearch 연동 모드: 로그인 후 가계도에 인물 직접 등록 (Client ID 입력 시)
             - GEDCOM 5.5.1 내보내기 / FamilySearch OAuth 직접 동기화
             - 전통 한지·먹 테마
+
+            ## v2.9.0 변경사항 (성씨 한자 전체 표시·성씨 한자만 필터·형제 순서 표시·이미지 준비 속도 개선)
+            - 🛠 **[성씨 입력] 한자 화면 잘림 해결** — 다이얼로그를 넓히고 한자 후보 영역을 스크롤 가능하게 하여 모든 한자가 화면에 보임
+            - 🛠 **성씨로 쓰이는 한자만 표시** — 후보를 성씨 한자로 필터링하고 한글음을 병기
+            - 🛠 **첫째아들·둘째아들 등 형제 순서 표시** — 차례 표기가 없어도 형제 순서대로 관계를 자동 부여
+            - ⚡ **'이미지 준비 중' 시간 단축** — 느린 확대 보정을 제거하고 가벼운 전처리로 전환
 
             ## v2.8.0 변경사항 (성씨 입력 라이브 후보·카메라/갤러리 선택 메뉴·인식 멈춤(ANR) 해결·시작 안정화)
             - 🛠 **[성씨 입력] 반응 없음 해결** — 한글 성을 적으면 입력 즉시 한자 후보가 표시 ([입력] 버튼과 무관하게 후보 노출)
@@ -189,10 +195,10 @@ jobs:
             - **기반**: 한자 OCR 모델을 APK 에 번들(`text-recognition-chinese:16.0.1`) — 완전 오프라인·온디바이스
             - **검증(배포 전 시뮬레이션)**: 정적 분석 무오류 + 단위 테스트 통과 + 빌드 APK 내부 한자 인식 모델 포함 + 모든 arm64 .so 16KB 페이지 정렬 확인
           files: |
-            dist/family-search-helper-v2.8.0-universal.apk
-            dist/family-search-helper-v2.8.0-arm64.apk
-            dist/family-search-helper-v2.8.0-arm32.apk
-            dist/family-search-helper-v2.8.0-x86_64.apk
+            dist/family-search-helper-v2.9.0-universal.apk
+            dist/family-search-helper-v2.9.0-arm64.apk
+            dist/family-search-helper-v2.9.0-arm32.apk
+            dist/family-search-helper-v2.9.0-x86_64.apk
           draft: false
           prerelease: false
           make_latest: "true"

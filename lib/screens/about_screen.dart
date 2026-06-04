@@ -43,7 +43,7 @@ class AboutScreen extends StatelessWidget {
                 Text('Family Search Helper',
                     style: TextStyle(fontSize: 12, color: HanjiColors.mukSoft, letterSpacing: 2)),
                 SizedBox(height: 16),
-                Text('v2.8.0',
+                Text('v2.9.0',
                     style: TextStyle(fontSize: 14, color: HanjiColors.ju, letterSpacing: 2)),
               ],
             ),
@@ -144,6 +144,17 @@ class AboutScreen extends StatelessWidget {
               padding: const EdgeInsets.all(8),
               child: Column(
                 children: const [
+                  _Hist(
+                    ver: 'v2.9.0',
+                    date: '2026-06-04',
+                    items: [
+                      '🛠 [성씨 입력] 한자 선택 화면이 잘려 보이던 문제 해결 — 다이얼로그를 넓히고 한자 후보 영역을 스크롤 가능하게 하여 모든 한자가 화면에 보이도록 개선',
+                      '🛠 [성씨 입력] 후보를 성씨로 실제 쓰이는 한자만 표시하도록 필터링(한자에 한글음 병기)',
+                      '🛠 족보 이미지 인식 후 첫째아들·둘째아들 등 형제 순서(관계)가 표시되지 않던 문제 해결 — 차례 표기가 없어도 형제 순서대로 자동 부여',
+                      '⚡ \'이미지 준비 중\' 지연 단축 — 느린 확대 보정을 제거하고 가벼운 전처리로 전환하여 인식 준비 시간을 크게 단축',
+                    ],
+                  ),
+                  Divider(),
                   _Hist(
                     ver: 'v2.8.0',
                     date: '2026-06-04',

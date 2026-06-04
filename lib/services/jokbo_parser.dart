@@ -45,6 +45,12 @@ class JokboParser {
     '六': '여섯째', '七': '일곱째', '八': '여덟째', '九': '아홉째', '十': '열째',
   };
 
+  /// 차례(차례 한자)가 없을 때 형제 순서(1부터)로 매기는 서수 라벨.
+  static const _ordinalByIndex = <String>[
+    '첫째', '둘째', '셋째', '넷째', '다섯째', '여섯째', '일곱째', '여덟째',
+    '아홉째', '열째', '열한째', '열두째', '열셋째', '열넷째', '열다섯째',
+  ];
+
   /// OCR 인식 텍스트(세로쓰기 → 정렬된 평문)를 받아 인물 카드 목록 추출
   static List<Person> parse(String rawText,
       {String? sourceImagePath,
@@ -70,6 +76,25 @@ class JokboParser {
           clanHanja: clanHanja,
           clanHangul: clanHangul);
       if (p != null) persons.add(p);
+    }
+    // v2.9 #2 — 차례(一二三…) 표기가 없는 자녀에게 형제 순서대로
+    //          '첫째아들/둘째아들/첫째딸…' 관계를 부여한다.
+    //          (명시적 차례가 있으면 그대로 두고 순번만 증가시킨다.)
+    var sonSeq = 0, dauSeq = 0;
+    for (final p in persons) {
+      final m = RegExp(r'^([子女男])\s*([一二三四五六七八九十]+)?')
+          .firstMatch((p.rawText ?? '').trim());
+      final oc = m?.group(2);
+      final explicit =
+          oc != null && oc.length == 1 && _ordinal[oc] != null;
+      final isFemale = p.gender == 'F';
+      final seq = isFemale ? (dauSeq += 1) : (sonSeq += 1);
+      if (!explicit) {
+        final lab = seq - 1 < _ordinalByIndex.length
+            ? _ordinalByIndex[seq - 1]
+            : '$seq번째';
+        p.relation = '$lab${isFemale ? '딸' : '아들'}';
+      }
     }
     // v2.2 — 세(世) 기반 출생연도 추정 보완
     Genealogy.fillGenerationEstimates(persons);

@@ -25,16 +25,19 @@ Uint8List _processImageBytes(Uint8List bytes) {
   final decoded = img.decodeImage(bytes);
   if (decoded == null) return Uint8List(0);
   img.Image work = img.bakeOrientation(decoded);
+  // v2.9 #3 — '이미지 준비 중' 지연 최소화.
+  //  · 느린 cubic 업스케일을 제거(소형 이미지를 키워도 OCR 정확도 향상은 미미하고
+  //    처리시간만 크게 늘어남). 큰 이미지만 빠른 선형 보간으로 다운스케일한다.
+  //  · 무거운 adjustColor(행렬 연산) 대신 가벼운 grayscale 로 대비를 확보한다.
   final w = work.width;
-  if (w > 0 && w < 2200) {
-    work = img.copyResize(work, width: 2200, interpolation: img.Interpolation.cubic);
-  } else if (w > 2600) {
-    work = img.copyResize(work, width: 2600);
+  if (w > 2400) {
+    work = img.copyResize(work,
+        width: 2400, interpolation: img.Interpolation.linear);
   }
   try {
-    work = img.adjustColor(work, contrast: 1.18, saturation: 0.0);
+    work = img.grayscale(work);
   } catch (_) {}
-  return Uint8List.fromList(img.encodeJpg(work, quality: 92));
+  return Uint8List.fromList(img.encodeJpg(work, quality: 88));
 }
 
 class CaptureScreen extends StatefulWidget {
