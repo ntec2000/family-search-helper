@@ -60,6 +60,18 @@ class ParentChildReview {
         }
       }
     }
+    for (final parent in entries) {
+      for (final childId in parent.childrenIds) {
+        final child = byId[childId];
+        if (child == null) continue;
+        final linked = parent.gender == 'M'
+            ? child.fatherId == parent.id
+            : parent.gender == 'F' && child.motherId == parent.id;
+        if (!linked) {
+          issues.add('자녀-부모 역방향 연결 확인 필요: ${parent.id} → $childId');
+        }
+      }
+    }
     return issues;
   }
 
