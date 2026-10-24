@@ -27,12 +27,23 @@ class _ResultScreenState extends State<ResultScreen> {
   bool _saved = false;
   bool _saving = false;
   bool _largeText = false;
+  final TransformationController _imageTransform = TransformationController();
   final List<(Person, int, List<(String, String)>)> _excluded = [];
 
   @override
   void initState() {
     super.initState();
     _persons = List<Person>.from(widget.persons);
+  }
+
+  @override
+  void dispose() {
+    _imageTransform.dispose();
+    super.dispose();
+  }
+
+  void _resetImageZoom() {
+    _imageTransform.value = Matrix4.identity();
   }
 
   Future<void> _deletePerson(Person person) async {
