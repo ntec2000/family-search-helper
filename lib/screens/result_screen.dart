@@ -57,8 +57,20 @@ class _ResultScreenState extends State<ResultScreen> {
 
   void _restoreLastExcluded() {
     if (_saved || _excluded.isEmpty) return;
-    final (person, index) = _excluded.removeLast();
-    setState(() => _persons.insert(index.clamp(0, _persons.length), person));
+    final (person, index, links) = _excluded.removeLast();
+    setState(() {
+      _persons.insert(index.clamp(0, _persons.length), person);
+      for (final (parentId, childId) in links) {
+        final parents = _persons.where((p) => p.id == parentId);
+        final children = _persons.where((p) => p.id == childId);
+        if (parents.isEmpty || children.isEmpty) continue;
+        final parent = parents.first;
+        final child = children.first;
+        if (ParentChildReview.conflict(parent, child) == null) {
+          ParentChildReview.restoreReviewedLink(parent, child);
+        }
+      }
+    });
   }
 
   Future<void> _editCandidate(Person person) async {
