@@ -94,4 +94,16 @@ void main() {
     expect(child.fatherId, father.id);
   });
 
+  test('unlink father preserves mother link', () {
+    final father = person('father', 21);
+    final mother = person('mother', 21, gender: 'F');
+    final child = person('child', 22);
+    ParentChildReview.applyReviewedLink(father, child);
+    ParentChildReview.applyReviewedLink(mother, child);
+    ParentChildReview.unlink(father, child);
+    expect(child.fatherId, isNull);
+    expect(child.motherId, mother.id);
+    expect(mother.childrenIds, contains(child.id));
+  });
+
 }
