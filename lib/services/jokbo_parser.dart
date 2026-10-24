@@ -230,12 +230,12 @@ class JokboParser {
     }
 
     // 字 / 號 / 諡號 (본인부에서만). 字는 본명이 아닌 관례명이므로 메모에도 기록.
-    final ja = RegExp(r'字([一-鿿]{1,3})').firstMatch(personPart);
+    final ja = RegExp(r'字\s*([一-鿿]{1,3}?)(?=\s|$|[配生卒墓忌號娶出系])').firstMatch(personPart);
     if (ja != null) {
       person.ja = ja.group(1);
       addNote('字(자) ${dict.toHangul(ja.group(1)!)}(${ja.group(1)}) — 관례 때 받은 이름(본명 아님)');
     }
-    final ho = RegExp(r'號([一-鿿]{1,3})').firstMatch(personPart);
+    final ho = RegExp(r'(?<!諡)號\s*([一-鿿]{1,3}?)(?=\s|$|[配生卒墓忌字娶出系])').firstMatch(personPart);
     if (ho != null) person.ho = ho.group(1);
     final siho = RegExp(r'諡號?([一-鿿]{1,3})').firstMatch(personPart);
     if (siho != null) person.siho = siho.group(1);
