@@ -17,6 +17,7 @@ class GedcomExport {
     final ids = <String, String>{};
     final used = <String>{};
     for (var i = 0; i < persons.length; i++) {
+      if (ids.containsKey(persons[i].id)) throw StateError('Duplicate person ID');
       final raw = persons[i].id.replaceAll(RegExp(r'[^A-Za-z0-9_]'), '_');
       var candidate = 'I${raw.isEmpty ? 'person' : raw}';
       if (used.contains(candidate)) candidate = '${candidate}_${i + 1}';
