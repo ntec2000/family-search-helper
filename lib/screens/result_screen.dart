@@ -26,7 +26,7 @@ class _ResultScreenState extends State<ResultScreen> {
   late final List<Person> _persons;
   bool _saved = false;
   bool _saving = false;
-  final List<(Person, int)> _excluded = [];
+  final List<(Person, int, List<(String, String)>)> _excluded = [];
 
   @override
   void initState() {
@@ -39,7 +39,17 @@ class _ResultScreenState extends State<ResultScreen> {
     final index = _persons.indexOf(person);
     if (index < 0) return;
     setState(() {
-      _excluded.add((person, index));
+      final links = <(String, String)>[];
+      for (final other in _persons) {
+        if (other.id == person.id) continue;
+        if (other.fatherId == person.id || other.motherId == person.id) {
+          links.add((person.id, other.id));
+        }
+        if (person.fatherId == other.id || person.motherId == other.id) {
+          links.add((other.id, person.id));
+        }
+      }
+      _excluded.add((person, index, links));
       ParentChildReview.detachExcluded(person, _persons);
       _persons.removeAt(index);
     });
