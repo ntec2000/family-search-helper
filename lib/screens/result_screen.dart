@@ -88,6 +88,7 @@ class _ResultScreenState extends State<ResultScreen> {
         if (ParentChildReview.conflict(parent, child) == null) {
           ParentChildReview.restoreReviewedLink(parent, child);
         } else {
+          failedLinkIds.add('$parentId → $childId (관계 충돌)');
           skippedLinks++;
         }
       }
