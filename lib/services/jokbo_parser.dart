@@ -198,7 +198,11 @@ class JokboParser {
     if (isFemale) {
       person.nameHanja = '';
       person.nameHangul = '';
-      final body = t.replaceFirst(RegExp(r'^女\s*[一二三四五六七八九十]?\s*'), '');
+      // 사위 후보는 女 표기 바로 뒤의 인명 구간으로만 제한한다.
+      // 날짜·묘지·배우자·자손 메모가 사위 이름으로 흡수되지 않도록 한다.
+      final body = t.replaceFirst(RegExp(r'^女\\s*[一二三四五六七八九十]?\\s*'), '')
+          .split(RegExp(r'\\s|(?=[生卒墓忌配字號娶出系])'))
+          .first;
       final bgM = RegExp(r'([一-鿿]{2,3})人').firstMatch(body);
       String husband;
       if (bgM != null) {
