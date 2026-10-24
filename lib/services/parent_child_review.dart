@@ -40,7 +40,7 @@ class ParentChildReview {
       (person.note ?? '').contains('出系');
 
   static void restoreReviewedLink(Person parent, Person child) {
-    if (parent.gender == 'M' && child.fatherId == null) {
+    if (parent.gender == 'M' && (child.fatherId == null || child.fatherId == parent.id)) {
       applyReviewedLink(parent, child);
     } else if (parent.gender == 'F' && child.motherId == null) {
       applyReviewedLink(parent, child);
