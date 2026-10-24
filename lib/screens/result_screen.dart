@@ -140,6 +140,7 @@ class _ResultScreenState extends State<ResultScreen> {
         person.nameHanja = result[0];
         person.nameHangul = result[1];
         person.updatedAt = DateTime.now();
+        _relationshipsReviewed = false;
       });
     }
     hanja.dispose();
@@ -251,7 +252,10 @@ class _ResultScreenState extends State<ResultScreen> {
       updatedAt: now,
     );
     if (!mounted) return;
-    setState(() => _persons.add(np));
+    setState(() {
+      _persons.add(np);
+      _relationshipsReviewed = false;
+    });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('새 인물 후보를 추가했습니다. 저장 후 수정할 수 있습니다.')),
     );
@@ -278,7 +282,9 @@ class _ResultScreenState extends State<ResultScreen> {
       }
     }
     if (!mounted) return;
-    setState(() {});
+    setState(() {
+      if (applied > 0) _relationshipsReviewed = false;
+    });
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
           content: Text(applied == 0
