@@ -342,6 +342,7 @@ class _ResultScreenState extends State<ResultScreen> {
                     minScale: 1.0,
                     maxScale: 8.0,
                     panEnabled: true,
+                    onInteractionEnd: (_) => setState(() {}),
                     child:
                         Image.file(File(widget.imagePath), fit: BoxFit.contain),
                   ),
