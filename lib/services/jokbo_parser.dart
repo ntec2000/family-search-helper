@@ -198,21 +198,18 @@ class JokboParser {
     if (isFemale) {
       person.nameHanja = '';
       person.nameHangul = '';
-      // 사위 후보는 女 표기 바로 뒤의 인명 구간으로만 제한한다.
-      // 날짜·묘지·배우자·자손 메모가 사위 이름으로 흡수되지 않도록 한다.
-      final body = t.replaceFirst(RegExp(r'^女\\s*[一二三四五六七八九十]?\\s*'), '')
-          .split(RegExp(r'\\s|(?=[生卒墓忌配字號娶出系])'))
-          .first;
-      final bgM = RegExp(r'([一-鿿]{2,3})人').firstMatch(body);
-      String husband;
+      // 女 다음 첫 이름 토큰만 사위 후보로 사용한다.
+      // 본관(安東人)은 별도로 읽고, 뒤따르는 卒/墓/配 등은 포함하지 않는다.
+      final body = t.replaceFirst(
+          RegExp(r'^女\\s*[一二三四五六七八九十]?\\s*'), '').trim();
+      final husbandMatch = RegExp(r'^([一-鿿]{1,4})(?=\\s|$|[生卒墓忌配字號娶出系])')
+          .firstMatch(body);
+      final husband = husbandMatch?.group(1) ?? '';
+      final afterHusband = body.substring(husbandMatch?.end ?? 0);
+      final bgM = RegExp(r'^\\s*([一-鿿]{2,3})人').firstMatch(afterHusband);
       if (bgM != null) {
-        person.spouseBongwan = bgM.group(1); // 사위 본관 (安東·金海·全州 등)
-        final pre = body.substring(0, bgM.start); // 본관 앞쪽 = 사위 이름
-        husband = RegExp(r'[一-鿿]+').allMatches(pre).map((m) => m.group(0)!).join();
-      } else {
-        husband = RegExp(r'[一-鿿]+').allMatches(body).map((m) => m.group(0)!).join();
+        person.spouseBongwan = bgM.group(1);
       }
-      if (husband.length > 4) husband = husband.substring(0, 4);
       person.spouseHanja = husband.isEmpty ? null : husband;
       person.spouseHangul = husband.isEmpty ? null : dict.toHangul(husband);
       // 딸의 성은 가문 성씨 상속 (이름 없음 → 내보내기에서 "○씨")
