@@ -82,4 +82,13 @@ void main() {
     expect(reviewed.nameHangul, '수정 후보');
   });
 
+  test('restoring an existing father link repairs the reverse list', () {
+    final father = person('核', 21);
+    final child = person('顯五', 22);
+    child.fatherId = father.id;
+    ParentChildReview.restoreReviewedLink(father, child);
+    ParentChildReview.restoreReviewedLink(father, child);
+    expect(father.childrenIds, [child.id]);
+  });
+
 }
