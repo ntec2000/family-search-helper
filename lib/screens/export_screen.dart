@@ -192,7 +192,8 @@ class _State extends State<ExportScreen> {
         title: const Text('FamilySearch 신규 인물 등록 확인'),
         content: const Text(
           '이 작업은 기존 인물과의 중복 여부를 자동 확인하지 않고 신규 인물을 생성합니다. '
-          '같은 작업을 반복하면 중복 등록될 수 있습니다. 계속하시겠습니까?'),
+          '이 앱에서 등록에 성공한 인물은 저장된 FamilySearch ID를 기준으로 재등록하지 않습니다. '
+          '다른 기기나 기존 FamilySearch 가계도의 중복 인물은 확인하지 못합니다. 계속하시겠습니까?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext, false),
@@ -216,8 +217,13 @@ class _State extends State<ExportScreen> {
       _status = 'FamilySearch 로 인물 동기화 중...';
     });
     final list = await DbService.instance.listPersons();
-    int ok = 0, fail = 0, skipped = 0;
+    int ok = 0, fail = 0, skipped = 0, alreadyRegistered = 0;
     for (final p in list) {
+      final savedId = await DbService.instance.getConfig('fs_person_id_${p.id}');
+      if (savedId != null && savedId.isNotEmpty) {
+        alreadyRegistered++;
+        continue;
+      }
       if ((p.deathDateSolar ?? '').trim().isEmpty &&
           (p.deathDateLunar ?? '').trim().isEmpty) {
         skipped++;
@@ -225,6 +231,7 @@ class _State extends State<ExportScreen> {
       }
       final id = await FamilySearchService.createPerson(p);
       if (id != null) {
+        await DbService.instance.setConfig('fs_person_id_${p.id}', id);
         ok++;
         if (mounted) setState(() => _status = '진행 중: $ok명 등록 / 전체 ${list.length}명');
       } else {
@@ -234,7 +241,8 @@ class _State extends State<ExportScreen> {
     if (!mounted) return;
     setState(() {
       _busy = false;
-      _status = '완료: 성공 $ok명 / 실패 $fail명 / 사망 확인 불가로 제외 $skipped명';
+      _status = '완료: 신규 $ok명 / 기존 등록 제외 $alreadyRegistered명 / '
+          '사망 확인 불가 제외 $skipped명 / 실패 $fail명';
     });
   }
 
