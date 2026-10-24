@@ -195,7 +195,7 @@ class JokboParser {
             orderChar.length == 1 &&
             _ordinal[orderChar] != null)
         ? _ordinal[orderChar]!
-        : '첫째';
+        : '순서 미상';
     person.relation = '$orderLab${isFemale ? '딸' : '아들'}';
     if (orderChar != null &&
         orderChar.length == 1 &&
