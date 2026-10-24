@@ -523,7 +523,7 @@ class _PersonList extends StatelessWidget {
             ].where((s) => s.trim().isNotEmpty).join('\n'),
                 style: TextStyle(height: 1.55, fontSize: largeText ? 17 : 12)),
             trailing: PopupMenuButton<String>(
-              tooltip: '인물 작업 메뉴',
+              tooltip: '인물 작업 메뉴 · 인물 아님 제외',
               icon: const Icon(Icons.more_vert),
               onSelected: (action) {
                 switch (action) {
@@ -561,7 +561,7 @@ class _PersonList extends StatelessWidget {
                 if (!saved)
                   const PopupMenuItem(value: 'exclude',
                       child: ListTile(leading: Icon(Icons.person_remove_outlined),
-                          title: Text('인물 후보 제외'))),
+                          title: Text('인물 아님 — 후보 제외'))),
               ],
             ),
             onTap: saved ? () => Navigator.push(
