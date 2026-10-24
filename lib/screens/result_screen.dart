@@ -49,6 +49,40 @@ class _ResultScreenState extends State<ResultScreen> {
     setState(() => _persons.insert(index.clamp(0, _persons.length), person));
   }
 
+  Future<void> _editCandidate(Person person) async {
+    if (_saved || _saving) return;
+    final hanja = TextEditingController(text: person.nameHanja);
+    final hangul = TextEditingController(text: person.nameHangul);
+    final result = await showDialog<List<String>>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('이름 후보 수정'),
+        content: Column(mainAxisSize: MainAxisSize.min, children: [
+          TextField(controller: hanja,
+              decoration: const InputDecoration(labelText: '한자 이름')),
+          TextField(controller: hangul,
+              decoration: const InputDecoration(labelText: '한글 이름')),
+        ]),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx),
+              child: const Text('취소')),
+          FilledButton(onPressed: () => Navigator.pop(ctx,
+              [hanja.text.trim(), hangul.text.trim()]),
+              child: const Text('적용')),
+        ],
+      ),
+    );
+    if (result != null && mounted) {
+      setState(() {
+        person.nameHanja = result[0];
+        person.nameHangul = result[1];
+        person.updatedAt = DateTime.now();
+      });
+    }
+    hanja.dispose();
+    hangul.dispose();
+  }
+
   Future<void> _saveReviewedPersons() async {
     if (_saved || _saving) return;
     setState(() => _saving = true);
