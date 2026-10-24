@@ -379,7 +379,10 @@ class _PersonList extends StatelessWidget {
         return Card(
           child: ListTile(
             title: Text(nameLine,
-                style: const TextStyle(fontWeight: FontWeight.bold)),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.bold,
+                    fontSize: 16, height: 1.35)),
             subtitle: Text([
               if (p.ja != null) '字 ${_a(p.ja)}',
               if (p.birthDateLunar != null) '生 ${p.birthDateLunar}',
