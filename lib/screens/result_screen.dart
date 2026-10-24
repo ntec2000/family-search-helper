@@ -71,12 +71,16 @@ class _ResultScreenState extends State<ResultScreen> {
   void _restoreLastExcluded() {
     if (_saved || _saving || _excluded.isEmpty) return;
     final (person, index, links) = _excluded.removeLast();
+    var skippedLinks = 0;
     setState(() {
       _persons.insert(index.clamp(0, _persons.length), person);
       for (final (parentId, childId) in links) {
         final parents = _persons.where((p) => p.id == parentId);
         final children = _persons.where((p) => p.id == childId);
-        if (parents.isEmpty || children.isEmpty) continue;
+        if (parents.isEmpty || children.isEmpty) {
+          skippedLinks++;
+          continue;
+        }
         final parent = parents.first;
         final child = children.first;
         if (ParentChildReview.conflict(parent, child) == null) {
