@@ -47,7 +47,7 @@ class _State extends State<ExportScreen> {
     const div = '────────────────────';
     final dict = HanjaDict.instance;
     final buf = StringBuffer();
-    buf.writeln('固城李氏 思菴公派譜 (FamilySearch 입력용 정리)');
+    buf.writeln('가족역사기록 (FamilySearch 입력용 정리)');
     buf.writeln('총 ${list.length}명');
     buf.writeln();
     for (var i = 0; i < list.length; i++) {
@@ -102,11 +102,11 @@ class _State extends State<ExportScreen> {
       if (p.ja != null) buf.writeln('  字(자)    : ${_kh(p.ja)}');
       if (p.ho != null) buf.writeln('  號(호)    : ${_kh(p.ho)}');
       buf.writeln('  출생      : ${p.birthDateSolar ?? p.birthDateLunar ?? '알 수 없음'}');
-      buf.writeln('  출생지    : ${p.birthPlace ?? Genealogy.defaultPlace}');
+      buf.writeln('  출생지    : ${p.birthPlace?.trim().isNotEmpty == true ? p.birthPlace : '알 수 없음'}');
       final deathDate = p.deathDateSolar ?? p.deathDateLunar ?? '';
       if (deathDate.isNotEmpty) {
         buf.writeln('  사망      : $deathDate');
-        buf.writeln('  사망지    : ${p.deathPlace ?? Genealogy.defaultPlace}');
+        buf.writeln('  사망지    : ${p.deathPlace?.trim().isNotEmpty == true ? p.deathPlace : '알 수 없음'}');
       }
       if (p.burialPlace != null) {
         final ori = p.burialOrientation != null ? ' (${p.burialOrientation})' : '';
@@ -216,8 +216,13 @@ class _State extends State<ExportScreen> {
       _status = 'FamilySearch 로 인물 동기화 중...';
     });
     final list = await DbService.instance.listPersons();
-    int ok = 0, fail = 0;
+    int ok = 0, fail = 0, skipped = 0;
     for (final p in list) {
+      if ((p.deathDateSolar ?? '').trim().isEmpty &&
+          (p.deathDateLunar ?? '').trim().isEmpty) {
+        skipped++;
+        continue;
+      }
       final id = await FamilySearchService.createPerson(p);
       if (id != null) {
         ok++;
@@ -229,7 +234,7 @@ class _State extends State<ExportScreen> {
     if (!mounted) return;
     setState(() {
       _busy = false;
-      _status = '완료: 성공 $ok명 / 실패 $fail명';
+      _status = '완료: 성공 $ok명 / 실패 $fail명 / 사망 확인 불가로 제외 $skipped명';
     });
   }
 
