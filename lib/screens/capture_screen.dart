@@ -239,9 +239,8 @@ class _CaptureScreenState extends State<CaptureScreen> {
         }
       }
 
-      for (final person in persons) {
-        await DbService.instance.upsertPerson(person);
-      }
+      // OCR 후보는 검토 전 데이터베이스에 자동 저장하지 않습니다.
+      // 사용자가 결과 화면에서 인물 후보를 확인하고 저장합니다.
 
       if (!mounted) return;
       Navigator.pushReplacement(
