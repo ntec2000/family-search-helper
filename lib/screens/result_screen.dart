@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/person.dart';
 import '../services/hanja_dict.dart';
 import '../services/db_service.dart';
+import '../services/parent_child_review.dart';
 import '../theme/traditional_theme.dart';
 import '../widgets/surname_input_dialog.dart';
 import 'person_card_screen.dart';
@@ -81,6 +82,29 @@ class _ResultScreenState extends State<ResultScreen> {
     }
     hanja.dispose();
     hangul.dispose();
+  }
+
+  Future<void> _chooseParent(Person child) async {
+    if (_saved || _saving) return;
+    final options = _persons.where((p) => p.id != child.id).toList();
+    if (options.isEmpty) return;
+    final parent = await showDialog<Person>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: const Text('원문을 확인한 부모 선택'),
+        children: options.map((p) => SimpleDialogOption(
+          onPressed: () => Navigator.pop(ctx, p),
+          child: Text('${p.nameHanja} ${p.nameHangul} (${p.sega ?? "세대 미상"}世)'),
+        )).toList(),
+      ),
+    );
+    if (parent == null || !mounted) return;
+    final error = ParentChildReview.conflict(parent, child);
+    if (error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      return;
+    }
+    setState(() => ParentChildReview.applyReviewedLink(parent, child));
   }
 
   Future<void> _saveReviewedPersons() async {
