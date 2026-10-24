@@ -350,7 +350,8 @@ class _PersonList extends StatelessWidget {
   final Future<void> Function(Person) onParent;
   final void Function(Person) onUnlink;
   final bool saved;
-  const _PersonList({required this.persons, required this.onDelete, required this.onEdit, required this.onParent, required this.onUnlink, required this.saved});
+  final bool largeText;
+  const _PersonList({required this.persons, required this.onDelete, required this.onEdit, required this.onParent, required this.onUnlink, required this.saved, required this.largeText});
 
   // 한자(한글) 표기
   static String _a(String? s) =>
@@ -436,7 +437,7 @@ class _PersonList extends StatelessWidget {
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(fontWeight: FontWeight.bold,
-                    fontSize: 16, height: 1.35)),
+                    fontSize: largeText ? 21 : 16, height: 1.4)),
             subtitle: Text([
               if (p.ja != null) '字 ${_a(p.ja)}',
               if (p.birthDateLunar != null) '生 ${p.birthDateLunar}',
@@ -452,7 +453,7 @@ class _PersonList extends StatelessWidget {
               if (!isFemale && p.spouseMaternalGrandfather != null) '聘外祖 ${_a(p.spouseMaternalGrandfather)}',
               if (p.note != null) '※ ${p.note}',
             ].where((s) => s.trim().isNotEmpty).join('\n'),
-                style: const TextStyle(height: 1.5, fontSize: 12)),
+                style: TextStyle(height: 1.55, fontSize: largeText ? 17 : 12)),
             trailing: PopupMenuButton<String>(
               tooltip: '인물 작업 메뉴',
               icon: const Icon(Icons.more_vert),
