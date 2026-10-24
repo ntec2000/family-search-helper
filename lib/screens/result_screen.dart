@@ -196,8 +196,29 @@ class _ResultScreenState extends State<ResultScreen> {
         context: context,
         builder: (ctx) => AlertDialog(
           title: Text('저장 전 확인할 관계 ${issues.length}건'),
-          content: SingleChildScrollView(child: Text(issues.join('\n'))),
-          actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('확인'))],
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('아래 ID를 인물 이름과 대조한 뒤 관계 검토 메뉴에서 수정하세요.'),
+                const SizedBox(height: 12),
+                ...issues.map((issue) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    _persons.fold<String>(issue, (message, person) {
+                      final name = person.nameHanja.isNotEmpty
+                          ? person.nameHanja : person.nameHangul;
+                      return name.isEmpty
+                          ? message
+                          : message.replaceAll(person.id, '$name (${person.id})');
+                    }),
+                  ),
+                )),
+              ],
+            ),
+          ),
+          actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('관계 검토로 돌아가기'))],
         ),
       );
       return;
