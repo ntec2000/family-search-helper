@@ -95,7 +95,7 @@ class _ResultScreenState extends State<ResultScreen> {
     });
     if (skippedLinks > 0) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('인물은 복원했지만 가족관계 $skippedLinks건은 복구하지 못했습니다. 원문을 대조해 다시 확인하세요.'),
+        content: Text('가족관계 $skippedLinks건 복구 실패: ${failedLinkIds.join(', ')}. 원문을 대조해 확인하세요.'),
       ));
     }
   }
