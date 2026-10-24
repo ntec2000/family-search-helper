@@ -5,6 +5,22 @@ import 'package:family_search_helper/services/genealogy.dart';
 import 'package:family_search_helper/services/lunar_service.dart';
 
 void main() {
+  group('인물 경계 오인식 방지', () {
+    test('좌향 子坐午向의 子는 새로운 인물이 아니다', () {
+      final people = JokboParser.parse('子格 字良甫 墓山子坐午向 子核 字仲甫');
+      expect(people, hasLength(2));
+      expect(people[0].nameHanja, '格');
+      expect(people[1].nameHanja, '核');
+    });
+
+    test('간지 甲子는 인물 시작으로 분리하지 않는다', () {
+      final people = JokboParser.parse('子格 甲子生 子核 乙丑生');
+      expect(people, hasLength(2));
+      expect(people[0].birthDateLunar, contains('甲子'));
+      expect(people[1].birthDateLunar, contains('乙丑'));
+    });
+  });
+
   group('세로 OCR 날짜 정규화 회귀', () {
     test('숫자 한자로 끝나는 이름과 세대 표기 사이의 공백은 보존한다', () {
       final people = JokboParser.parse('子 顯五 二十二世 庚午生');
