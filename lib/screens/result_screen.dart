@@ -26,6 +26,7 @@ class _ResultScreenState extends State<ResultScreen> {
   late final List<Person> _persons;
   bool _saved = false;
   bool _saving = false;
+  bool _largeText = false;
   final List<(Person, int, List<(String, String)>)> _excluded = [];
 
   @override
@@ -290,6 +291,20 @@ class _ResultScreenState extends State<ResultScreen> {
               labelColor: HanjiColors.muk,
               indicatorColor: HanjiColors.ju,
             ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(children: [
+                const Icon(Icons.format_size, size: 19,
+                    color: HanjiColors.mukSoft),
+                const SizedBox(width: 8),
+                const Expanded(child: Text('큰 글씨로 인물 확인',
+                    style: TextStyle(fontSize: 14))),
+                Switch(
+                  value: _largeText,
+                  onChanged: (value) => setState(() => _largeText = value),
+                ),
+              ]),
+            ),
             Builder(builder: (tabContext) => Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               child: Row(children: [
@@ -307,7 +322,7 @@ class _ResultScreenState extends State<ResultScreen> {
             )),
             Expanded(
               child: TabBarView(children: [
-                _PersonList(persons: _persons, onDelete: _deletePerson, onEdit: _editCandidate, onParent: _chooseParent, onUnlink: _clearParentLinks, saved: _saved),
+                _PersonList(persons: _persons, onDelete: _deletePerson, onEdit: _editCandidate, onParent: _chooseParent, onUnlink: _clearParentLinks, saved: _saved, largeText: _largeText),
                 _TextCompare(hanja: widget.rawText, hangul: hangulText),
                 Container(
                   color: Colors.black,
