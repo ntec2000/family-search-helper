@@ -54,4 +54,11 @@ void main() {
     expect(output, isNot(contains('1 NAME 최해두 /崔海斗/')));
   });
 
+  test('empty export has a header and trailer', () {
+    final output = GedcomExport.toGedcom(<Person>[]);
+    expect(output, contains('0 HEAD'));
+    expect(output, contains('0 TRLR'));
+    expect(output, isNot(contains('0 @I')));
+  });
+
 }
