@@ -229,7 +229,23 @@ class _State extends State<ExportScreen> {
       _status = 'FamilySearch 로 인물 동기화 중...';
     });
     final list = await DbService.instance.listPersons();
-    int ok = 0, fail = 0, skipped = 0, alreadyRegistered = 0;
+    // Check all unresolved requests before sending any new person.
+    for (final person in list) {
+      final pending = await DbService.instance.getConfig('fs_upload_pending_${person.id}');
+      if (pending == '1') {
+        if (!mounted) return;
+        setState(() {
+          _busy = false;
+          _status = '동기화 중지: 미확인 등록 기록이 있습니다. '
+              '인물 ID ${person.id} / '
+              '이름 ${person.nameHangul.isNotEmpty ? person.nameHangul : person.nameHanja}. '
+              'FamilySearch에서 기존 등록 여부를 먼저 확인해 주세요. '
+              '자동 재등록하지 않습니다.';
+        });
+        return;
+      }
+    }
+    int ok = 0, fail = 0, skipped = 0, nameless = 0, alreadyRegistered = 0;
     bool uncertain = false;
     for (final p in list) {
       final pending = await DbService.instance.getConfig('fs_upload_pending_${p.id}');
@@ -240,6 +256,12 @@ class _State extends State<ExportScreen> {
       final savedId = await DbService.instance.getConfig('fs_person_id_${p.id}');
       if (savedId != null && savedId.isNotEmpty) {
         alreadyRegistered++;
+        continue;
+      }
+      if (p.nameHangul.trim().isEmpty &&
+          p.nameHanja.trim().isEmpty &&
+          p.nameRoman.trim().isEmpty) {
+        nameless++;
         continue;
       }
       if ((p.deathDateSolar ?? '').trim().isEmpty &&
@@ -264,7 +286,7 @@ class _State extends State<ExportScreen> {
     setState(() {
       _busy = false;
       _status = '완료: 신규 $ok명 / 기존 등록 제외 $alreadyRegistered명 / '
-          '사망 확인 불가 제외 $skipped명 / 실패 $fail명'
+          '사망 확인 불가 제외 $skipped명 / 이름 없음 제외 $nameless명 / 실패 $fail명'
           '${uncertain ? ' / 등록 결과 불명확: 자동 재시도 중지' : ''}';
     });
   }
