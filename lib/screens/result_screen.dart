@@ -180,7 +180,14 @@ class _ResultScreenState extends State<ResultScreen> {
     if (_saved || _saving) return;
     final issues = ParentChildReview.validateReviewedBatch(_persons);
     if (issues.isNotEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(issues.first)));
+      showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text('저장 전 확인할 관계 ${issues.length}건'),
+          content: SingleChildScrollView(child: Text(issues.join('\n'))),
+          actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('확인'))],
+        ),
+      );
       return;
     }
     setState(() => _saving = true);
