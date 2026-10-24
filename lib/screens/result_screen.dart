@@ -191,10 +191,20 @@ class _ResultScreenState extends State<ResultScreen> {
 
   Set<String> _relationshipIssueIds() {
     final issues = ParentChildReview.validateReviewedBatch(_persons);
-    return _persons
-        .where((person) => issues.any((issue) => issue.contains(person.id)))
-        .map((person) => person.id)
-        .toSet();
+    final knownIds = _persons.map((person) => person.id).toSet();
+    final involved = <String>{};
+    for (final issue in issues) {
+      // Validation messages contain IDs after a colon or arrow.
+      // Compare whole tokens so IDs such as "p1" and "p10" do not overlap.
+      final details = issue.contains(':')
+          ? issue.substring(issue.indexOf(':') + 1)
+          : issue;
+      for (final token in details.split(RegExp(r'\\s*→\\s*|\\s+'))) {
+        final id = token.trim();
+        if (knownIds.contains(id)) involved.add(id);
+      }
+    }
+    return involved;
   }
 
   Future<void> _saveReviewedPersons() async {
