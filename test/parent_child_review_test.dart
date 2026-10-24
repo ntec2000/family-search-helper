@@ -64,6 +64,7 @@ void main() {
     expect(daughter.nameHanja, isEmpty);
     expect(daughter.nameHangul, isEmpty);
     expect(daughter.fatherId, '昃');
+    expect(father.childrenIds, contains(daughter.id));
   });
   test('review copy does not mutate original OCR candidate or family links', () {
     final original = person('昃', 20);
