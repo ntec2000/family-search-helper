@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'dart:ui' show Rect;
+import 'vertical_reading_order.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
 /// Google ML Kit 기반 한자 OCR (온디바이스 · 무료)
@@ -12,19 +14,16 @@ class OcrService {
     final input = InputImage.fromFile(File(imagePath));
     final result = await _recognizer.processImage(input);
 
-    // 블록의 좌표를 기준으로 우→좌, 상→하 정렬 (세로쓰기 족보 표준)
+    // 세로쓰기: 오른쪽 열부터, 같은 열에서는 위에서 아래로 읽는다.
+    // 고정 30px 행 기준은 이미지 크기에 따라 순서를 뒤섞을 수 있다.
     final blocks = [...result.blocks];
-    blocks.sort((a, b) {
-      // 같은 행 (y 차이 < 30) 이면 x 큰 쪽 우선 (우→좌)
-      final yDiff = (a.boundingBox.top - b.boundingBox.top).abs();
-      if (yDiff < 30) {
-        return b.boundingBox.left.compareTo(a.boundingBox.left);
-      }
-      return a.boundingBox.top.compareTo(b.boundingBox.top);
-    });
+    final order = verticalReadingOrder(
+      blocks.map((block) => block.boundingBox).toList(),
+    );
+    final orderedBlocks = [for (final index in order) blocks[index]];
 
     final buf = StringBuffer();
-    for (final b in blocks) {
+    for (final b in orderedBlocks) {
       buf.writeln(b.text);
     }
 
