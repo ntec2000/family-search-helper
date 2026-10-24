@@ -1,7 +1,6 @@
 import 'package:uuid/uuid.dart';
 import '../models/person.dart';
 import 'hanja_dict.dart';
-import 'lunar_service.dart';
 import 'genealogy.dart';
 
 /// 족보 OCR 텍스트 파서.
@@ -422,24 +421,6 @@ class JokboParser {
     final md = m.group(2);
     final label = md != null ? '$gz年 $md $suffix' : '$gz年 $suffix';
     return _GzDate(gz, label);
-  }
-
-  static String? _estimateBirthYear(String gz) {
-    final c = LunarService.estimateYearsFromGanzhi(gz);
-    final r = c.where((y) => y <= DateTime.now().year).toList();
-    if (r.isEmpty) return null;
-    return '대략 ${r.last}년 (干支 추정)';
-  }
-
-  static String? _estimateDeathYear(String gz, String? birthSolar) {
-    if (birthSolar == null) return null;
-    final c = LunarService.estimateYearsFromGanzhi(gz);
-    final bm = RegExp(r'(\d{4})').firstMatch(birthSolar);
-    if (bm == null) return null;
-    final by = int.parse(bm.group(1)!);
-    final dy = c.firstWhere((y) => y > by && y <= DateTime.now().year,
-        orElse: () => -1);
-    return dy > 0 ? '대략 $dy년 (干支 추정)' : null;
   }
 
   /// 한자/아라비아 숫자 세(世) → 정수.
