@@ -64,4 +64,22 @@ void main() {
     expect(daughter.nameHangul, isEmpty);
     expect(daughter.fatherId, '昃');
   });
+  test('review copy does not mutate original OCR candidate or family links', () {
+    final original = person('昃', 20);
+    original.nameHangul = '이측';
+    original.rawText = '昃';
+    original.childrenIds.add('格');
+
+    final reviewed = Person.fromMap(original.toMap());
+    reviewed.nameHangul = '수정 후보';
+    reviewed.childrenIds.remove('格');
+    reviewed.fatherId = '검토 중 임시 관계';
+
+    expect(original.nameHangul, '이측');
+    expect(original.rawText, '昃');
+    expect(original.childrenIds, contains('格'));
+    expect(original.fatherId, isNull);
+    expect(reviewed.nameHangul, '수정 후보');
+  });
+
 }
