@@ -58,10 +58,9 @@ class DbService {
             'sons_in_law_note',
             'in_laws_note',
           ]) {
-            try {
+            final schema = await db.rawQuery('PRAGMA table_info(persons)');
+            if (!schema.any((column) => column['name'] == col)) {
               await db.execute('ALTER TABLE persons ADD COLUMN $col TEXT');
-            } on DatabaseException catch (e) {
-              if (!e.toString().contains('duplicate column name')) rethrow;
             }
           }
         }
@@ -74,10 +73,9 @@ class DbService {
             'in_laws_spouse_note',
             'reason_statement',
           ]) {
-            try {
+            final schema = await db.rawQuery('PRAGMA table_info(persons)');
+            if (!schema.any((column) => column['name'] == col)) {
               await db.execute('ALTER TABLE persons ADD COLUMN $col TEXT');
-            } on DatabaseException catch (e) {
-              if (!e.toString().contains('duplicate column name')) rethrow;
             }
           }
         }
@@ -90,10 +88,9 @@ class DbService {
             'spouse_birth',
             'spouse_death',
           ]) {
-            try {
+            final schema = await db.rawQuery('PRAGMA table_info(persons)');
+            if (!schema.any((column) => column['name'] == col)) {
               await db.execute('ALTER TABLE persons ADD COLUMN $col TEXT');
-            } on DatabaseException catch (e) {
-              if (!e.toString().contains('duplicate column name')) rethrow;
             }
           }
         }
