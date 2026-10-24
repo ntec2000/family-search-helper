@@ -13,6 +13,18 @@ void main() {
       expect(people.single.ja, '良甫');
     });
 
+    test('두 인물의 자와 출생 간지가 서로 섞이지 않는다', () {
+      final people = JokboParser.parse(
+          '子格 字良甫 丁未生 子核 字仲甫 乙丑生');
+      expect(people, hasLength(2));
+      expect(people[0].nameHanja, '格');
+      expect(people[0].ja, '良甫');
+      expect(people[0].birthDateLunar, contains('丁未'));
+      expect(people[1].nameHanja, '核');
+      expect(people[1].ja, '仲甫');
+      expect(people[1].birthDateLunar, contains('乙丑'));
+    });
+
     test('호 뒤의 사망 기록이 호에 포함되지 않는다', () {
       final people = JokboParser.parse('子格 號松軒庚申卒');
       expect(people, hasLength(1));
