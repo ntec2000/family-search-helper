@@ -61,4 +61,14 @@ void main() {
     expect(output, isNot(contains('0 @I')));
   });
 
+  test('duplicate person IDs are rejected', () {
+    expect(
+      () => GedcomExport.toGedcom(<Person>[
+        Person(id: 'same'),
+        Person(id: 'same'),
+      ]),
+      throwsStateError,
+    );
+  });
+
 }
