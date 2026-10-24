@@ -339,8 +339,12 @@ class _PersonList extends StatelessWidget {
         ),
       );
     }
+    final generationCounts = <int?, int>{};
+    for (final person in persons) {
+      generationCounts.update(person.sega, (n) => n + 1, ifAbsent: () => 1);
+    }
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 48),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 88),
       itemCount: persons.length,
       separatorBuilder: (_, __) => const SizedBox(height: 8),
       itemBuilder: (_, i) {
