@@ -60,8 +60,8 @@ class DbService {
           ]) {
             try {
               await db.execute('ALTER TABLE persons ADD COLUMN $col TEXT');
-            } catch (_) {
-              // 이미 존재하면 무시
+            } on DatabaseException catch (e) {
+              if (!e.toString().contains('duplicate column name')) rethrow;
             }
           }
         }
@@ -76,8 +76,8 @@ class DbService {
           ]) {
             try {
               await db.execute('ALTER TABLE persons ADD COLUMN $col TEXT');
-            } catch (_) {
-              // 이미 존재하면 무시
+            } on DatabaseException catch (e) {
+              if (!e.toString().contains('duplicate column name')) rethrow;
             }
           }
         }
@@ -92,8 +92,8 @@ class DbService {
           ]) {
             try {
               await db.execute('ALTER TABLE persons ADD COLUMN $col TEXT');
-            } catch (_) {
-              // 이미 존재하면 무시
+            } on DatabaseException catch (e) {
+              if (!e.toString().contains('duplicate column name')) rethrow;
             }
           }
         }
@@ -101,16 +101,16 @@ class DbService {
           // v2.4 추가 컬럼 — 특이사항/메모(出系·양자·한글 오기 등)
           try {
             await db.execute('ALTER TABLE persons ADD COLUMN note TEXT');
-          } catch (_) {
-            // 이미 존재하면 무시
+          } on DatabaseException catch (e) {
+            if (!e.toString().contains('duplicate column name')) rethrow;
           }
         }
         if (oldV < 7) {
           // v2.6 추가 컬럼 — 아버지와의 가족관계(첫째아들/둘째딸 등)
           try {
             await db.execute('ALTER TABLE persons ADD COLUMN relation TEXT');
-          } catch (_) {
-            // 이미 존재하면 무시
+          } on DatabaseException catch (e) {
+            if (!e.toString().contains('duplicate column name')) rethrow;
           }
         }
       },
