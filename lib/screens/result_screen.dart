@@ -552,7 +552,13 @@ class _PersonList extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(fontWeight: FontWeight.bold,
                     fontSize: largeText ? 21 : 16, height: 1.4)),
+            isThreeLine: relationshipMode,
             subtitle: Text([
+              if (relationshipMode)
+                '부친: ${p.fatherId == null ? "미연결" : persons.where((candidate) => candidate.id == p.fatherId).map((candidate) => candidate.nameHanja.isNotEmpty ? candidate.nameHanja : candidate.nameHangul).firstOrNull ?? "외부 인물(${p.fatherId})"}',
+              if (relationshipMode)
+                '모친: ${p.motherId == null ? "미연결" : persons.where((candidate) => candidate.id == p.motherId).map((candidate) => candidate.nameHanja.isNotEmpty ? candidate.nameHanja : candidate.nameHangul).firstOrNull ?? "외부 인물(${p.motherId})"}',
+
               if (p.ja != null) '字 ${_a(p.ja)}',
               if (p.birthDateLunar != null) '生 ${p.birthDateLunar}',
               if (p.birthPlace != null) '生地 ${_a(p.birthPlace)}',
