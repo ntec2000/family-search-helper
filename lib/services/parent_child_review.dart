@@ -72,6 +72,12 @@ class ParentChildReview {
         }
       }
     }
+    for (final parent in entries) {
+      final ids = parent.childrenIds;
+      if (ids.length != ids.toSet().length) {
+        issues.add('중복 자녀 연결: ${parent.id}');
+      }
+    }
     return issues;
   }
 
