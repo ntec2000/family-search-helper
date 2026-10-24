@@ -375,6 +375,17 @@ class _ResultScreenState extends State<ResultScreen> {
                           : (value) => setState(
                               () => _relationshipsReviewed = value ?? false),
                     ),
+                    if (_reviewStep == 1) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        '부모 양쪽 연결 ${_persons.where((p) => p.fatherId != null && p.motherId != null).length}명'
+                        ' · 일부 연결 ${_persons.where((p) => (p.fatherId == null) != (p.motherId == null)).length}명'
+                        ' · 미연결 ${_persons.where((p) => p.fatherId == null && p.motherId == null).length}명',
+                        style: const TextStyle(fontSize: 12, color: HanjiColors.mukSoft),
+                      ),
+                      const Text('미연결은 오류로 단정하지 않습니다. 원본 기록과 대조해 확인하세요.',
+                          style: TextStyle(fontSize: 12, color: HanjiColors.mukSoft)),
+                    ],
                     Text('검토 대상 ${_persons.length}명  ·  제외 ${_excluded.length}명',
                         style: const TextStyle(fontSize: 13,
                             fontWeight: FontWeight.w600, color: HanjiColors.ju)),
