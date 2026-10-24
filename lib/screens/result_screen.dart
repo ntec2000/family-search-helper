@@ -31,6 +31,7 @@ class _ResultScreenState extends State<ResultScreen> {
   bool _showReviewGuide = false;
   bool _relationshipsReviewed = false;
   int _reviewStep = 0;
+  bool _showOnlyRelationshipIssues = false;
   final TransformationController _imageTransform = TransformationController();
   final List<(Person, int, List<(String, String)>)> _excluded = [];
 
@@ -186,6 +187,14 @@ class _ResultScreenState extends State<ResultScreen> {
       }
       _relationshipsReviewed = false;
     });
+  }
+
+  Set<String> _relationshipIssueIds() {
+    final issues = ParentChildReview.validateReviewedBatch(_persons);
+    return _persons
+        .where((person) => issues.any((issue) => issue.contains(person.id)))
+        .map((person) => person.id)
+        .toSet();
   }
 
   Future<void> _saveReviewedPersons() async {
@@ -407,6 +416,15 @@ class _ResultScreenState extends State<ResultScreen> {
                           : (value) => setState(
                               () => _relationshipsReviewed = value ?? false),
                     ),
+                    if (_reviewStep == 1)
+                      CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('관계 오류 인물만 보기'),
+                        subtitle: const Text('검증에서 문제가 발견된 인물만 표시합니다.'),
+                        value: _showOnlyRelationshipIssues,
+                        onChanged: (value) => setState(
+                          () => _showOnlyRelationshipIssues = value ?? false),
+                      ),
                     if (_reviewStep == 1) ...[
                       const SizedBox(height: 6),
                       Text(
@@ -484,7 +502,7 @@ class _ResultScreenState extends State<ResultScreen> {
               ),
             Expanded(
               child: TabBarView(children: [
-                _PersonList(persons: _persons, onDelete: _deletePerson, onEdit: _editCandidate, onParent: _chooseParent, onUnlink: _clearParentLinks, saved: _saved || _saving, largeText: _largeText, relationshipMode: _reviewStep == 1),
+                _PersonList(persons: _persons, onDelete: _deletePerson, onEdit: _editCandidate, onParent: _chooseParent, onUnlink: _clearParentLinks, saved: _saved || _saving, largeText: _largeText, relationshipMode: _reviewStep == 1, issueIds: _reviewStep == 1 && _showOnlyRelationshipIssues ? _relationshipIssueIds() : null),
                 _TextCompare(hanja: widget.rawText, hangul: hangulText),
                 Container(
                   color: Colors.black,
@@ -516,7 +534,8 @@ class _PersonList extends StatelessWidget {
   final bool saved;
   final bool largeText;
   final bool relationshipMode;
-  const _PersonList({required this.persons, required this.onDelete, required this.onEdit, required this.onParent, required this.onUnlink, required this.saved, required this.largeText, required this.relationshipMode});
+  final Set<String>? issueIds;
+  const _PersonList({required this.persons, required this.onDelete, required this.onEdit, required this.onParent, required this.onUnlink, required this.saved, required this.largeText, required this.relationshipMode, this.issueIds});
 
   // 한자(한글) 표기
   static String _a(String? s) =>
