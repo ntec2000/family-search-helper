@@ -201,7 +201,7 @@ class _ResultScreenState extends State<ResultScreen> {
             ),
             Expanded(
               child: TabBarView(children: [
-                _PersonList(persons: _persons, onDelete: _deletePerson, saved: _saved),
+                _PersonList(persons: _persons, onDelete: _deletePerson, onEdit: _editCandidate, saved: _saved),
                 _TextCompare(hanja: widget.rawText, hangul: hangulText),
                 Container(
                   color: Colors.black,
@@ -225,8 +225,9 @@ class _ResultScreenState extends State<ResultScreen> {
 class _PersonList extends StatelessWidget {
   final List<Person> persons;
   final Future<void> Function(Person) onDelete;
+  final Future<void> Function(Person) onEdit;
   final bool saved;
-  const _PersonList({required this.persons, required this.onDelete, required this.saved});
+  const _PersonList({required this.persons, required this.onDelete, required this.onEdit, required this.saved});
 
   // 한자(한글) 표기
   static String _a(String? s) =>
@@ -311,7 +312,8 @@ class _PersonList extends StatelessWidget {
                   onPressed: saved ? () => Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (_) => PersonCardScreen(personId: p.id))) : null,
+                          builder: (_) => PersonCardScreen(personId: p.id)))
+                      : () => onEdit(p),
                 ),
                 IconButton(
                   icon: Icon(Icons.delete_outline, color: Colors.red.shade700),
