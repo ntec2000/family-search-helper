@@ -269,7 +269,7 @@ class _ResultScreenState extends State<ResultScreen> {
             ),
             Expanded(
               child: TabBarView(children: [
-                _PersonList(persons: _persons, onDelete: _deletePerson, onEdit: _editCandidate, onParent: _chooseParent, saved: _saved),
+                _PersonList(persons: _persons, onDelete: _deletePerson, onEdit: _editCandidate, onParent: _chooseParent, onUnlink: _clearParentLinks, saved: _saved),
                 _TextCompare(hanja: widget.rawText, hangul: hangulText),
                 Container(
                   color: Colors.black,
@@ -295,8 +295,9 @@ class _PersonList extends StatelessWidget {
   final Future<void> Function(Person) onDelete;
   final Future<void> Function(Person) onEdit;
   final Future<void> Function(Person) onParent;
+  final void Function(Person) onUnlink;
   final bool saved;
-  const _PersonList({required this.persons, required this.onDelete, required this.onEdit, required this.onParent, required this.saved});
+  const _PersonList({required this.persons, required this.onDelete, required this.onEdit, required this.onParent, required this.onUnlink, required this.saved});
 
   // 한자(한글) 표기
   static String _a(String? s) =>
