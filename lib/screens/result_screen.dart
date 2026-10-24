@@ -132,6 +132,18 @@ class _ResultScreenState extends State<ResultScreen> {
 
   Future<void> _saveReviewedPersons() async {
     if (_saved || _saving) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('검토한 인물 저장 확인'),
+        content: Text('인물 ${_persons.length}명과 확인된 가족관계를 저장하시겠습니까? 원본 이미지와 OCR 원문은 변경하지 않습니다.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('취소')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('저장')),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
     setState(() => _saving = true);
     try {
       for (final person in _persons) {
