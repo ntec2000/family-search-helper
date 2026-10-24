@@ -109,7 +109,7 @@ class _ResultScreenState extends State<ResultScreen> {
         ],
       ),
     );
-    if (result != null && mounted) {
+    if (result != null && mounted && !_saved && !_saving && _persons.contains(person)) {
       setState(() {
         person.nameHanja = result[0];
         person.nameHangul = result[1];
