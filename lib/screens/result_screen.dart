@@ -94,9 +94,14 @@ class _ResultScreenState extends State<ResultScreen> {
       }
     });
     if (skippedLinks > 0) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('가족관계 $skippedLinks건 복구 실패: ${failedLinkIds.join(', ')}. 원문을 대조해 확인하세요.'),
-      ));
+      showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text('가족관계 $skippedLinks건 복원 실패'),
+          content: const Text('원문과 가족관계를 다시 확인하세요.'),
+          actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('확인'))],
+        ),
+      );
     }
   }
 
