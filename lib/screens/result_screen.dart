@@ -29,6 +29,7 @@ class _ResultScreenState extends State<ResultScreen> {
   bool _saving = false;
   bool _largeText = false;
   bool _showReviewGuide = false;
+  bool _relationshipsReviewed = false;
   final TransformationController _imageTransform = TransformationController();
   final List<(Person, int, List<(String, String)>)> _excluded = [];
 
@@ -66,6 +67,7 @@ class _ResultScreenState extends State<ResultScreen> {
       _excluded.add((person, index, links));
       ParentChildReview.detachExcluded(person, _persons);
       _persons.removeAt(index);
+      _relationshipsReviewed = false;
     });
   }
 
@@ -76,6 +78,7 @@ class _ResultScreenState extends State<ResultScreen> {
     final failedLinkIds = <String>[];
     setState(() {
       _persons.insert(index.clamp(0, _persons.length), person);
+      _relationshipsReviewed = false;
       for (final (parentId, childId) in links) {
         final parents = _persons.where((p) => p.id == parentId);
         final children = _persons.where((p) => p.id == childId);
@@ -166,7 +169,10 @@ class _ResultScreenState extends State<ResultScreen> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
       return;
     }
-    setState(() => ParentChildReview.applyReviewedLink(parent, child));
+    setState(() {
+      ParentChildReview.applyReviewedLink(parent, child);
+      _relationshipsReviewed = false;
+    });
   }
 
   void _clearParentLinks(Person child) {
@@ -175,6 +181,7 @@ class _ResultScreenState extends State<ResultScreen> {
       for (final parent in _persons) {
         ParentChildReview.unlink(parent, child);
       }
+      _relationshipsReviewed = false;
     });
   }
 
@@ -189,6 +196,12 @@ class _ResultScreenState extends State<ResultScreen> {
           content: SingleChildScrollView(child: Text(issues.join('\n'))),
           actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('확인'))],
         ),
+      );
+      return;
+    }
+    if (!_relationshipsReviewed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('가족관계 검토 완료를 먼저 확인해 주세요.')),
       );
       return;
     }
@@ -324,6 +337,16 @@ class _ResultScreenState extends State<ResultScreen> {
                         style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700,
                             color: HanjiColors.muk)),
                     const SizedBox(height: 8),
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('가족관계 검토 완료'),
+                      subtitle: const Text('인물별 부모 연결과 원본 기록을 확인했습니다.'),
+                      value: _relationshipsReviewed,
+                      onChanged: _saved || _saving
+                          ? null
+                          : (value) => setState(
+                              () => _relationshipsReviewed = value ?? false),
+                    ),
                     Text('검토 대상 ${_persons.length}명  ·  제외 ${_excluded.length}명',
                         style: const TextStyle(fontSize: 13,
                             fontWeight: FontWeight.w600, color: HanjiColors.ju)),
