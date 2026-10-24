@@ -196,6 +196,244 @@ class _State extends State<ExportScreen> {
     );
   }
 
+  Future<void> _resolvePendingUpload() async {
+    if (_busy) return;
+    final people = await DbService.instance.listPersons();
+    Person? pendingPerson;
+    for (final person in people) {
+      if (await DbService.instance.getConfig('fs_upload_pending_${person.id}') == '1') {
+        pendingPerson = person;
+        break;
+      }
+    }
+    if (!mounted) return;
+    if (pendingPerson == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('확인이 필요한 등록 기록이 없습니다.')),
+      );
+      return;
+    }
+    final person = pendingPerson;
+    final controller = TextEditingController();
+    final confirmedId = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('FamilySearch 등록 기록 확인'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('로컬 ID: ${person.id}'),
+            Text('이름: ${person.nameHangul.isNotEmpty ? person.nameHangul : person.nameHanja}'),
+            const SizedBox(height: 12),
+            const Text('FamilySearch에서 동일 인물의 등록을 직접 확인한 경우에만 '
+                '해당 인물 ID를 입력하세요. 확인하지 못했다면 취소하세요.'),
+            TextField(
+              controller: controller,
+              decoration: const InputDecoration(labelText: '확인된 FamilySearch 인물 ID'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('취소')),
+          FilledButton(
+            onPressed: () {
+              final value = controller.text.trim();
+              if (!RegExp(r'^[A-Za-z0-9-]{4,40}
+    if (_busy) return;
+    final approved = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('FamilySearch 신규 인물 등록 확인'),
+        content: const Text(
+          '이 작업은 기존 인물과의 중복 여부를 자동 확인하지 않고 신규 인물을 생성합니다. '
+          '이 앱에서 등록에 성공한 인물은 저장된 FamilySearch ID를 기준으로 재등록하지 않습니다. '
+          '다른 기기나 기존 FamilySearch 가계도의 중복 인물은 확인하지 못합니다. 계속하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('신규 등록 진행'),
+          ),
+        ],
+      ),
+    );
+    if (approved != true || !mounted) return;
+    if (!FamilySearchService.isLoggedIn) {
+      await Navigator.push(context, MaterialPageRoute(
+          builder: (_) => const FamilySearchLoginScreen()));
+      if (!mounted || !FamilySearchService.isLoggedIn) return;
+    }
+    setState(() {
+      _busy = true;
+      _status = 'FamilySearch 로 인물 동기화 중...';
+    });
+    final list = await DbService.instance.listPersons();
+    // Check all unresolved requests before sending any new person.
+    for (final person in list) {
+      final pending = await DbService.instance.getConfig('fs_upload_pending_${person.id}');
+      if (pending == '1') {
+        if (!mounted) return;
+        setState(() {
+          _busy = false;
+          _status = '동기화 중지: 미확인 등록 기록이 있습니다. '
+              '인물 ID ${person.id} / '
+              '이름 ${person.nameHangul.isNotEmpty ? person.nameHangul : person.nameHanja}. '
+              'FamilySearch에서 기존 등록 여부를 먼저 확인해 주세요. '
+              '자동 재등록하지 않습니다.';
+        });
+        return;
+      }
+    }
+    int ok = 0, fail = 0, skipped = 0, nameless = 0, alreadyRegistered = 0;
+    bool uncertain = false;
+    for (final p in list) {
+      final pending = await DbService.instance.getConfig('fs_upload_pending_${p.id}');
+      if (pending == '1') {
+        uncertain = true;
+        break;
+      }
+      final savedId = await DbService.instance.getConfig('fs_person_id_${p.id}');
+      if (savedId != null && savedId.isNotEmpty) {
+        alreadyRegistered++;
+        continue;
+      }
+      if (p.nameHangul.trim().isEmpty &&
+          p.nameHanja.trim().isEmpty &&
+          p.nameRoman.trim().isEmpty) {
+        nameless++;
+        continue;
+      }
+      if ((p.deathDateSolar ?? '').trim().isEmpty &&
+          (p.deathDateLunar ?? '').trim().isEmpty) {
+        skipped++;
+        continue;
+      }
+      await DbService.instance.setConfig('fs_upload_pending_${p.id}', '1');
+      final id = await FamilySearchService.createPerson(p);
+      if (id != null) {
+        await DbService.instance.setConfig('fs_person_id_${p.id}', id);
+        await DbService.instance.setConfig('fs_upload_pending_${p.id}', '0');
+        ok++;
+        if (mounted) setState(() => _status = '진행 중: $ok명 등록 / 전체 ${list.length}명');
+      } else {
+        fail++;
+        uncertain = true;
+        break;
+      }
+    }
+    if (!mounted) return;
+    setState(() {
+      _busy = false;
+      _status = '완료: 신규 $ok명 / 기존 등록 제외 $alreadyRegistered명 / '
+          '사망 확인 불가 제외 $skipped명 / 이름 없음 제외 $nameless명 / 실패 $fail명'
+          '${uncertain ? ' / 등록 결과 불명확: 자동 재시도 중지' : ''}';
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('내보내기 / 동기화')),
+      body: SafeArea(child: Stack(children: [
+        ListView(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 48),
+          children: [
+            const Text('① 파일로 내보내기 (로그인 불필요)',
+                style: TextStyle(fontWeight: FontWeight.bold, color: HanjiColors.ju)),
+            const SizedBox(height: 8),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.account_tree, color: HanjiColors.muk),
+                title: const Text('GEDCOM 5.5.1 (.ged)'),
+                subtitle: const Text('FamilySearch · Ancestry · MyHeritage 호환'),
+                trailing: const Icon(Icons.download),
+                onTap: _exportGedcom,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.text_snippet, color: HanjiColors.muk),
+                title: const Text('텍스트 (수동 입력용)'),
+                subtitle: const Text('정렬된 텍스트 · 字/배우자 한글 표기 · 복사·공유'),
+                trailing: const Icon(Icons.visibility),
+                onTap: _previewText,
+              ),
+            ),
+            const SizedBox(height: 32),
+            const Text('② FamilySearch 직접 동기화',
+                style: TextStyle(fontWeight: FontWeight.bold, color: HanjiColors.ju)),
+            const SizedBox(height: 8),
+            if (FamilySearchService.enabled)
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.cloud_upload, color: HanjiColors.ju),
+                  title: const Text('FamilySearch.org 직접 업로드'),
+                  subtitle: Text(!FamilySearchService.isConfigured
+                      ? 'Client ID 미입력 — 설정에서 입력하세요'
+                      : (FamilySearchService.isLoggedIn
+                          ? '로그인됨 — 인물 등록 가능'
+                          : 'LDS 회원 계정 로그인 필요')),
+                  trailing: const Icon(Icons.upload),
+                  onTap: (_busy || !FamilySearchService.isConfigured)
+                      ? null
+                      : _syncFamilySearch,
+                ),
+              )
+            else
+              const Card(
+                child: ListTile(
+                  leading: Icon(Icons.cloud_off, color: HanjiColors.muk),
+                  title: Text('FamilySearch 연동 꺼짐'),
+                  subtitle: Text('설정 → FamilySearch 연동에서 켜면 사용할 수 있습니다.'),
+                ),
+              ),
+            if (FamilySearchService.enabled)
+              ListTile(
+                leading: const Icon(Icons.fact_check),
+                title: const Text('미확인 등록 기록 검토'),
+                subtitle: const Text('FamilySearch에서 실제 등록을 확인한 경우에만 ID 저장'),
+                onTap: _busy ? null : _resolvePendingUpload,
+              ),
+            if (_status.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: Text(_status,
+                    style: const TextStyle(color: HanjiColors.ju)),
+              ),
+          ],
+        ),
+        if (_busy)
+          Container(
+            color: Colors.black54,
+            child: const Center(
+                child: CircularProgressIndicator(color: HanjiColors.hanji)),
+          ),
+      ])),
+    );
+  }
+}
+).hasMatch(value)) return;
+              Navigator.pop(dialogContext, value);
+            },
+            child: const Text('확인된 ID 저장'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (confirmedId == null || !mounted) return;
+    await DbService.instance.setConfig('fs_person_id_${person.id}', confirmedId);
+    await DbService.instance.setConfig('fs_upload_pending_${person.id}', '0');
+    if (!mounted) return;
+    setState(() => _status = '확인된 FamilySearch ID를 저장했습니다. 자동 재등록 대상에서 제외됩니다.');
+  }
+
   Future<void> _syncFamilySearch() async {
     if (_busy) return;
     final approved = await showDialog<bool>(
