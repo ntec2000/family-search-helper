@@ -27,6 +27,7 @@ class _ResultScreenState extends State<ResultScreen> {
   bool _saved = false;
   bool _saving = false;
   bool _largeText = false;
+  bool _showReviewGuide = false;
   final TransformationController _imageTransform = TransformationController();
   final List<(Person, int, List<(String, String)>)> _excluded = [];
 
@@ -284,8 +285,13 @@ class _ResultScreenState extends State<ResultScreen> {
                     Text('검토 대상 ${_persons.length}명  ·  제외 ${_excluded.length}명',
                         style: const TextStyle(fontSize: 13,
                             fontWeight: FontWeight.w600, color: HanjiColors.ju)),
-                    const SizedBox(height: 8),
-                    const Text('원본 이미지와 한자 OCR을 대조한 뒤 이름과 가족관계를 확인하세요. '
+                    TextButton.icon(
+                      onPressed: () => setState(() => _showReviewGuide = !_showReviewGuide),
+                      icon: Icon(_showReviewGuide ? Icons.expand_less : Icons.expand_more),
+                      label: Text(_showReviewGuide ? '검토 안내 접기' : '검토 안내 펼치기'),
+                    ),
+                    if (_showReviewGuide)
+                      const Text('원본 이미지와 한자 OCR을 대조한 뒤 이름과 가족관계를 확인하세요. '
                         '인물이 아닌 후보는 제외할 수 있으며 저장 전까지 데이터베이스에 반영되지 않습니다.',
                         style: TextStyle(fontSize: 13, height: 1.5,
                             color: HanjiColors.mukSoft)),
