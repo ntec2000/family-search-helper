@@ -92,6 +92,15 @@ class JokboParser {
       buf.write(' ');
     }
     var s = buf.toString();
+    // 세로 OCR은 간지와 날짜 숫자를 글자별로 나누기도 한다. 원문은
+    // Person.rawText에 보존하고, 파싱용 문자열에서만 구조 토큰을 복원한다.
+    s = s.replaceAllMapped(
+        RegExp('([$_gan])\\s+([$_ji])'), (m) => '${m[1]}${m[2]}');
+    s = s.replaceAllMapped(
+        RegExp('([$_gan][$_ji])\\s*年'), (m) => '${m[1]}年');
+    s = s.replaceAllMapped(
+        RegExp(r'([零一二三四五六七八九十百○0-9])\s+(?=[零一二三四五六七八九十百○0-9月日])'),
+        (m) => m[1]!);
     s = s.replaceAll(RegExp(r'\s+'), ' ');
     return s;
   }
@@ -392,7 +401,7 @@ class JokboParser {
   /// 干支(+月日) + 接尾(生/卒) 매칭. 월·일은 선택.
   static _GzDate? _matchGanzhiDate(String text, String suffix) {
     final re = RegExp(
-        '([$_gan][$_ji])(?:([零一二三四五六七八九十百○]{1,3}月[零一二三四五六七八九十○]{1,3}日))?\\s*$suffix');
+        '([$_gan][$_ji])年?(?:((?:閏)?[正冬臘零一二三四五六七八九十百○0-9]{1,3}月[初廿卅零一二三四五六七八九十○0-9]{1,3}日))?\\s*$suffix');
     final m = re.firstMatch(text);
     if (m == null) return null;
     final gz = m.group(1)!;

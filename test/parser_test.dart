@@ -5,6 +5,22 @@ import 'package:family_search_helper/services/genealogy.dart';
 import 'package:family_search_helper/services/lunar_service.dart';
 
 void main() {
+  group('세로 OCR 날짜 정규화 회귀', () {
+    test('간지·날짜 글자 사이 공백을 복원한다', () {
+      final people = JokboParser.parse(
+          '子在源 甲 子 年 十 一 月 十 日 生 乙 丑 年 九 月 十 二 日 卒');
+      expect(people, hasLength(1));
+      expect(people.single.birthDateLunar, '甲子年 十一月十日 生');
+      expect(people.single.deathDateLunar, '乙丑年 九月十二日 卒');
+    });
+
+    test('윤월·정월·아라비아 숫자 날짜를 보존한다', () {
+      final people = JokboParser.parse(
+          '子在源 乙未年正月初十日生 庚午年閏6月23日卒');
+      expect(people.single.birthDateLunar, contains('正月初十日'));
+      expect(people.single.deathDateLunar, contains('閏6月23日'));
+    });
+  });
   // 주의: HanjaDict 는 rootBundle 의존이라 순수 Dart 테스트에서는 로드되지 않는다.
   // 따라서 한글 음 변환(toHangul)은 항등(원문 유지)으로 동작하므로,
   // 아래 검증은 한자/구조 필드 위주로 단언한다. (Genealogy 의 성씨 맵은 사전 비의존)
