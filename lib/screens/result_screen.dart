@@ -554,16 +554,22 @@ class _PersonList extends StatelessWidget {
         ),
       );
     }
+    final visiblePersons = issueIds == null
+        ? persons
+        : persons.where((person) => issueIds!.contains(person.id)).toList();
+    if (visiblePersons.isEmpty) {
+      return const Center(child: Text('검증에서 발견된 관계 오류 인물이 없습니다.'));
+    }
     final generationCounts = <int?, int>{};
     for (final person in persons) {
       generationCounts.update(person.sega, (n) => n + 1, ifAbsent: () => 1);
     }
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 88),
-      itemCount: persons.length,
+      itemCount: visiblePersons.length,
       separatorBuilder: (_, __) => const SizedBox(height: 8),
       itemBuilder: (_, i) {
-        final p = persons[i];
+        final p = visiblePersons[i];
         final isFemale = p.gender == 'F';
         // v2.6(#7) — 아들은 \"성+이름\" 으로 합쳐 표기 (성씨가 있으면).
         final sHangul = p.surnameHangul ?? '';
