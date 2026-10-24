@@ -102,7 +102,8 @@ class _ResultScreenState extends State<ResultScreen> {
           content: SingleChildScrollView(
             child: Text('${failedLinkIds.join('\n')}\n\n원문과 가족관계를 다시 확인하세요.'),
           ),
-          actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('확인'))],
+          actions: [TextButton(onPressed: () => Clipboard.setData(ClipboardData(text: failedLinkIds.join('\n'))), child: const Text('내역 복사')),
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('확인'))],
         ),
       );
     }
