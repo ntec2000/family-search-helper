@@ -50,6 +50,7 @@ void main() {
     ParentChildReview.unlink(father, child);
     expect(child.fatherId, isNull);
     expect(father.childrenIds, isEmpty);
+    expect(child.fatherId, isNull);
     ParentChildReview.restoreReviewedLink(father, child);
     expect(child.fatherId, father.id);
     expect(father.childrenIds, contains(child.id));
