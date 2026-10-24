@@ -95,7 +95,7 @@ class JokboParser {
             (dauRun - 1 < _ordinalByIndex.length
                 ? _ordinalByIndex[dauRun - 1]
                 : '$dauRun번째');
-        p.relation = '$lab딸';
+        p.relation = explicit == null ? '순서 미상 딸' : '$lab딸';
       } else {
         dauRun = 0; // 아들 등장 → 딸 연속 묶음 종료
       }
