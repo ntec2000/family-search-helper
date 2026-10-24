@@ -112,6 +112,8 @@ void main() {
     expect(mother.childrenIds, contains(child.id));
     expect(father.childrenIds.where((id) => id == child.id).length, 1);
     expect(ParentChildReview.validateReviewedBatch([father, mother, child]), isEmpty);
+    father.childrenIds.clear();
+    expect(ParentChildReview.validateReviewedBatch([father, mother, child]), isNotEmpty);
   });
 
 }
