@@ -23,6 +23,19 @@ class ParentChildReview {
     return null;
   }
 
+  static void unlink(Person parent, Person child) {
+    if (child.fatherId == parent.id) child.fatherId = null;
+    if (child.motherId == parent.id) child.motherId = null;
+    parent.childrenIds.remove(child.id);
+  }
+
+  static void detachExcluded(Person excluded, Iterable<Person> remaining) {
+    for (final person in remaining) {
+      unlink(excluded, person);
+      unlink(person, excluded);
+    }
+  }
+
   static void applyReviewedLink(Person parent, Person child) {
     final error = conflict(parent, child);
     if (error != null) throw StateError(error);
