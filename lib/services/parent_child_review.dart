@@ -26,7 +26,7 @@ class ParentChildReview {
   static void unlink(Person parent, Person child) {
     if (child.fatherId == parent.id) child.fatherId = null;
     if (child.motherId == parent.id) child.motherId = null;
-    parent.childrenIds.remove(child.id);
+    parent.childrenIds.removeWhere((id) => id == child.id);
   }
 
   static void detachExcluded(Person excluded, Iterable<Person> remaining) {
