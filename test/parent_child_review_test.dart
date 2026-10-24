@@ -105,6 +105,9 @@ void main() {
     expect(child.motherId, mother.id);
     expect(mother.childrenIds, contains(child.id));
     expect(father.childrenIds, isEmpty);
+    ParentChildReview.restoreReviewedLink(father, child);
+    expect(child.fatherId, father.id);
+    expect(child.motherId, mother.id);
   });
 
 }
