@@ -40,6 +40,7 @@ class _ResultScreenState extends State<ResultScreen> {
     if (index < 0) return;
     setState(() {
       _excluded.add((person, index));
+      ParentChildReview.detachExcluded(person, _persons);
       _persons.removeAt(index);
     });
   }
