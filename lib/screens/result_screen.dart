@@ -553,6 +553,7 @@ class _PersonList extends StatelessWidget {
                 style: TextStyle(fontWeight: FontWeight.bold,
                     fontSize: largeText ? 21 : 16, height: 1.4)),
             isThreeLine: relationshipMode,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             subtitle: Text([
               if (relationshipMode)
                 '부친: ${p.fatherId == null ? "미연결" : persons.where((candidate) => candidate.id == p.fatherId).map((candidate) => candidate.nameHanja.isNotEmpty ? candidate.nameHanja : candidate.nameHangul).firstOrNull ?? "외부 인물(${p.fatherId})"}',
@@ -578,7 +579,9 @@ class _PersonList extends StatelessWidget {
                 ? Icon(
                     p.fatherId == null && p.motherId == null
                         ? Icons.link_off
-                        : Icons.account_tree_outlined,
+                        : p.fatherId != null && p.motherId != null
+                            ? Icons.account_tree
+                            : Icons.account_tree_outlined,
                     color: p.fatherId == null && p.motherId == null
                         ? HanjiColors.mukSoft
                         : HanjiColors.ju,
