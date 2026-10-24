@@ -230,7 +230,13 @@ class _State extends State<ExportScreen> {
     });
     final list = await DbService.instance.listPersons();
     int ok = 0, fail = 0, skipped = 0, alreadyRegistered = 0;
+    bool uncertain = false;
     for (final p in list) {
+      final pending = await DbService.instance.getConfig('fs_upload_pending_${p.id}');
+      if (pending == '1') {
+        uncertain = true;
+        break;
+      }
       final savedId = await DbService.instance.getConfig('fs_person_id_${p.id}');
       if (savedId != null && savedId.isNotEmpty) {
         alreadyRegistered++;
@@ -241,20 +247,25 @@ class _State extends State<ExportScreen> {
         skipped++;
         continue;
       }
+      await DbService.instance.setConfig('fs_upload_pending_${p.id}', '1');
       final id = await FamilySearchService.createPerson(p);
       if (id != null) {
         await DbService.instance.setConfig('fs_person_id_${p.id}', id);
+        await DbService.instance.setConfig('fs_upload_pending_${p.id}', '0');
         ok++;
         if (mounted) setState(() => _status = '진행 중: $ok명 등록 / 전체 ${list.length}명');
       } else {
         fail++;
+        uncertain = true;
+        break;
       }
     }
     if (!mounted) return;
     setState(() {
       _busy = false;
       _status = '완료: 신규 $ok명 / 기존 등록 제외 $alreadyRegistered명 / '
-          '사망 확인 불가 제외 $skipped명 / 실패 $fail명';
+          '사망 확인 불가 제외 $skipped명 / 실패 $fail명'
+          '${uncertain ? ' / 등록 결과 불명확: 자동 재시도 중지' : ''}';
     });
   }
 
