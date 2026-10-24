@@ -36,6 +36,33 @@ class ParentChildReview {
     }
   }
 
+  /// Checks only relationships within the reviewed batch; external IDs are
+  /// left untouched because their records may already exist in storage.
+  static List<String> validateReviewedBatch(Iterable<Person> persons) {
+    final entries = persons.toList();
+    final byId = <String, Person>{};
+    final issues = <String>[];
+    for (final person in entries) {
+      if (byId.containsKey(person.id)) {
+        issues.add('중복 인물 ID: ${person.id}');
+      } else {
+        byId[person.id] = person;
+      }
+    }
+    for (final child in entries) {
+      for (final parentId in [child.fatherId, child.motherId]) {
+        if (parentId == null) continue;
+        final parent = byId[parentId];
+        if (parent == null) continue;
+        if (conflict(parent, child) != null ||
+            !parent.childrenIds.contains(child.id)) {
+          issues.add('부모-자녀 연결 확인 필요: $parentId → ${child.id}');
+        }
+      }
+    }
+    return issues;
+  }
+
   static bool hasAdoptionAnnotation(Person person) =>
       (person.note ?? '').contains('出系');
 
