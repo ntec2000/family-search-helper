@@ -5,6 +5,15 @@ import 'package:family_search_helper/services/genealogy.dart';
 import 'package:family_search_helper/services/lunar_service.dart';
 
 void main() {
+  group('인물별 필드 혼합 방지', () {
+    test('딸의 사위 이름에 뒤따르는 사망 및 묘지 정보가 섞이지 않는다', () {
+      final people = JokboParser.parse('女金永洙 安東人 卒 墓山 子格 字良甫');
+      expect(people, hasLength(2));
+      expect(people.first.spouseHanja, '金永洙');
+      expect(people.last.nameHanja, '格');
+    });
+  });
+
   group('인물 경계 오인식 방지', () {
     test('좌향 子坐午向의 子는 새로운 인물이 아니다', () {
       final people = JokboParser.parse('子格 字良甫 墓山子坐午向 子核 字仲甫');
