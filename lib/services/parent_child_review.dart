@@ -36,6 +36,9 @@ class ParentChildReview {
     }
   }
 
+  static bool hasAdoptionAnnotation(Person person) =>
+      (person.note ?? '').contains('出系');
+
   static void restoreReviewedLink(Person parent, Person child) {
     if (parent.gender == 'M' && child.fatherId == null) {
       applyReviewedLink(parent, child);
