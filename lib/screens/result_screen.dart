@@ -338,8 +338,9 @@ class _ResultScreenState extends State<ResultScreen> {
                 Container(
                   color: Colors.black,
                   child: InteractiveViewer(
+                    transformationController: _imageTransform,
                     minScale: 1.0,
-                    maxScale: 6.0,
+                    maxScale: 8.0,
                     panEnabled: true,
                     child:
                         Image.file(File(widget.imagePath), fit: BoxFit.contain),
