@@ -109,6 +109,10 @@ class FamilySearchService {
   /// 인물 등록 (gx JSON 포맷)
   /// FamilySearch GEDCOM-X 표준 사용.
   static Future<String?> createPerson(Person p) async {
+    // Never create a nameless remote record from incomplete OCR data.
+    if (p.nameHangul.trim().isEmpty &&
+        p.nameHanja.trim().isEmpty &&
+        p.nameRoman.trim().isEmpty) return null;
     // Without a confirmed death record, do not upload a possibly living person
     // as deceased. A manual review workflow is required for uncertain cases.
     if ((p.deathDateSolar ?? '').trim().isEmpty &&
