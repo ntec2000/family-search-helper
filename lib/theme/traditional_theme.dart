@@ -121,6 +121,19 @@ class TraditionalTheme {
         labelStyle: const TextStyle(color: HanjiColors.mukSoft),
         hintStyle: const TextStyle(color: HanjiColors.mukSoft),
       ),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          foregroundColor: HanjiColors.muk,
+          minimumSize: const Size(44, 44),
+          tapTargetSize: MaterialTapTargetSize.padded,
+        ),
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: HanjiColors.hanjiLight,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+      ),
       listTileTheme: const ListTileThemeData(
         iconColor: HanjiColors.mukSoft,
         textColor: HanjiColors.muk,
