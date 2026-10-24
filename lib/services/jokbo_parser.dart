@@ -93,8 +93,8 @@ class JokboParser {
     s = s.replaceAllMapped(
         RegExp('([$_gan][$_ji])\\s*年'), (m) => '${m[1]}年');
     s = s.replaceAllMapped(
-        RegExp(r'([零一二三四五六七八九十百○0-9])\s+(?=[零一二三四五六七八九十百○0-9月日])'),
-        (m) => m[1]!);
+        RegExp(r'[零一二三四五六七八九十百○0-9](?:\s*[零一二三四五六七八九十百○0-9])*\s*[月日]'),
+        (m) => m[0]!.replaceAll(RegExp(r'\s+'), ''));
     s = s.replaceAll(RegExp(r'\s+'), ' ');
     return s;
   }

@@ -6,6 +6,11 @@ import 'package:family_search_helper/services/lunar_service.dart';
 
 void main() {
   group('세로 OCR 날짜 정규화 회귀', () {
+    test('숫자 한자로 끝나는 이름과 세대 표기 사이의 공백은 보존한다', () {
+      final people = JokboParser.parse('子 顯五 二十二世 庚午生');
+      expect(people.single.nameHanja, '顯五');
+      expect(people.single.sega, 22);
+    });
     test('간지·날짜 글자 사이 공백을 복원한다', () {
       final people = JokboParser.parse(
           '子在源 甲 子 年 十 一 月 十 日 生 乙 丑 年 九 月 十 二 日 卒');
