@@ -25,6 +25,41 @@ class GedcomExport {
       ids[persons[i].id] = candidate;
     }
 
+    // Only link relationships backed by stored person IDs. Never infer family ties.
+    final families = <String, ({String? father, String? mother, List<String> children})>{};
+    final childFamily = <String, String>{};
+    for (final child in persons) {
+      final father = child.fatherId != child.id && ids.containsKey(child.fatherId)
+          ? child.fatherId
+          : null;
+      final mother = child.motherId != child.id && ids.containsKey(child.motherId)
+          ? child.motherId
+          : null;
+      if (father == null && mother == null) continue;
+      final key = '${father ?? ''}|${mother ?? ''}';
+      final family = families[key];
+      if (family == null) {
+        families[key] = (father: father, mother: mother, children: <String>[child.id]);
+      } else {
+        family.children.add(child.id);
+      }
+      childFamily[child.id] = key;
+    }
+    final familyIds = <String, String>{};
+    var familyIndex = 0;
+    for (final key in families.keys) {
+      familyIds[key] = 'F${++familyIndex}';
+    }
+    final spouseFamilies = <String, List<String>>{};
+    for (final entry in families.entries) {
+      final familyId = familyIds[entry.key]!;
+      for (final parentId in <String?>[entry.value.father, entry.value.mother]) {
+        if (parentId != null) {
+          spouseFamilies.putIfAbsent(parentId, () => <String>[]).add(familyId);
+        }
+      }
+    }
+
     for (final p in persons) {
       buf.writeln('0 @${ids[p.id]}@ INDI');
       // NAME: hangul /hanja/
@@ -61,6 +96,24 @@ class GedcomExport {
       if (p.bongwan != null) buf.writeln('1 NOTE 本貫: ${p.bongwan}');
       if (p.pa != null) buf.writeln('1 NOTE 派: ${p.pa}');
       if (p.sega != null) buf.writeln('1 NOTE ${p.sega}世');
+      final parentFamily = childFamily[p.id];
+      if (parentFamily != null) {
+        buf.writeln('1 FAMC @${familyIds[parentFamily]}@');
+      }
+      for (final familyId in spouseFamilies[p.id] ?? const <String>[]) {
+        buf.writeln('1 FAMS @$familyId@');
+      }
+    }
+
+    for (final entry in families.entries) {
+      buf.writeln('0 @${familyIds[entry.key]}@ FAM');
+      final father = entry.value.father;
+      final mother = entry.value.mother;
+      if (father != null) buf.writeln('1 HUSB @${ids[father]}@');
+      if (mother != null) buf.writeln('1 WIFE @${ids[mother]}@');
+      for (final child in entry.value.children) {
+        buf.writeln('1 CHIL @${ids[child]}@');
+      }
     }
 
     buf.writeln('0 TRLR');
