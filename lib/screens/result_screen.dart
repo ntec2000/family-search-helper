@@ -34,7 +34,7 @@ class _ResultScreenState extends State<ResultScreen> {
   @override
   void initState() {
     super.initState();
-    _persons = List<Person>.from(widget.persons);
+    _persons = widget.persons.map((person) => Person.fromMap(person.toMap())).toList();
   }
 
   @override
