@@ -72,6 +72,7 @@ class _ResultScreenState extends State<ResultScreen> {
     if (_saved || _saving || _excluded.isEmpty) return;
     final (person, index, links) = _excluded.removeLast();
     var skippedLinks = 0;
+    final failedLinkIds = <String>[];
     setState(() {
       _persons.insert(index.clamp(0, _persons.length), person);
       for (final (parentId, childId) in links) {
