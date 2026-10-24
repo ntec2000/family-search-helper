@@ -6,6 +6,16 @@ void main() {
   Person person(String id, int generation, {String gender = 'M'}) =>
       Person(id: id, nameHanja: id, gender: gender, sega: generation);
 
+  test('invalid parent assignments are flagged', () {
+    final child = person('child', 22);
+    child.fatherId = 'parent';
+    child.motherId = 'parent';
+    expect(ParentChildReview.validateReviewedBatch([child]), isNotEmpty);
+    child.fatherId = child.id;
+    child.motherId = null;
+    expect(ParentChildReview.validateReviewedBatch([child]), isNotEmpty);
+  });
+
   test('page 224 verified paternal chains', () {
     final cheuk = person('昃', 20);
     final gyeok = person('格', 21);
