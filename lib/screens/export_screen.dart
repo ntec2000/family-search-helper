@@ -24,14 +24,26 @@ class _State extends State<ExportScreen> {
   String _status = '';
 
   Future<void> _exportGedcom() async {
-    final list = await DbService.instance.listPersons();
-    final ged = GedcomExport.toGedcom(list);
-    final dir = await getTemporaryDirectory();
-    final f = File(path.join(dir.path,
-        'family_${DateTime.now().millisecondsSinceEpoch}.ged'));
-    await f.writeAsString(ged);
-    await Share.shareXFiles([XFile(f.path)],
-        subject: '가족역사기록 GEDCOM');
+    try {
+      final list = await DbService.instance.listPersons();
+      final ged = GedcomExport.toGedcom(list);
+      final dir = await getTemporaryDirectory();
+      final f = File(path.join(dir.path,
+          'family_${DateTime.now().millisecondsSinceEpoch}.ged'));
+      await f.writeAsString(ged);
+      await Share.shareXFiles([XFile(f.path)],
+          subject: '가족역사기록 GEDCOM');
+    } on StateError {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('인물 ID가 중복되어 내보내기를 중단했습니다. 원본 자료를 확인해 주세요.')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('GEDCOM 파일 내보내기에 실패했습니다. 다시 시도해 주세요.')),
+      );
+    }
   }
 
   /// 한자 → "한글 (한자)" 표기. 한자가 비어있으면 빈 문자열.
