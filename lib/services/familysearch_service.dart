@@ -68,16 +68,18 @@ class FamilySearchService {
 
   /// Authorization Code → Access Token 교환
   static Future<bool> exchangeCode(String code) async {
+    final client = HttpClient();
     try {
-      final client = HttpClient();
       final req =
           await client.postUrl(Uri.parse('$_identBase/cis-web/oauth2/v3/token'));
       req.headers
           .set('Content-Type', 'application/x-www-form-urlencoded');
-      req.write('grant_type=authorization_code'
-          '&code=$code'
-          '&client_id=$clientId'
-          '&redirect_uri=${Uri.encodeComponent(redirectUri)}');
+      req.write(Uri(queryParameters: {
+        'grant_type': 'authorization_code',
+        'code': code.trim(),
+        'client_id': clientId,
+        'redirect_uri': redirectUri,
+      }).query);
       final resp = await req.close();
       final body = await resp.transform(utf8.decoder).join();
       if (resp.statusCode == 200) {
@@ -85,11 +87,13 @@ class FamilySearchService {
         _accessToken = json['access_token'] as String?;
         return _accessToken != null;
       }
-      debugPrint('FS token error: ${resp.statusCode} $body');
+      debugPrint('FS token error: HTTP ${resp.statusCode}');
       return false;
     } catch (e) {
-      debugPrint('FS exchange error: $e');
+      debugPrint('FS exchange failed');
       return false;
+    } finally {
+      client.close();
     }
   }
 
@@ -105,6 +109,10 @@ class FamilySearchService {
   /// 인물 등록 (gx JSON 포맷)
   /// FamilySearch GEDCOM-X 표준 사용.
   static Future<String?> createPerson(Person p) async {
+    // Without a confirmed death record, do not upload a possibly living person
+    // as deceased. A manual review workflow is required for uncertain cases.
+    if ((p.deathDateSolar ?? '').trim().isEmpty &&
+        (p.deathDateLunar ?? '').trim().isEmpty) return null;
     final body = {
       'persons': [
         {
@@ -112,7 +120,9 @@ class FamilySearchService {
           'gender': {
             'type': p.gender == 'M'
                 ? 'http://gedcomx.org/Male'
-                : 'http://gedcomx.org/Female'
+                : p.gender == 'F'
+                    ? 'http://gedcomx.org/Female'
+                    : 'http://gedcomx.org/Unknown'
           },
           'names': [
             {
@@ -129,13 +139,13 @@ class FamilySearchService {
             }
           ],
           'facts': [
-            if (p.birthDateSolar != null || p.birthPlace != null)
+            if (p.birthDateSolar != null || p.birthDateLunar != null || p.birthPlace != null)
               {
                 'type': 'http://gedcomx.org/Birth',
                 'date': {'original': p.birthDateSolar ?? p.birthDateLunar ?? ''},
                 'place': {'original': p.birthPlace ?? ''},
               },
-            if (p.deathDateSolar != null || p.deathPlace != null)
+            if (p.deathDateSolar != null || p.deathDateLunar != null || p.deathPlace != null)
               {
                 'type': 'http://gedcomx.org/Death',
                 'date': {'original': p.deathDateSolar ?? p.deathDateLunar ?? ''},
@@ -161,8 +171,8 @@ class FamilySearchService {
 
   static Future<Map<String, dynamic>?> _get(String path) async {
     if (_accessToken == null) return null;
+    final client = HttpClient();
     try {
-      final client = HttpClient();
       final req = await client.getUrl(Uri.parse('$_base$path'));
       req.headers.set('Authorization', 'Bearer $_accessToken');
       req.headers.set('Accept', 'application/x-gedcomx-v1+json');
@@ -171,19 +181,21 @@ class FamilySearchService {
       if (resp.statusCode == 200) {
         return jsonDecode(body) as Map<String, dynamic>;
       }
-      debugPrint('FS GET error: ${resp.statusCode} $body');
+      debugPrint('FS GET error: HTTP ${resp.statusCode}');
       return null;
     } catch (e) {
-      debugPrint('FS GET exception: $e');
+      debugPrint('FS GET request failed');
       return null;
+    } finally {
+      client.close();
     }
   }
 
   static Future<Map<String, dynamic>?> _post(
       String path, Map<String, dynamic> body) async {
     if (_accessToken == null) return null;
+    final client = HttpClient();
     try {
-      final client = HttpClient();
       final req = await client.postUrl(Uri.parse('$_base$path'));
       req.headers.set('Authorization', 'Bearer $_accessToken');
       req.headers.set('Content-Type', 'application/x-gedcomx-v1+json');
@@ -194,11 +206,13 @@ class FamilySearchService {
       if (resp.statusCode == 200 || resp.statusCode == 201) {
         return jsonDecode(respBody) as Map<String, dynamic>;
       }
-      debugPrint('FS POST error: ${resp.statusCode} $respBody');
+      debugPrint('FS POST error: HTTP ${resp.statusCode}');
       return null;
     } catch (e) {
-      debugPrint('FS POST exception: $e');
+      debugPrint('FS POST request failed');
       return null;
+    } finally {
+      client.close();
     }
   }
 }
