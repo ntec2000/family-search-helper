@@ -179,7 +179,10 @@ class _ResultScreenState extends State<ResultScreen> {
   Future<void> _saveReviewedPersons() async {
     if (_saved || _saving) return;
     final issues = ParentChildReview.validateReviewedBatch(_persons);
-    if (issues.isNotEmpty) return;
+    if (issues.isNotEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(issues.first)));
+      return;
+    }
     setState(() => _saving = true);
     final confirmed = await showDialog<bool>(
       context: context,
