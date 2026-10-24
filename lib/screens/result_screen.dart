@@ -504,7 +504,7 @@ class _PersonList extends StatelessWidget {
             title: Text(nameLine,
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.bold,
+                style: TextStyle(fontWeight: FontWeight.bold,
                     fontSize: largeText ? 21 : 16, height: 1.4)),
             subtitle: Text([
               if (p.ja != null) '字 ${_a(p.ja)}',
