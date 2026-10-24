@@ -45,4 +45,13 @@ void main() {
     expect(output, isNot(contains('1 FAMS ')));
   });
 
+  test('GEDCOM surname is Hangul surname, not Hanja full name', () {
+    final output = GedcomExport.toGedcom(<Person>[
+      Person(id: 'p', nameHangul: '최해두', surnameHangul: '최', nameHanja: '崔海斗'),
+    ]);
+    expect(output, contains('1 NAME 해두 /최/'));
+    expect(output, contains('1 NOTE 한자 이름: 崔海斗'));
+    expect(output, isNot(contains('1 NAME 최해두 /崔海斗/')));
+  });
+
 }
