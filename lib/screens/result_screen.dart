@@ -377,6 +377,11 @@ class _PersonList extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 IconButton(
+                  icon: const Icon(Icons.link_off),
+                  tooltip: '부모 연결 해제',
+                  onPressed: saved ? null : () => onUnlink(p),
+                ),
+                IconButton(
                   icon: const Icon(Icons.account_tree_outlined),
                   tooltip: '부모 관계 확인 및 연결',
                   onPressed: saved ? null : () => onParent(p),
