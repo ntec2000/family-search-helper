@@ -290,6 +290,21 @@ class _ResultScreenState extends State<ResultScreen> {
               labelColor: HanjiColors.muk,
               indicatorColor: HanjiColors.ju,
             ),
+            Builder(builder: (tabContext) => Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              child: Row(children: [
+                Expanded(child: TextButton.icon(
+                  onPressed: () => DefaultTabController.of(tabContext).animateTo(2),
+                  icon: const Icon(Icons.image_outlined),
+                  label: const Text('원본 족보 보기'),
+                )),
+                Expanded(child: TextButton.icon(
+                  onPressed: () => DefaultTabController.of(tabContext).animateTo(0),
+                  icon: const Icon(Icons.people_outline),
+                  label: const Text('인물 검토로 이동'),
+                )),
+              ]),
+            )),
             Expanded(
               child: TabBarView(children: [
                 _PersonList(persons: _persons, onDelete: _deletePerson, onEdit: _editCandidate, onParent: _chooseParent, onUnlink: _clearParentLinks, saved: _saved),
