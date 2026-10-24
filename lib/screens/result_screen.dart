@@ -441,7 +441,7 @@ class _ResultScreenState extends State<ResultScreen> {
               ),
             Expanded(
               child: TabBarView(children: [
-                _PersonList(persons: _persons, onDelete: _deletePerson, onEdit: _editCandidate, onParent: _chooseParent, onUnlink: _clearParentLinks, saved: _saved || _saving, largeText: _largeText),
+                _PersonList(persons: _persons, onDelete: _deletePerson, onEdit: _editCandidate, onParent: _chooseParent, onUnlink: _clearParentLinks, saved: _saved || _saving, largeText: _largeText, relationshipMode: _reviewStep == 1),
                 _TextCompare(hanja: widget.rawText, hangul: hangulText),
                 Container(
                   color: Colors.black,
@@ -472,7 +472,8 @@ class _PersonList extends StatelessWidget {
   final void Function(Person) onUnlink;
   final bool saved;
   final bool largeText;
-  const _PersonList({required this.persons, required this.onDelete, required this.onEdit, required this.onParent, required this.onUnlink, required this.saved, required this.largeText});
+  final bool relationshipMode;
+  const _PersonList({required this.persons, required this.onDelete, required this.onEdit, required this.onParent, required this.onUnlink, required this.saved, required this.largeText, required this.relationshipMode});
 
   // 한자(한글) 표기
   static String _a(String? s) =>
@@ -592,18 +593,19 @@ class _PersonList extends StatelessWidget {
                 }
               },
               itemBuilder: (_) => [
-                if (!saved)
+                if (!saved && relationshipMode)
                   const PopupMenuItem(value: 'parent',
                       child: ListTile(leading: Icon(Icons.account_tree_outlined),
                           title: Text('부모 관계 연결'))),
-                if (!saved && (p.fatherId != null || p.motherId != null))
+                if (!saved && relationshipMode && (p.fatherId != null || p.motherId != null))
                   const PopupMenuItem(value: 'unlink',
                       child: ListTile(leading: Icon(Icons.link_off),
                           title: Text('부모 연결 해제'))),
-                PopupMenuItem(value: 'edit',
+                if (!relationshipMode || saved)
+                  PopupMenuItem(value: 'edit',
                     child: ListTile(leading: const Icon(Icons.edit_note),
                         title: Text(saved ? '인물 상세 보기' : '이름 수정'))),
-                if (!saved)
+                if (!saved && !relationshipMode)
                   const PopupMenuItem(value: 'exclude',
                       child: ListTile(leading: Icon(Icons.person_remove_outlined),
                           title: Text('인물 아님 — 후보 제외'))),
