@@ -54,7 +54,9 @@ class ParentChildReview {
         if (parentId == null) continue;
         final parent = byId[parentId];
         if (parent == null) continue;
-        if (conflict(parent, child) != null ||
+        if ((parentId == child.fatherId && parent.gender != 'M') ||
+            (parentId == child.motherId && parent.gender != 'F') ||
+            conflict(parent, child) != null ||
             !parent.childrenIds.contains(child.id)) {
           issues.add('부모-자녀 연결 확인 필요: $parentId → ${child.id}');
         }
