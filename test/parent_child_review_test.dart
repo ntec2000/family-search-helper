@@ -115,6 +115,9 @@ void main() {
     father.childrenIds.add(child.id);
     expect(ParentChildReview.validateReviewedBatch([father, mother, child]), isNotEmpty);
     father.childrenIds.removeLast();
+    child.fatherId = mother.id;
+    expect(ParentChildReview.validateReviewedBatch([father, mother, child]), isNotEmpty);
+    child.fatherId = father.id;
     father.childrenIds.clear();
     expect(ParentChildReview.validateReviewedBatch([father, mother, child]), isNotEmpty);
     father.childrenIds.add(child.id);
