@@ -62,11 +62,24 @@ class GedcomExport {
 
     for (final p in persons) {
       buf.writeln('0 @${ids[p.id]}@ INDI');
-      // NAME: hangul /hanja/
-      final hangul = p.nameHangul.isEmpty ? '?' : p.nameHangul;
-      final hanja = p.nameHanja.isEmpty ? '' : p.nameHanja;
-      buf.writeln('1 NAME $hangul /$hanja/');
-      buf.writeln('2 ROMN ${p.nameRoman}');
+      // GEDCOM NAME uses /surname/, not /Hanja/.
+      // Only separate a surname when it was explicitly recorded.
+      final fullName = p.nameHangul.trim();
+      final surname = (p.surnameHangul ?? '').trim();
+      final given = surname.isNotEmpty && fullName.startsWith(surname)
+          ? fullName.substring(surname.length).trim()
+          : fullName;
+      if (surname.isNotEmpty && fullName.startsWith(surname)) {
+        buf.writeln('1 NAME $given /$surname/');
+      } else {
+        buf.writeln('1 NAME ${fullName.isEmpty ? '?' : fullName}');
+      }
+      if (p.nameHanja.trim().isNotEmpty) {
+        buf.writeln('1 NOTE 한자 이름: ${p.nameHanja.trim()}');
+      }
+      if (p.nameRoman.trim().isNotEmpty) {
+        buf.writeln('1 NOTE 로마자 이름: ${p.nameRoman.trim()}');
+      }
       buf.writeln('1 SEX ${p.gender}');
 
       if (p.birthDateSolar != null || p.birthDateLunar != null) {
