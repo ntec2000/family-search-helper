@@ -185,10 +185,31 @@ class _State extends State<ExportScreen> {
   }
 
   Future<void> _syncFamilySearch() async {
+    if (_busy) return;
+    final approved = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('FamilySearch 신규 인물 등록 확인'),
+        content: const Text(
+          '이 작업은 기존 인물과의 중복 여부를 자동 확인하지 않고 신규 인물을 생성합니다. '
+          '같은 작업을 반복하면 중복 등록될 수 있습니다. 계속하시겠습니까?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('신규 등록 진행'),
+          ),
+        ],
+      ),
+    );
+    if (approved != true || !mounted) return;
     if (!FamilySearchService.isLoggedIn) {
       await Navigator.push(context, MaterialPageRoute(
           builder: (_) => const FamilySearchLoginScreen()));
-      if (!FamilySearchService.isLoggedIn) return;
+      if (!mounted || !FamilySearchService.isLoggedIn) return;
     }
     setState(() {
       _busy = true;
@@ -200,11 +221,12 @@ class _State extends State<ExportScreen> {
       final id = await FamilySearchService.createPerson(p);
       if (id != null) {
         ok++;
-        setState(() => _status = '진행 중: $ok명 등록 / 전체 ${list.length}명');
+        if (mounted) setState(() => _status = '진행 중: $ok명 등록 / 전체 ${list.length}명');
       } else {
         fail++;
       }
     }
+    if (!mounted) return;
     setState(() {
       _busy = false;
       _status = '완료: 성공 $ok명 / 실패 $fail명';
