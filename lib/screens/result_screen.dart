@@ -574,6 +574,16 @@ class _PersonList extends StatelessWidget {
               if (p.note != null) '※ ${p.note}',
             ].where((s) => s.trim().isNotEmpty).join('\n'),
                 style: TextStyle(height: 1.55, fontSize: largeText ? 17 : 12)),
+            leading: relationshipMode
+                ? Icon(
+                    p.fatherId == null && p.motherId == null
+                        ? Icons.link_off
+                        : Icons.account_tree_outlined,
+                    color: p.fatherId == null && p.motherId == null
+                        ? HanjiColors.mukSoft
+                        : HanjiColors.ju,
+                  )
+                : null,
             trailing: PopupMenuButton<String>(
               tooltip: '인물 작업 메뉴 · 인물 아님 제외',
               icon: const Icon(Icons.more_vert),
