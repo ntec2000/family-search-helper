@@ -396,33 +396,46 @@ class _PersonList extends StatelessWidget {
               if (p.note != null) '※ ${p.note}',
             ].where((s) => s.trim().isNotEmpty).join('\n'),
                 style: const TextStyle(height: 1.5, fontSize: 12)),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.link_off),
-                  tooltip: '부모 연결 해제',
-                  onPressed: saved ? null : () => onUnlink(p),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.account_tree_outlined),
-                  tooltip: '부모 관계 확인 및 연결',
-                  onPressed: saved ? null : () => onParent(p),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.edit_note),
-                  tooltip: '수정',
-                  onPressed: saved ? () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => PersonCardScreen(personId: p.id)))
-                      : () => onEdit(p),
-                ),
-                IconButton(
-                  icon: Icon(Icons.delete_outline, color: Colors.red.shade700),
-                  tooltip: '인물 아님 → 삭제',
-                  onPressed: saved ? null : () => onDelete(p),
-                ),
+            trailing: PopupMenuButton<String>(
+              tooltip: '인물 작업 메뉴',
+              icon: const Icon(Icons.more_vert),
+              onSelected: (action) {
+                switch (action) {
+                  case 'parent':
+                    onParent(p);
+                    break;
+                  case 'unlink':
+                    onUnlink(p);
+                    break;
+                  case 'edit':
+                    if (saved) {
+                      Navigator.push(context, MaterialPageRoute(
+                          builder: (_) => PersonCardScreen(personId: p.id)));
+                    } else {
+                      onEdit(p);
+                    }
+                    break;
+                  case 'exclude':
+                    onDelete(p);
+                    break;
+                }
+              },
+              itemBuilder: (_) => [
+                if (!saved)
+                  const PopupMenuItem(value: 'parent',
+                      child: ListTile(leading: Icon(Icons.account_tree_outlined),
+                          title: Text('부모 관계 연결'))),
+                if (!saved && (p.fatherId != null || p.motherId != null))
+                  const PopupMenuItem(value: 'unlink',
+                      child: ListTile(leading: Icon(Icons.link_off),
+                          title: Text('부모 연결 해제'))),
+                PopupMenuItem(value: 'edit',
+                    child: ListTile(leading: const Icon(Icons.edit_note),
+                        title: Text(saved ? '인물 상세 보기' : '이름 수정'))),
+                if (!saved)
+                  const PopupMenuItem(value: 'exclude',
+                      child: ListTile(leading: Icon(Icons.person_remove_outlined),
+                          title: Text('인물 후보 제외'))),
               ],
             ),
             onTap: saved ? () => Navigator.push(
