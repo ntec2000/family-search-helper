@@ -132,12 +132,11 @@ class FamilySearchService {
             {
               'nameForms': [
                 {
-                  'fullText':
-                      '${p.nameHangul} ${p.nameHanja} ${p.nameRoman}'.trim(),
-                  'parts': [
-                    if (p.nameHangul.isNotEmpty)
-                      {'type': 'http://gedcomx.org/Given', 'value': p.nameHangul},
-                  ],
+                  'fullText': p.nameHangul.trim().isNotEmpty
+                      ? p.nameHangul.trim()
+                      : p.nameHanja.trim().isNotEmpty
+                          ? p.nameHanja.trim()
+                          : p.nameRoman.trim(),
                 }
               ]
             }
