@@ -24,4 +24,25 @@ void main() {
     ]);
     expect(output, isNot(contains('0 @F1@ FAM')));
   });
+  test('short and colliding normalized IDs have unique cross-references', () {
+    final output = GedcomExport.toGedcom(<Person>[
+      Person(id: 'a'),
+      Person(id: 'a-b'),
+      Person(id: 'a_b'),
+    ]);
+    expect(output, contains('0 @Ia@ INDI'));
+    expect(output, contains('0 @Ia_b@ INDI'));
+    expect(output, contains('0 @Ia_b_3@ INDI'));
+  });
+
+  test('does not invent relationships from unrelated people', () {
+    final output = GedcomExport.toGedcom(<Person>[
+      Person(id: 'one', nameHangul: '첫째'),
+      Person(id: 'two', nameHangul: '둘째'),
+    ]);
+    expect(output, isNot(contains(' FAM')));
+    expect(output, isNot(contains('1 FAMC ')));
+    expect(output, isNot(contains('1 FAMS ')));
+  });
+
 }
