@@ -119,6 +119,15 @@ class DbService {
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
+  Future<void> upsertPersonsAtomically(Iterable<Person> persons) async {
+    await db.transaction((txn) async {
+      for (final person in persons) {
+        await txn.insert('persons', person.toMap(),
+            conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+    });
+  }
+
   Future<List<Person>> listPersons({String? search}) async {
     final rows = search == null || search.isEmpty
         ? await db.query('persons', orderBy: 'updated_at DESC')
