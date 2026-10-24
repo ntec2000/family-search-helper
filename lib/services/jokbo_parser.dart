@@ -76,30 +76,8 @@ class JokboParser {
           clanHangul: clanHangul);
       if (p != null) persons.add(p);
     }
-    // v3.0 #2 — 족보 차례(형제 순서) 규칙을 정확히 적용한다.
-    //  · 아들: 차례 한자(二·三·四…)가 있으면 그 순서, 없으면 장남(첫째아들).
-    //         (족보 관례상 장남은 숫자를 생략하고 가장 먼저 등장한다.
-    //          → 이 처리는 _parsePersonBlock 에서 이미 완료되므로 그대로 둔다.)
-    //  · 딸: 차례 표기가 거의 없으므로, '연속한 女 항목'(같은 아버지의
-    //        딸 묶음) 안의 등장 순서로 첫째딸·둘째딸…을 부여한다.
-    //        아들(子)이 나오면 딸 연속 카운터를 초기화한다.
-    var dauRun = 0;
-    for (final p in persons) {
-      if (p.gender == 'F') {
-        final m = RegExp(r'^女\s*([一二三四五六七八九十]+)?')
-            .firstMatch((p.rawText ?? '').trim());
-        final oc = m?.group(1);
-        final explicit = oc != null && oc.length == 1 ? _ordinal[oc] : null;
-        dauRun += 1;
-        final lab = explicit ??
-            (dauRun - 1 < _ordinalByIndex.length
-                ? _ordinalByIndex[dauRun - 1]
-                : '$dauRun번째');
-        p.relation = explicit == null ? '순서 미상 딸' : '$lab딸';
-      } else {
-        dauRun = 0; // 아들 등장 → 딸 연속 묶음 종료
-      }
-    }
+    // OCR 등장 순서만으로 형제 순서나 부모를 추론하지 않습니다.
+    // 각 인물의 명시적 순서 표기는 _parsePersonBlock에서 보존합니다.
     // 간지만으로 서기 연도를 확정할 수 없으므로 세대별 연도 자동 추정은 하지 않습니다.
     return persons;
   }
