@@ -252,11 +252,34 @@ class _ResultScreenState extends State<ResultScreen> {
         child: DefaultTabController(
           length: 3,
           child: Column(children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: Text(
-                  '인물이 아닌 후보는 삭제하여 제외하세요. 확인 후 아래 저장 버튼을 누르기 전에는 데이터베이스에 등록되지 않습니다.',
-                  style: TextStyle(fontSize: 12, color: HanjiColors.mukSoft)),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: HanjiColors.hanjiLight,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: HanjiColors.hanjiDark),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('족보 원문 대조 · 인물 검토',
+                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700,
+                            color: HanjiColors.muk)),
+                    const SizedBox(height: 8),
+                    Text('검토 대상 ${_persons.length}명  ·  제외 ${_excluded.length}명',
+                        style: const TextStyle(fontSize: 13,
+                            fontWeight: FontWeight.w600, color: HanjiColors.ju)),
+                    const SizedBox(height: 8),
+                    const Text('원본 이미지와 한자 OCR을 대조한 뒤 이름과 가족관계를 확인하세요. '
+                        '인물이 아닌 후보는 제외할 수 있으며 저장 전까지 데이터베이스에 반영되지 않습니다.',
+                        style: TextStyle(fontSize: 13, height: 1.5,
+                            color: HanjiColors.mukSoft)),
+                  ],
+                ),
+              ),
             ),
             const TabBar(
               tabs: [
