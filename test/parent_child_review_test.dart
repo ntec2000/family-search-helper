@@ -89,6 +89,7 @@ void main() {
     ParentChildReview.restoreReviewedLink(father, child);
     ParentChildReview.restoreReviewedLink(father, child);
     expect(father.childrenIds, [child.id]);
+    expect(child.fatherId, father.id);
   });
 
 }
