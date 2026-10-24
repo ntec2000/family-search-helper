@@ -266,10 +266,10 @@ class _ResultScreenState extends State<ResultScreen> {
           length: 3,
           child: Column(children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+              padding: const EdgeInsets.fromLTRB(12, 6, 12, 4),
               child: Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
                   color: HanjiColors.hanjiLight,
                   borderRadius: BorderRadius.circular(16),
