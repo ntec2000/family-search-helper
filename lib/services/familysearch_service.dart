@@ -207,7 +207,23 @@ class FamilySearchService {
       final resp = await req.close();
       final respBody = await resp.transform(utf8.decoder).join();
       if (resp.statusCode == 200 || resp.statusCode == 201) {
-        return jsonDecode(respBody) as Map<String, dynamic>;
+        if (respBody.trim().isNotEmpty) {
+          final decoded = jsonDecode(respBody);
+          if (decoded is Map<String, dynamic> && decoded['persons'] is List &&
+              (decoded['persons'] as List).isNotEmpty) {
+            return decoded;
+          }
+        }
+        final location = resp.headers.value('location');
+        if (location != null) {
+          final segments = Uri.parse(location).pathSegments;
+          final index = segments.lastIndexOf('persons');
+          if (index >= 0 && index + 1 < segments.length &&
+              segments[index + 1].isNotEmpty) {
+            return {'persons': [{'id': segments[index + 1]}]};
+          }
+        }
+        return null;
       }
       debugPrint('FS POST error: HTTP ${resp.statusCode}');
       return null;
