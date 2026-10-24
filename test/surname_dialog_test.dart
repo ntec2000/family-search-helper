@@ -9,7 +9,6 @@ void main() {
   test('HanjaDict loads and byReading returns candidates', () async {
     await HanjaDict.instance.load();
     final c = HanjaDict.instance.byReading('최');
-    print('byReading(최) -> ${c.length}');
     expect(HanjaDict.instance.size, greaterThan(0));
     expect(c, isNotEmpty);
   });
@@ -63,6 +62,5 @@ void main() {
     await tester.pumpAndSettle();
     expect(result, isNotNull);
     expect(result!.$2, '최');
-    print('dialog result = $result');
   });
 }

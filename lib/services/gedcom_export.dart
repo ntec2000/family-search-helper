@@ -21,7 +21,9 @@ class GedcomExport {
       final raw = persons[i].id.replaceAll(RegExp(r'[^A-Za-z0-9_]'), '_');
       var candidate = 'I${raw.isEmpty ? 'person' : raw}';
       if (used.contains(candidate)) candidate = '${candidate}_${i + 1}';
-      while (used.contains(candidate)) candidate = '${candidate}_';
+      while (used.contains(candidate)) {
+        candidate = '${candidate}_';
+      }
       used.add(candidate);
       ids[persons[i].id] = candidate;
     }

@@ -26,8 +26,8 @@ class AboutScreen extends StatelessWidget {
               color: HanjiColors.hanjiLight,
               border: Border.all(color: HanjiColors.muk, width: 0.8),
             ),
-            child: Column(
-              children: const [
+            child: const Column(
+              children: [
                 FittedBox(
                     fit: BoxFit.scaleDown,
                     child: Text('家族歷史記錄 助手',
@@ -52,7 +52,7 @@ class AboutScreen extends StatelessWidget {
           const SizedBox(height: 24),
 
           // ─── 개발자 정보 ──────────────────────
-          _Section(title: '개발자 정보'),
+          const _Section(title: '개발자 정보'),
           Card(
             child: Column(
               children: [
@@ -82,13 +82,13 @@ class AboutScreen extends StatelessWidget {
           const SizedBox(height: 24),
 
           // ─── 개발 배경 ──────────────────────
-          _Section(title: '개발 배경'),
-          Card(
+          const _Section(title: '개발 배경'),
+          const Card(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text(
                     '본 앱은 한국의 족보(族譜) 한자 기록을 해석하여, '
                     'The Church of Jesus Christ of Latter-day Saints '
@@ -121,10 +121,10 @@ class AboutScreen extends StatelessWidget {
           const SizedBox(height: 24),
 
           // ─── 기술 스택 ──────────────────────
-          _Section(title: '기술 스택 (전부 무료/오픈소스)'),
-          Card(
+          const _Section(title: '기술 스택 (전부 무료/오픈소스)'),
+          const Card(
             child: Column(
-              children: const [
+              children: [
                 _KV('프레임워크', 'Flutter 3.41 · Dart 3.11'),
                 _KV('OCR', 'Google ML Kit Text Recognition v2 16.0.1 (Chinese, 온디바이스 · 16KB 페이지 정렬)'),
                 _KV('한자→한글 사전', '내장 9,000자+ · 한글 음(여러 음 포함)·뜻(訓) 수록'),
@@ -139,7 +139,7 @@ class AboutScreen extends StatelessWidget {
           const SizedBox(height: 24),
 
           // ─── 개발 히스토리 / 버그 수정 ───────────────────
-          _Section(title: '개발 히스토리 / 버그 수정 기록'),
+          const _Section(title: '개발 히스토리 / 버그 수정 기록'),
           Card(
             child: Column(
               children: [
@@ -167,15 +167,16 @@ class AboutScreen extends StatelessWidget {
               ],
             ),
           ),
-          Card(
+          const Card(
             child: Padding(
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(8),
               child: Column(
-                children: const [
+                children: [
                   _Hist(
                     ver: 'v3.0.2',
                     date: '2026-10-24 · 개발 변경 / 배포 검증 대기',
                     items: [
+                      'GitHub 분석에서 확인한 내보내기 화면 중복 코드·정규식 오류와 결과 화면 글자 크기 오류 수정, 분석 경고 정리',
                       '원본·전처리 이미지 OCR 비교와 한쪽 실패 시 대체 결과 사용. 검출 한자 수는 정확도를 보장하지 않으므로 원문 확인 필요',
                       '간지·날짜 공백 처리 보완, 촬영 원본 경로 보존, 인물 아닌 후보 제외 메뉴 안내 개선',
                       '검토 인물 일괄 저장을 트랜잭션으로 처리해 부분 저장 방지',
@@ -473,7 +474,7 @@ class AboutScreen extends StatelessWidget {
           const SizedBox(height: 24),
 
           // ─── 참조 ───────────────────
-          _Section(title: '참조 자료'),
+          const _Section(title: '참조 자료'),
           Card(
             child: Column(
               children: [
@@ -507,7 +508,7 @@ class AboutScreen extends StatelessWidget {
           const SizedBox(height: 32),
 
           // ─── 라이센스 ───────────────────
-          _Section(title: '라이센스'),
+          const _Section(title: '라이센스'),
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 4),
             child: Text(

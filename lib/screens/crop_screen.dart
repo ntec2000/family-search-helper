@@ -73,10 +73,10 @@ class _CropScreenState extends State<CropScreen> {
       if (decoded == null) throw Exception('decode failed');
       final oriented = img.bakeOrientation(decoded);
       final iw = oriented.width, ih = oriented.height;
-      int x = (_l * iw).round().clamp(0, iw - 1);
-      int y = (_t * ih).round().clamp(0, ih - 1);
-      int w = ((_r - _l) * iw).round().clamp(1, iw - x);
-      int h = ((_b - _t) * ih).round().clamp(1, ih - y);
+      final x = (_l * iw).round().clamp(0, iw - 1);
+      final y = (_t * ih).round().clamp(0, ih - 1);
+      final w = ((_r - _l) * iw).round().clamp(1, iw - x);
+      final h = ((_b - _t) * ih).round().clamp(1, ih - y);
       final cropped = img.copyCrop(oriented, x: x, y: y, width: w, height: h);
       final jpg = img.encodeJpg(cropped, quality: 92);
       final dir = await getTemporaryDirectory();

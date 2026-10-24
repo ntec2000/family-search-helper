@@ -112,11 +112,15 @@ class FamilySearchService {
     // Never create a nameless remote record from incomplete OCR data.
     if (p.nameHangul.trim().isEmpty &&
         p.nameHanja.trim().isEmpty &&
-        p.nameRoman.trim().isEmpty) return null;
+        p.nameRoman.trim().isEmpty) {
+      return null;
+    }
     // Without a confirmed death record, do not upload a possibly living person
     // as deceased. A manual review workflow is required for uncertain cases.
     if ((p.deathDateSolar ?? '').trim().isEmpty &&
-        (p.deathDateLunar ?? '').trim().isEmpty) return null;
+        (p.deathDateLunar ?? '').trim().isEmpty) {
+      return null;
+    }
     final body = {
       'persons': [
         {

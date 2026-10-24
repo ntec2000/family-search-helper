@@ -80,7 +80,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ? '추출 + FamilySearch 가계도 직접 등록 (로그인 필요)'
               : '추출 전용 모드 — 정보 추출 후 GEDCOM·텍스트로만 내보내기'),
           value: _fsEnabled,
-          activeColor: HanjiColors.ju,
+          activeThumbColor: HanjiColors.ju,
           onChanged: (v) => setState(() => _fsEnabled = v),
         ),
         if (_fsEnabled) ...[

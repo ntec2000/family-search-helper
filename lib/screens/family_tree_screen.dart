@@ -90,7 +90,7 @@ class _State extends State<FamilyTreeScreen> {
   /// 토큰 → 표시 스펙(성 분리·성별·정렬연도·매칭ID).
   _ChildSpec _buildChild(String token, String fbHanja, String fbHangul) {
     final parsed = Genealogy.parseToken(token);
-    var hanja = parsed.$1;
+    final hanja = parsed.$1;
     var hangul = parsed.$2;
     if (hangul.isEmpty && hanja.isNotEmpty) {
       hangul = HanjaDict.instance.toHangul(hanja);

@@ -63,7 +63,7 @@ void main() {
   group('족보 파서 (子在源 단순 표기)', () {
     test('출생·사망·배우자·장인·묘', () {
       // 墓 는 본인부(配 앞)에 위치
-      final text =
+      const text =
           '子在源 字古元 乙未十一月十日生 乙丑九月十二日卒 墓楊口郡東面 配密陽朴氏父重建';
       final p = JokboParser.parse(text).first;
       expect(p.gender, 'M');

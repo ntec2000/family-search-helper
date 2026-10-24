@@ -24,7 +24,7 @@ import 'genealogy.dart';
 ///   女○○ ○○人               : 딸 → 남편(사위) 이름 + 사위 본관. 딸 본인은 이름이
 ///                              없으므로 가문 성씨를 따라 "○씨" 로 표기.
 class JokboParser {
-  static final _uuid = const Uuid();
+  static const _uuid = Uuid();
 
   static const _gan = '甲乙丙丁戊己庚辛壬癸';
   static const _ji = '子丑寅卯辰巳午未申酉戌亥';
@@ -43,12 +43,6 @@ class JokboParser {
     '一': '첫째', '二': '둘째', '三': '셋째', '四': '넷째', '五': '다섯째',
     '六': '여섯째', '七': '일곱째', '八': '여덟째', '九': '아홉째', '十': '열째',
   };
-
-  /// 차례(차례 한자)가 없을 때 형제 순서(1부터)로 매기는 서수 라벨.
-  static const _ordinalByIndex = <String>[
-    '첫째', '둘째', '셋째', '넷째', '다섯째', '여섯째', '일곱째', '여덟째',
-    '아홉째', '열째', '열한째', '열두째', '열셋째', '열넷째', '열다섯째',
-  ];
 
   /// OCR 인식 텍스트(세로쓰기 → 정렬된 평문)를 받아 인물 카드 목록 추출
   static List<Person> parse(String rawText,

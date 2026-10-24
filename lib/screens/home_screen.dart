@@ -304,12 +304,12 @@ class _EmptyState extends StatelessWidget {
   const _EmptyState();
   @override
   Widget build(BuildContext context) {
-    return Center(
+    return const Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          children: const [
+          children: [
             Icon(Icons.menu_book_outlined, size: 80, color: HanjiColors.mukSoft),
             SizedBox(height: 16),
             Text('族譜', style: TextStyle(fontSize: 36, color: HanjiColors.muk, letterSpacing: 8)),

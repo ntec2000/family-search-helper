@@ -158,7 +158,9 @@ class _ResultScreenState extends State<ResultScreen> {
       ),
     );
     if (parent == null || !mounted || _saved || _saving ||
-        !_persons.contains(child) || !_persons.contains(parent)) return;
+        !_persons.contains(child) || !_persons.contains(parent)) {
+      return;
+    }
     final error = ParentChildReview.conflict(parent, child);
     if (error != null) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
@@ -268,7 +270,7 @@ class _ResultScreenState extends State<ResultScreen> {
       SnackBar(
           content: Text(applied == 0
               ? '성씨를 적용할 인물이 없습니다.'
-              : '성씨 ${sHangul}${sHanja.isNotEmpty ? '($sHanja)' : ''} 을(를) $applied명에 적용했습니다.')),
+              : '성씨 $sHangul${sHanja.isNotEmpty ? '($sHanja)' : ''} 을(를) $applied명에 적용했습니다.')),
     );
   }
 
@@ -450,14 +452,6 @@ class _PersonList extends StatelessWidget {
         final p = persons[i];
         final isFemale = p.gender == 'F';
         // v2.6(#7) — 아들은 \"성+이름\" 으로 합쳐 표기 (성씨가 있으면).
-        final sHanja = p.surnameHanja ?? '';
-        var fullHanja = p.nameHanja;
-        if (!isFemale &&
-            sHanja.isNotEmpty &&
-            p.nameHanja.isNotEmpty &&
-            !p.nameHanja.startsWith(sHanja)) {
-          fullHanja = sHanja + p.nameHanja;
-        }
         final sHangul = p.surnameHangul ?? '';
         final fullHangul = (!isFemale &&
                 sHangul.isNotEmpty &&

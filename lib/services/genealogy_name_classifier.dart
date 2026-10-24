@@ -25,7 +25,7 @@ class GenealogyNameClassifier {
     if (value == '女') {
       final surname = (fatherSurname ?? '').trim();
       return GenealogyCandidate(value,
-          surname.isEmpty ? '이름 미상' : '${surname}씨',
+          surname.isEmpty ? '이름 미상' : '$surname씨',
           GenealogyCandidateType.name, '딸의 개인 이름이 기록되지 않았습니다.');
     }
     if (value.startsWith('配') && value.endsWith('氏')) {

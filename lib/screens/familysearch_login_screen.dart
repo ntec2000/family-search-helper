@@ -66,13 +66,13 @@ class _State extends State<FamilySearchLoginScreen> {
             color: HanjiColors.hanjiLight,
             border: Border.all(color: HanjiColors.mukSoft, width: 0.5),
           ),
-          child: Column(
+          child: const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('FamilySearch.org 연동은 선택사항입니다.',
+              Text('FamilySearch.org 연동은 선택사항입니다.',
                   style: TextStyle(fontWeight: FontWeight.bold, color: HanjiColors.ju)),
-              const SizedBox(height: 8),
-              const Text(
+              SizedBox(height: 8),
+              Text(
                 '• 로그인 없이도 GEDCOM/텍스트 내보내기로 FamilySearch에 수동 업로드 가능합니다.\n'
                 '• 직접 동기화를 원하시면 LDS 회원 계정(FamilySearch.org)으로 로그인하세요.\n'
                 '• 본 앱은 토큰을 기기 내부에만 보관하며 외부로 전송하지 않습니다.',
