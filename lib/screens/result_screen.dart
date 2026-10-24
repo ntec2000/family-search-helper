@@ -23,6 +23,8 @@ class ResultScreen extends StatefulWidget {
 
 class _ResultScreenState extends State<ResultScreen> {
   late final List<Person> _persons;
+  bool _saved = false;
+  bool _saving = false;
 
   @override
   void initState() {
@@ -30,35 +32,33 @@ class _ResultScreenState extends State<ResultScreen> {
     _persons = List<Person>.from(widget.persons);
   }
 
-  /// v2.4 — 인물이 아닌 항목(오인식·제목 등) 삭제. DB 와 목록에서 함께 제거한다.
-  Future<void> _deletePerson(Person p) async {
-    final label = p.nameHanja.isNotEmpty
-        ? HanjaDict.instance.annotate(p.nameHanja)
-        : (p.spouseHanja != null
-            ? '딸(사위 ${p.spouseHanja})'
-            : '${p.surnameHangul ?? ''}씨');
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('항목 삭제'),
-        content: Text('"$label" 항목을 삭제할까요?\n사람 이름이 아닌 경우에만 삭제하세요.'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('취소')),
-          FilledButton(
-              style: FilledButton.styleFrom(backgroundColor: Colors.red.shade700),
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('삭제')),
-        ],
-      ),
-    );
-    if (ok != true) return;
+  Future<void> _deletePerson(Person person) async {
+    if (_saved) return;
+    setState(() => _persons.remove(person));
+  }
+
+  Future<void> _saveReviewedPersons() async {
+    if (_saved || _saving) return;
+    setState(() => _saving = true);
     try {
-      await DbService.instance.deletePerson(p.id);
-    } catch (_) {/* 미저장 항목이면 무시 */}
-    if (!mounted) return;
-    setState(() => _persons.remove(p));
+      for (final person in _persons) {
+        await DbService.instance.upsertPerson(person);
+      }
+      if (!mounted) return;
+      setState(() {
+        _saved = true;
+        _saving = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('검토한 인물 ${_persons.length}명을 저장했습니다.')),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('저장 중 오류가 발생했습니다. 다시 시도해 주세요.')),
+      );
+    }
   }
 
   Future<void> _addPerson() async {
@@ -69,11 +69,11 @@ class _ResultScreenState extends State<ResultScreen> {
       createdAt: now,
       updatedAt: now,
     );
-    await DbService.instance.upsertPerson(np);
     if (!mounted) return;
     setState(() => _persons.add(np));
-    Navigator.push(context,
-        MaterialPageRoute(builder: (_) => PersonCardScreen(personId: np.id)));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('새 인물 후보를 추가했습니다. 저장 후 수정할 수 있습니다.')),
+    );
   }
 
   /// v2.6(#7) — 성을 알 수 없는 인물에 성씨(한글+한자)를 수동 적용한다.
@@ -91,9 +91,7 @@ class _ResultScreenState extends State<ResultScreen> {
         if (noHanja && sHanja.isNotEmpty) p.surnameHanja = sHanja;
         if (noHangul && sHangul.isNotEmpty) p.surnameHangul = sHangul;
         p.updatedAt = DateTime.now();
-        try {
-          await DbService.instance.upsertPerson(p);
-        } catch (_) {/* 미저장 항목이면 무시 */}
+        // 검토 전 후보는 데이터베이스에 저장하지 않습니다.
         applied++;
       }
     }
@@ -117,14 +115,19 @@ class _ResultScreenState extends State<ResultScreen> {
           IconButton(
             icon: const Icon(Icons.drive_file_rename_outline),
             tooltip: '성씨 입력 (성 미상 인물에 적용)',
-            onPressed: _applySurname,
+            onPressed: _saved ? null : _applySurname,
           ),
           IconButton(
             icon: const Icon(Icons.person_add_alt_1),
             tooltip: '인물 추가',
-            onPressed: _addPerson,
+            onPressed: _saved ? null : _addPerson,
           ),
         ],
+      ),
+      floatingActionButton: _saved ? null : FloatingActionButton.extended(
+        onPressed: _saving ? null : _saveReviewedPersons,
+        icon: const Icon(Icons.save),
+        label: Text(_saving ? '저장 중...' : '검토한 인물 저장'),
       ),
       body: SafeArea(
         child: DefaultTabController(
@@ -133,7 +136,7 @@ class _ResultScreenState extends State<ResultScreen> {
             const Padding(
               padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: Text(
-                  '사람 이름이 아닌 항목은 오른쪽 🗑 버튼으로 삭제하세요. 인물만 남기면 됩니다.',
+                  '인물이 아닌 후보는 삭제하여 제외하세요. 확인 후 아래 저장 버튼을 누르기 전에는 데이터베이스에 등록되지 않습니다.',
                   style: TextStyle(fontSize: 12, color: HanjiColors.mukSoft)),
             ),
             const TabBar(
@@ -147,7 +150,7 @@ class _ResultScreenState extends State<ResultScreen> {
             ),
             Expanded(
               child: TabBarView(children: [
-                _PersonList(persons: _persons, onDelete: _deletePerson),
+                _PersonList(persons: _persons, onDelete: _deletePerson, saved: _saved),
                 _TextCompare(hanja: widget.rawText, hangul: hangulText),
                 Container(
                   color: Colors.black,
@@ -171,7 +174,8 @@ class _ResultScreenState extends State<ResultScreen> {
 class _PersonList extends StatelessWidget {
   final List<Person> persons;
   final Future<void> Function(Person) onDelete;
-  const _PersonList({required this.persons, required this.onDelete});
+  final bool saved;
+  const _PersonList({required this.persons, required this.onDelete, required this.saved});
 
   // 한자(한글) 표기
   static String _a(String? s) =>
@@ -253,22 +257,22 @@ class _PersonList extends StatelessWidget {
                 IconButton(
                   icon: const Icon(Icons.edit_note),
                   tooltip: '수정',
-                  onPressed: () => Navigator.push(
+                  onPressed: saved ? () => Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (_) => PersonCardScreen(personId: p.id))),
+                          builder: (_) => PersonCardScreen(personId: p.id))) : null,
                 ),
                 IconButton(
                   icon: Icon(Icons.delete_outline, color: Colors.red.shade700),
                   tooltip: '인물 아님 → 삭제',
-                  onPressed: () => onDelete(p),
+                  onPressed: saved ? null : () => onDelete(p),
                 ),
               ],
             ),
-            onTap: () => Navigator.push(
+            onTap: saved ? () => Navigator.push(
                 context,
                 MaterialPageRoute(
-                    builder: (_) => PersonCardScreen(personId: p.id))),
+                    builder: (_) => PersonCardScreen(personId: p.id))) : null,
           ),
         );
       },
