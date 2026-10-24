@@ -35,6 +35,26 @@ void main() {
     expect(child.fatherId, 'another');
   });
 
+  test('adoption annotation never changes father automatically', () {
+    final child = person('承勳', 23);
+    child.note = '出系 顯龍后';
+    child.fatherId = '顯五';
+    expect(ParentChildReview.hasAdoptionAnnotation(child), isTrue);
+    expect(child.fatherId, '顯五');
+  });
+
+  test('unlink and restore preserves confirmed relationship', () {
+    final father = person('核', 21);
+    final child = person('顯五', 22);
+    ParentChildReview.applyReviewedLink(father, child);
+    ParentChildReview.unlink(father, child);
+    expect(child.fatherId, isNull);
+    expect(father.childrenIds, isEmpty);
+    ParentChildReview.restoreReviewedLink(father, child);
+    expect(child.fatherId, father.id);
+    expect(father.childrenIds, contains(child.id));
+  });
+
   test('unnamed daughter remains unnamed', () {
     final father = person('昃', 20);
     final daughter = Person(id: 'daughter-1', gender: 'F',
