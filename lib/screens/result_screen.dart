@@ -395,7 +395,7 @@ class _PersonList extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                           color: HanjiColors.muk)),
                   const Spacer(),
-                  Text('${generationCounts[p.sega]}명',
+                  Text('전체 ${generationCounts[p.sega]}명',
                       style: const TextStyle(fontSize: 13,
                           color: HanjiColors.mukSoft)),
                 ]),
