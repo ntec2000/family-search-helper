@@ -134,7 +134,8 @@ class _ResultScreenState extends State<ResultScreen> {
         )).toList(),
       ),
     );
-    if (parent == null || !mounted) return;
+    if (parent == null || !mounted || _saved || _saving ||
+        !_persons.contains(child) || !_persons.contains(parent)) return;
     final error = ParentChildReview.conflict(parent, child);
     if (error != null) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
