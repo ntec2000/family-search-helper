@@ -104,6 +104,7 @@ void main() {
     expect(child.fatherId, isNull);
     expect(child.motherId, mother.id);
     expect(mother.childrenIds, contains(child.id));
+    expect(father.childrenIds, isEmpty);
   });
 
 }
