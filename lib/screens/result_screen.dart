@@ -85,6 +85,8 @@ class _ResultScreenState extends State<ResultScreen> {
         final child = children.first;
         if (ParentChildReview.conflict(parent, child) == null) {
           ParentChildReview.restoreReviewedLink(parent, child);
+        } else {
+          skippedLinks++;
         }
       }
     });
