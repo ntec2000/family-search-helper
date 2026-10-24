@@ -102,7 +102,10 @@ class JokboParser {
   static List<String> _splitByPerson(String text) {
     // 子 가 干支(甲子·壬子 등)의 일부일 때는 분리하지 않는다(앞 글자가 天干이면 제외)
     // 子·男=아들, 女=딸. (일부 족보는 아들을 男으로 표기)
-    final pattern = RegExp(r'(?<![甲乙丙丁戊己庚辛壬癸])(?=[子女男])');
+    // 인물 시작 표지는 독립 토큰일 때만 인정한다.
+    // 子坐午向의 子, 본문 속 女/男 및 간지의 子를 인물로 오인하지 않는다.
+    // OCR가 공백 없이 붙여 놓은 애매한 후보는 자동 분리하지 않고 원문에 남긴다.
+    final pattern = RegExp(r'(?<!\S)(?=[子女男]\s*[一-鿿])');
     final parts = text.split(pattern).where((s) => s.trim().isNotEmpty).toList();
     return parts.where((p) {
       final t = p.trim();
