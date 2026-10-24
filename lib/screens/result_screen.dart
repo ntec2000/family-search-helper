@@ -154,6 +154,7 @@ class _ResultScreenState extends State<ResultScreen> {
 
   Future<void> _saveReviewedPersons() async {
     if (_saved || _saving) return;
+    setState(() => _saving = true);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -165,8 +166,11 @@ class _ResultScreenState extends State<ResultScreen> {
         ],
       ),
     );
-    if (confirmed != true || !mounted) return;
-    setState(() => _saving = true);
+    if (!mounted) return;
+    if (confirmed != true) {
+      setState(() => _saving = false);
+      return;
+    }
     try {
       for (final person in _persons) {
         await DbService.instance.upsertPerson(person);
@@ -189,6 +193,7 @@ class _ResultScreenState extends State<ResultScreen> {
   }
 
   Future<void> _addPerson() async {
+    if (_saved || _saving) return;
     final now = DateTime.now();
     final np = Person(
       id: 'manual_${now.millisecondsSinceEpoch}',
@@ -207,8 +212,9 @@ class _ResultScreenState extends State<ResultScreen> {
   /// 입력한 성씨를 족보의 기본 성으로 삼아, 성이 없는 모든 인물(자녀 포함)에
   /// 적용하고 DB 에 저장한다. 화면의 이름 표기는 \"성+이름\" 으로 갱신된다.
   Future<void> _applySurname() async {
+    if (_saved || _saving) return;
     final entered = await showSurnameInputDialog(context);
-    if (entered == null) return;
+    if (entered == null || !mounted || _saved || _saving) return;
     final sHanja = entered.$1, sHangul = entered.$2;
     var applied = 0;
     for (final p in _persons) {
