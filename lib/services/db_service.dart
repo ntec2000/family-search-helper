@@ -99,10 +99,9 @@ class DbService {
         }
         if (oldV < 6) {
           // v2.4 추가 컬럼 — 특이사항/메모(出系·양자·한글 오기 등)
-          try {
+          final schema = await db.rawQuery('PRAGMA table_info(persons)');
+          if (!schema.any((column) => column['name'] == 'note')) {
             await db.execute('ALTER TABLE persons ADD COLUMN note TEXT');
-          } on DatabaseException catch (e) {
-            if (!e.toString().contains('duplicate column name')) rethrow;
           }
         }
         if (oldV < 7) {
