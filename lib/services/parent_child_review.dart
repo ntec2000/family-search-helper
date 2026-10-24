@@ -50,6 +50,14 @@ class ParentChildReview {
       }
     }
     for (final child in entries) {
+      if (child.fatherId != null && child.fatherId == child.motherId) {
+        issues.add('동일 인물이 양쪽 부모로 지정됨: ${child.id}');
+      }
+      if (child.fatherId == child.id || child.motherId == child.id) {
+        issues.add('자기 자신을 부모로 지정함: ${child.id}');
+      }
+    }
+    for (final child in entries) {
       for (final parentId in [child.fatherId, child.motherId]) {
         if (parentId == null) continue;
         final parent = byId[parentId];
