@@ -33,8 +33,8 @@ Future<void> main() async {
     }
     try {
       await DbService.instance.open();
-      // 앱을 다시 시작하면 항상 처음(빈) 작업 상태로 시작한다.
-      await DbService.instance.clearAll();
+      // 저장된 인물 기록은 앱 재시작 시 유지한다.
+      // 전체 삭제는 사용자 확인을 거치는 명시적 초기화 기능에서만 수행한다.
     } catch (e) {
       debugPrint('DB init failed: $e');
     }
