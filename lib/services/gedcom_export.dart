@@ -13,8 +13,20 @@ class GedcomExport {
     buf.writeln('2 FORM LINEAGE-LINKED');
     buf.writeln('1 CHAR UTF-8');
 
+    // GEDCOM XREF는 파일 안에서 유일해야 하며 짧은 ID도 안전하게 처리한다.
+    final ids = <String, String>{};
+    final used = <String>{};
+    for (var i = 0; i < persons.length; i++) {
+      final raw = persons[i].id.replaceAll(RegExp(r'[^A-Za-z0-9_]'), '_');
+      var candidate = 'I${raw.isEmpty ? 'person' : raw}';
+      if (used.contains(candidate)) candidate = '${candidate}_${i + 1}';
+      while (used.contains(candidate)) candidate = '${candidate}_';
+      used.add(candidate);
+      ids[persons[i].id] = candidate;
+    }
+
     for (final p in persons) {
-      buf.writeln('0 @I${_safeId(p.id)}@ INDI');
+      buf.writeln('0 @${ids[p.id]}@ INDI');
       // NAME: hangul /hanja/
       final hangul = p.nameHangul.isEmpty ? '?' : p.nameHangul;
       final hanja = p.nameHanja.isEmpty ? '' : p.nameHanja;
@@ -55,5 +67,4 @@ class GedcomExport {
     return buf.toString();
   }
 
-  static String _safeId(String id) => id.replaceAll('-', '').substring(0, 8);
 }
