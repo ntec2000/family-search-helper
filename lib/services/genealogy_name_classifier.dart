@@ -11,7 +11,7 @@ class GenealogyCandidate {
 
 class GenealogyNameClassifier {
   static const annotations = <String>{
-    '子', '女', '配', '父', '祖', '曾祖', '外祖', '字', '號',
+    '子', '配', '父', '祖', '曾祖', '外祖', '字', '號',
     '生', '卒', '忌', '墓', '出系', '世', '同知', '判官',
   };
 
