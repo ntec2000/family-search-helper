@@ -331,6 +331,15 @@ class _ResultScreenState extends State<ResultScreen> {
                 )),
               ]),
             )),
+            if (_imageTransform.value.getMaxScaleOnAxis() > 1.01)
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: _resetImageZoom,
+                  icon: const Icon(Icons.center_focus_strong),
+                  label: const Text('이미지 확대 초기화'),
+                ),
+              ),
             Expanded(
               child: TabBarView(children: [
                 _PersonList(persons: _persons, onDelete: _deletePerson, onEdit: _editCandidate, onParent: _chooseParent, onUnlink: _clearParentLinks, saved: _saved, largeText: _largeText),
