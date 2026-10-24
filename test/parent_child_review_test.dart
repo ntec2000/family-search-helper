@@ -110,6 +110,7 @@ void main() {
     expect(child.motherId, mother.id);
     expect(father.childrenIds, contains(child.id));
     expect(mother.childrenIds, contains(child.id));
+    expect(father.childrenIds.where((id) => id == child.id).length, 1);
   });
 
 }
