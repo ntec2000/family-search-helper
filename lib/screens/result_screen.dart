@@ -79,6 +79,7 @@ class _ResultScreenState extends State<ResultScreen> {
         final parents = _persons.where((p) => p.id == parentId);
         final children = _persons.where((p) => p.id == childId);
         if (parents.isEmpty || children.isEmpty) {
+          failedLinkIds.add('$parentId → $childId (인물 누락)');
           skippedLinks++;
           continue;
         }
