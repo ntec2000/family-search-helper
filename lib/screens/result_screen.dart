@@ -343,10 +343,13 @@ class _ResultScreenState extends State<ResultScreen> {
                         style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700,
                             color: HanjiColors.muk)),
                     const SizedBox(height: 8),
+                    const Text('1단계 · 인물 정보 수정 → 2단계 · 가족관계 검토 → 3단계 · 저장',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
+                            color: HanjiColors.muk)),
                     CheckboxListTile(
                       contentPadding: EdgeInsets.zero,
                       title: const Text('가족관계 검토 완료'),
-                      subtitle: const Text('인물별 부모 연결과 원본 기록을 확인했습니다.'),
+                      subtitle: const Text('먼저 인물 이름을 수정하고 부모 연결과 원본 기록을 대조한 뒤 체크하세요. 수정하면 다시 확인해야 합니다.'),
                       value: _relationshipsReviewed,
                       onChanged: _saved || _saving
                           ? null
