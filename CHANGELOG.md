@@ -14,7 +14,8 @@
 - 간지·날짜 공백 인식 보완, 촬영 원본 경로 보존, 인물 아닌 후보 제외 메뉴 안내 개선.
 - 검토 인물 일괄 저장을 SQLite 트랜잭션으로 처리해 부분 저장 방지.
 - 앱 정보의 버전별 히스토리, 다운로드·저장소 링크 복사 및 공유 추가.
-- OCR 후보 선택 회귀 테스트 3개 추가. Flutter 분석·테스트·APK 빌드와 실제 OCR 검증은 미실행.
+- OCR 후보 선택 회귀 테스트 3개 추가. 커밋 08b00f8의 GitHub 정적 분석 및 자동 테스트 61개 통과 확인.
+- APK 빌드 환경에 Android SDK 36 및 NDK 27.0.12077973 설치 단계 추가. 실제 기기 OCR 검증·APK 배포는 미완료.
 
 다운로드: [GitHub Releases](https://github.com/ntec2000/family-search-helper/releases)
 — 게시된 릴리스의 Assets에서 APK를 받습니다. 3.0.2 APK 게시 여부는 별도 확인이 필요합니다.
