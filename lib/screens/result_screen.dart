@@ -30,6 +30,7 @@ class _ResultScreenState extends State<ResultScreen> {
   bool _largeText = false;
   bool _showReviewGuide = false;
   bool _relationshipsReviewed = false;
+  int _reviewStep = 0;
   final TransformationController _imageTransform = TransformationController();
   final List<(Person, int, List<(String, String)>)> _excluded = [];
 
@@ -68,6 +69,7 @@ class _ResultScreenState extends State<ResultScreen> {
       ParentChildReview.detachExcluded(person, _persons);
       _persons.removeAt(index);
       _relationshipsReviewed = false;
+      _reviewStep = 0;
     });
   }
 
@@ -200,7 +202,7 @@ class _ResultScreenState extends State<ResultScreen> {
       );
       return;
     }
-    if (!_relationshipsReviewed) {
+    if (_reviewStep != 1 || !_relationshipsReviewed) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('가족관계 검토 완료를 먼저 확인해 주세요.')),
       );
@@ -318,7 +320,8 @@ class _ResultScreenState extends State<ResultScreen> {
         ],
       ),
       floatingActionButton: _saved ? null : FloatingActionButton.extended(
-        onPressed: _saving ? null : _saveReviewedPersons,
+        onPressed: _saving || _reviewStep != 1 || !_relationshipsReviewed
+            ? null : _saveReviewedPersons,
         icon: const Icon(Icons.save),
         label: Text(_saving ? '저장 중...' : '검토한 인물 저장'),
       ),
@@ -346,12 +349,28 @@ class _ResultScreenState extends State<ResultScreen> {
                     const Text('1단계 · 인물 정보 수정 → 2단계 · 가족관계 검토 → 3단계 · 저장',
                         style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
                             color: HanjiColors.muk)),
+                    Row(children: [
+                      Expanded(child: OutlinedButton(
+                        onPressed: _saving || _saved ? null : () => setState(() {
+                          _reviewStep = 0;
+                          _relationshipsReviewed = false;
+                        }),
+                        child: const Text('1. 내용 수정'),
+                      )),
+                      const SizedBox(width: 8),
+                      Expanded(child: FilledButton.tonal(
+                        onPressed: _saving || _saved ? null : () => setState(() {
+                          _reviewStep = 1;
+                        }),
+                        child: const Text('2. 관계 검토'),
+                      )),
+                    ]),
                     CheckboxListTile(
                       contentPadding: EdgeInsets.zero,
                       title: const Text('가족관계 검토 완료'),
                       subtitle: const Text('먼저 인물 이름을 수정하고 부모 연결과 원본 기록을 대조한 뒤 체크하세요. 수정하면 다시 확인해야 합니다.'),
                       value: _relationshipsReviewed,
-                      onChanged: _saved || _saving
+                      onChanged: _saved || _saving || _reviewStep != 1
                           ? null
                           : (value) => setState(
                               () => _relationshipsReviewed = value ?? false),
