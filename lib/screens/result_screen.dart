@@ -213,7 +213,18 @@ class _ResultScreenState extends State<ResultScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('검토한 인물 저장 확인'),
-        content: Text('인물 ${_persons.length}명과 확인된 가족관계를 저장하시겠습니까? 원본 이미지와 OCR 원문은 변경하지 않습니다.'),
+        content: SingleChildScrollView(
+          child: Text(
+            '저장 대상: ${_persons.length}명\\n'
+            '검토 중 제외한 후보: ${_excluded.length}명\\n'
+            '부친·모친 모두 연결: ${_persons.where((p) => p.fatherId != null && p.motherId != null).length}명\\n'
+            '한쪽만 연결: ${_persons.where((p) => (p.fatherId == null) != (p.motherId == null)).length}명\\n'
+            '부모 미연결: ${_persons.where((p) => p.fatherId == null && p.motherId == null).length}명\\n\\n'
+            '연결 상태는 원본 족보와 검토한 결과입니다. '
+            '미연결 관계를 임의로 생성하지 않습니다.\\n'
+            '원본 이미지와 OCR 원문은 변경하지 않습니다.',
+          ),
+        ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('취소')),
           FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('저장')),
