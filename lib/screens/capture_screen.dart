@@ -110,7 +110,11 @@ class _CaptureScreenState extends State<CaptureScreen> {
         }
         return;
       }
-      final c = CameraController(cams.first, ResolutionPreset.veryHigh,
+      final camera = cams.firstWhere(
+        (c) => c.lensDirection == CameraLensDirection.back,
+        orElse: () => cams.first,
+      );
+      final c = CameraController(camera, ResolutionPreset.veryHigh,
           enableAudio: false);
       await c.initialize();
       if (!mounted) return;
@@ -216,7 +220,8 @@ class _CaptureScreenState extends State<CaptureScreen> {
       setState(() => _status = '족보 정보 분석 중...');
       final persons = JokboParser.parse(
         ocr.text,
-        sourceImagePath: safePath,
+        // OCR 전처리본은 인식용이고, 결과가 가리키는 출처는 사용자의 원본이다.
+        sourceImagePath: path,
         clanHanjaOverride: widget.surnameHanja,
         clanHangulOverride: widget.surnameHangul,
       );
@@ -247,7 +252,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
         context,
         MaterialPageRoute(
           builder: (_) => ResultScreen(
-              rawText: ocr.text, persons: persons, imagePath: safePath),
+              rawText: ocr.text, persons: persons, imagePath: path),
         ),
       );
     } catch (e) {
