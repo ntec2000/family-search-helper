@@ -208,9 +208,7 @@ class _ResultScreenState extends State<ResultScreen> {
       return;
     }
     try {
-      for (final person in _persons) {
-        await DbService.instance.upsertPerson(person);
-      }
+      await DbService.instance.upsertPersonsAtomically(_persons);
       if (!mounted) return;
       setState(() {
         _saved = true;
