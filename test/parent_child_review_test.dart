@@ -47,6 +47,7 @@ void main() {
     final father = person('核', 21);
     final child = person('顯五', 22);
     ParentChildReview.applyReviewedLink(father, child);
+    father.childrenIds.add(child.id);
     ParentChildReview.unlink(father, child);
     expect(child.fatherId, isNull);
     expect(father.childrenIds, isEmpty);
