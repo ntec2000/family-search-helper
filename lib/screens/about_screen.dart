@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import '../theme/traditional_theme.dart';
 
 class AboutScreen extends StatelessWidget {
@@ -43,7 +44,7 @@ class AboutScreen extends StatelessWidget {
                 Text('Family Search Helper',
                     style: TextStyle(fontSize: 12, color: HanjiColors.mukSoft, letterSpacing: 2)),
                 SizedBox(height: 16),
-                Text('v3.0.1',
+                Text('v3.0.2',
                     style: TextStyle(fontSize: 14, color: HanjiColors.ju, letterSpacing: 2)),
               ],
             ),
@@ -140,10 +141,49 @@ class AboutScreen extends StatelessWidget {
           // ─── 개발 히스토리 / 버그 수정 ───────────────────
           _Section(title: '개발 히스토리 / 버그 수정 기록'),
           Card(
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.download_outlined),
+                  title: const Text('앱 다운로드 · GitHub Releases'),
+                  subtitle: const Text('게시된 버전의 Assets에서 APK를 받으세요.\n새 버전은 빌드·배포 후 제공됩니다.'),
+                  trailing: const Icon(Icons.copy),
+                  onTap: () => _copy(context, 'https://github.com/ntec2000/family-search-helper/releases'),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.code),
+                  title: const Text('GitHub 저장소 · 링크 복사'),
+                  subtitle: const Text('ntec2000/family-search-helper'),
+                  trailing: const Icon(Icons.copy),
+                  onTap: () => _copy(context, 'https://github.com/ntec2000/family-search-helper'),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.share_outlined),
+                  title: const Text('앱 다운로드·저장소 링크 공유'),
+                  onTap: () => Share.share(
+                    '가족역사기록 도우미\n다운로드: https://github.com/ntec2000/family-search-helper/releases\n저장소: https://github.com/ntec2000/family-search-helper',
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Card(
             child: Padding(
               padding: const EdgeInsets.all(8),
               child: Column(
                 children: const [
+                  _Hist(
+                    ver: 'v3.0.2',
+                    date: '2026-10-24 · 개발 변경 / 배포 검증 대기',
+                    items: [
+                      '원본·전처리 이미지 OCR 비교와 한쪽 실패 시 대체 결과 사용. 검출 한자 수는 정확도를 보장하지 않으므로 원문 확인 필요',
+                      '간지·날짜 공백 처리 보완, 촬영 원본 경로 보존, 인물 아닌 후보 제외 메뉴 안내 개선',
+                      '검토 인물 일괄 저장을 트랜잭션으로 처리해 부분 저장 방지',
+                      '다운로드·GitHub 저장소 링크 복사와 공유 추가',
+                      'Flutter 분석·자동 테스트·APK 빌드 및 실제 족보 이미지 인식 검증 미실행',
+                    ],
+                  ),
+                  Divider(),
                   _Hist(
                     ver: 'v3.0.1',
                     date: '2026-06-04',

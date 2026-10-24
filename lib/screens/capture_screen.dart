@@ -214,7 +214,10 @@ class _CaptureScreenState extends State<CaptureScreen> {
 
       if (!mounted) return;
       setState(() => _status = '한자 인식 중...');
-      final ocr = await OcrService.recognize(safePath);
+      final ocr = await OcrService.recognizeBest(
+        safePath,
+        originalPath: path,
+      );
 
       if (!mounted) return;
       setState(() => _status = '족보 정보 분석 중...');

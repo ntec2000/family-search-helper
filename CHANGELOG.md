@@ -3,6 +3,21 @@
 > **개발자**: Peter S. Choi
 > **문의**: ntec21c@gmail.com
 
+## 3.0.2+20 (2026-10-24) — 개발 변경, 배포 검증 대기
+
+- 원본·전처리 이미지 OCR 비교 및 실패 시 대체 입력 결과 사용.
+- 영문 잡음·공백보다 한자 검출 수를 우선하고 호환 한자 포함. 검출량은 정확도 점수가 아니며 원문 대조 필요.
+- 간지·날짜 공백 인식 보완, 촬영 원본 경로 보존, 인물 아닌 후보 제외 메뉴 안내 개선.
+- 검토 인물 일괄 저장을 SQLite 트랜잭션으로 처리해 부분 저장 방지.
+- 앱 정보의 버전별 히스토리, 다운로드·저장소 링크 복사 및 공유 추가.
+- OCR 후보 선택 회귀 테스트 3개 추가. Flutter 분석·테스트·APK 빌드와 실제 OCR 검증은 미실행.
+
+다운로드: [GitHub Releases](https://github.com/ntec2000/family-search-helper/releases)
+— 게시된 릴리스의 Assets에서 APK를 받습니다. 3.0.2 APK 게시 여부는 별도 확인이 필요합니다.
+
+소스: [GitHub 저장소](https://github.com/ntec2000/family-search-helper),
+[개발 브랜치](https://github.com/ntec2000/family-search-helper/tree/work/jokbo-update-20261024).
+
 ## 1.0.0 (2026-06-01) — 첫 릴리즈
 
 ### ✨ 신규 기능
