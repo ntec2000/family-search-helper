@@ -10,6 +10,8 @@ void main() {
       final people = JokboParser.parse('女金永洙 安東人 卒 墓山 子格 字良甫');
       expect(people, hasLength(2));
       expect(people.first.spouseHanja, '金永洙');
+      expect(people.first.spouseBongwan, '安東');
+      expect(people.first.rawText, contains('卒 墓山'));
       expect(people.last.nameHanja, '格');
     });
   });
