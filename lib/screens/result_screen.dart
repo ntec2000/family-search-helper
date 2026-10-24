@@ -248,17 +248,17 @@ class _ResultScreenState extends State<ResultScreen> {
           IconButton(
             icon: const Icon(Icons.drive_file_rename_outline),
             tooltip: '성씨 입력 (성 미상 인물에 적용)',
-            onPressed: _saved ? null : _applySurname,
+            onPressed: _saved || _saving ? null : _applySurname,
           ),
           IconButton(
             icon: const Icon(Icons.undo),
             tooltip: '마지막 제외 후보 복원',
-            onPressed: _saved || _excluded.isEmpty ? null : _restoreLastExcluded,
+            onPressed: _saved || _saving || _excluded.isEmpty ? null : _restoreLastExcluded,
           ),
           IconButton(
             icon: const Icon(Icons.person_add_alt_1),
             tooltip: '인물 추가',
-            onPressed: _saved ? null : _addPerson,
+            onPressed: _saved || _saving ? null : _addPerson,
           ),
         ],
       ),
@@ -354,7 +354,7 @@ class _ResultScreenState extends State<ResultScreen> {
               ),
             Expanded(
               child: TabBarView(children: [
-                _PersonList(persons: _persons, onDelete: _deletePerson, onEdit: _editCandidate, onParent: _chooseParent, onUnlink: _clearParentLinks, saved: _saved, largeText: _largeText),
+                _PersonList(persons: _persons, onDelete: _deletePerson, onEdit: _editCandidate, onParent: _chooseParent, onUnlink: _clearParentLinks, saved: _saved || _saving, largeText: _largeText),
                 _TextCompare(hanja: widget.rawText, hangul: hangulText),
                 Container(
                   color: Colors.black,
