@@ -240,7 +240,7 @@ class _PersonList extends StatelessWidget {
         final String nameLine;
         if (isFemale) {
           final ord = (p.relation ?? '').isNotEmpty ? p.relation! : '딸';
-          final nm = sHangul.isNotEmpty ? '$sHangul씨' : '이름 미상';
+          final nm = p.nameHangul.trim().isNotEmpty ? p.nameHangul.trim() : (p.nameHanja.trim().isNotEmpty ? p.nameHanja.trim() : (sHangul.isNotEmpty ? '$sHangul씨 (개인 이름 미상)' : '이름 미상'));
           nameLine = '$segaPrefix$ord (이름: $nm)';
         } else if (p.nameHanja.isNotEmpty) {
           final nm = fullHangul.isNotEmpty ? fullHangul : p.nameHanja;
