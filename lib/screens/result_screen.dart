@@ -35,7 +35,7 @@ class _ResultScreenState extends State<ResultScreen> {
   }
 
   Future<void> _deletePerson(Person person) async {
-    if (_saved) return;
+    if (_saved || _saving) return;
     final index = _persons.indexOf(person);
     if (index < 0) return;
     setState(() {
@@ -56,7 +56,7 @@ class _ResultScreenState extends State<ResultScreen> {
   }
 
   void _restoreLastExcluded() {
-    if (_saved || _excluded.isEmpty) return;
+    if (_saved || _saving || _excluded.isEmpty) return;
     final (person, index, links) = _excluded.removeLast();
     setState(() {
       _persons.insert(index.clamp(0, _persons.length), person);
