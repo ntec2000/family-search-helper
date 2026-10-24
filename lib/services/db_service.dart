@@ -107,10 +107,9 @@ class DbService {
         }
         if (oldV < 7) {
           // v2.6 추가 컬럼 — 아버지와의 가족관계(첫째아들/둘째딸 등)
-          try {
+          final schema = await db.rawQuery('PRAGMA table_info(persons)');
+          if (!schema.any((column) => column['name'] == 'relation')) {
             await db.execute('ALTER TABLE persons ADD COLUMN relation TEXT');
-          } on DatabaseException catch (e) {
-            if (!e.toString().contains('duplicate column name')) rethrow;
           }
         }
       },
