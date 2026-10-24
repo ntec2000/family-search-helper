@@ -130,6 +130,15 @@ class _ResultScreenState extends State<ResultScreen> {
     setState(() => ParentChildReview.applyReviewedLink(parent, child));
   }
 
+  void _clearParentLinks(Person child) {
+    if (_saved || _saving) return;
+    setState(() {
+      for (final parent in _persons) {
+        ParentChildReview.unlink(parent, child);
+      }
+    });
+  }
+
   Future<void> _saveReviewedPersons() async {
     if (_saved || _saving) return;
     final confirmed = await showDialog<bool>(
