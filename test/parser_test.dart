@@ -287,27 +287,27 @@ void main() {
     Person dau(String husband) =>
         list.firstWhere((e) => e.gender == 'F' && e.spouseHanja == husband);
 
-    test('아들 차례(첫째=장남, 숫자 표기는 해당 순서)', () {
+    test('아들 차례는 명시된 숫자만 반영', () {
       expect(son('昃').relation, '넷째아들'); // 四
-      expect(son('格').relation, '첫째아들'); // 장남(숫자 생략)
-      expect(son('聖甲').relation, '첫째아들');
+      expect(son('格').relation, '순서 미상아들'); // 숫자 생략은 순서 미상
+      expect(son('聖甲').relation, '순서 미상아들');
       expect(son('核').relation, '둘째아들'); // 二
-      expect(son('顯五').relation, '첫째아들');
-      expect(son('承烈').relation, '첫째아들');
+      expect(son('顯五').relation, '순서 미상아들');
+      expect(son('承烈').relation, '순서 미상아들');
       expect(son('承勳').relation, '둘째아들'); // 二
-      expect(son('賢東').relation, '첫째아들');
-      expect(son('炳吉').relation, '첫째아들');
+      expect(son('賢東').relation, '순서 미상아들');
+      expect(son('炳吉').relation, '순서 미상아들');
       expect(son('炳旭').relation, '둘째아들'); // 二
       expect(son('炳烈').relation, '셋째아들'); // 三
       expect(son('炳直').relation, '넷째아들'); // 四
     });
 
-    test('딸 차례(연속한 女 묶음 안의 등장 순서)', () {
-      expect(dau('權頭').relation, '첫째딸'); // 昃의 딸
-      expect(dau('權龜壽').relation, '첫째딸'); // 核의 첫째딸
-      expect(dau('李集').relation, '둘째딸'); // 核의 둘째딸
-      expect(dau('金免傑').relation, '첫째딸'); // 賢東의 첫째딸
-      expect(dau('尹兢秀').relation, '둘째딸'); // 賢東의 둘째딸
+    test('딸 차례는 원문 순서 표기가 없으면 미상', () {
+      expect(dau('權頭').relation, '순서 미상딸');
+      expect(dau('權龜壽').relation, '순서 미상딸');
+      expect(dau('李集').relation, '순서 미상딸');
+      expect(dau('金免傑').relation, '순서 미상딸');
+      expect(dau('尹兢秀').relation, '순서 미상딸');
     });
 
     test('본인 이름 = 가문 성 + 이름 (李 상속), 딸은 이름 없이 이씨', () {

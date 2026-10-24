@@ -171,7 +171,7 @@ class JokboParser {
       if (ki > 0) headName = headName.substring(0, ki);
     }
 
-    // 차례(四子 = 넷째 아들) → 아버지와의 관계(v2.6). 차례 숫자가 없으면 첫째(장남/장녀).
+    // 차례 숫자가 명시된 경우에만 순서를 부여한다.
     final orderLab = (orderChar != null &&
             orderChar.length == 1 &&
             _ordinal[orderChar] != null)
@@ -395,11 +395,11 @@ class JokboParser {
   /// 干支(+月日) + 接尾(生/卒) 매칭. 월·일은 선택.
   static _GzDate? _matchGanzhiDate(String text, String suffix) {
     final re = RegExp(
-        '([$_gan][$_ji])年?(?:((?:閏)?[正冬臘零一二三四五六七八九十百○0-9]{1,3}月[初廿卅零一二三四五六七八九十○0-9]{1,3}日))?\\s*$suffix');
+        '([$_gan][$_ji])年?\\s*(?:((?:閏)?[正冬臘零一二三四五六七八九十百○0-9]{1,3}月\\s*[初廿卅零一二三四五六七八九十○0-9]{1,3}日))?\\s*$suffix');
     final m = re.firstMatch(text);
     if (m == null) return null;
     final gz = m.group(1)!;
-    final md = m.group(2);
+    final md = m.group(2)?.replaceAll(RegExp(r'\s+'), '');
     final label = md != null ? '$gz年 $md $suffix' : '$gz年 $suffix';
     return _GzDate(gz, label);
   }
