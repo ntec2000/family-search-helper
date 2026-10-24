@@ -36,6 +36,14 @@ class ParentChildReview {
     }
   }
 
+  static void restoreReviewedLink(Person parent, Person child) {
+    if (parent.gender == 'M' && child.fatherId == null) {
+      applyReviewedLink(parent, child);
+    } else if (parent.gender == 'F' && child.motherId == null) {
+      applyReviewedLink(parent, child);
+    }
+  }
+
   static void applyReviewedLink(Person parent, Person child) {
     final error = conflict(parent, child);
     if (error != null) throw StateError(error);
