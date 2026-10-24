@@ -420,7 +420,10 @@ class _ResultScreenState extends State<ResultScreen> {
                       CheckboxListTile(
                         contentPadding: EdgeInsets.zero,
                         title: const Text('관계 오류 인물만 보기'),
-                        subtitle: const Text('검증에서 문제가 발견된 인물만 표시합니다.'),
+                        subtitle: Text(
+                          '현재 검증 오류 ${ParentChildReview.validateReviewedBatch(_persons).length}건'
+                          ' · 관련 인물 ${_relationshipIssueIds().length}명',
+                        ),
                         value: _showOnlyRelationshipIssues,
                         onChanged: (value) => setState(
                           () => _showOnlyRelationshipIssues = value ?? false),
@@ -558,7 +561,18 @@ class _PersonList extends StatelessWidget {
         ? persons
         : persons.where((person) => issueIds!.contains(person.id)).toList();
     if (visiblePersons.isEmpty) {
-      return const Center(child: Text('검증에서 발견된 관계 오류 인물이 없습니다.'));
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(
+            issueIds == null
+                ? '표시할 인물이 없습니다.'
+                : '현재 목록에서 확인할 관계 오류 인물이 없습니다.\\n'
+                  '오류가 인물 ID 중복 등 목록 전체에 관한 것인지도 확인하세요.',
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
     }
     final generationCounts = <int?, int>{};
     for (final person in persons) {
