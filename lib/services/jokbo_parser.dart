@@ -201,12 +201,12 @@ class JokboParser {
       // 女 다음 첫 이름 토큰만 사위 후보로 사용한다.
       // 본관(安東人)은 별도로 읽고, 뒤따르는 卒/墓/配 등은 포함하지 않는다.
       final body = t.replaceFirst(
-          RegExp(r'^女\\s*[一二三四五六七八九十]?\\s*'), '').trim();
-      final husbandMatch = RegExp(r'^([一-鿿]{1,4})(?=\\s|$|[生卒墓忌配字號娶出系])')
+          RegExp(r'^女\s*[一二三四五六七八九十]?\s*'), '').trim();
+      final husbandMatch = RegExp(r'^(?![一-鿿]*人)([一-鿿]{1,4})(?=\s|$|[生卒墓忌配字號娶出系])')
           .firstMatch(body);
       final husband = husbandMatch?.group(1) ?? '';
       final afterHusband = body.substring(husbandMatch?.end ?? 0);
-      final bgM = RegExp(r'^\\s*([一-鿿]{2,3})人').firstMatch(afterHusband);
+      final bgM = RegExp(r'^\s*([一-鿿]{2,3})人').firstMatch(afterHusband);
       if (bgM != null) {
         person.spouseBongwan = bgM.group(1);
       }

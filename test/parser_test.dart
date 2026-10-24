@@ -33,6 +33,20 @@ void main() {
   });
 
   group('인물별 필드 혼합 방지', () {
+    test('딸 표기 공백과 차례를 제거하고 사위 이름과 본관을 분리한다', () {
+      for (final text in ['女金永洙 安東人', '女 二 金永洙\t安東人']) {
+        final person = JokboParser.parse(text).single;
+        expect(person.spouseHanja, '金永洙');
+        expect(person.spouseBongwan, '安東');
+      }
+    });
+
+    test('본관만 있는 딸 표기에 사위 이름을 만들지 않는다', () {
+      final person = JokboParser.parse('女 二 安東人').single;
+      expect(person.spouseHanja, isNull);
+      expect(person.spouseBongwan, '安東');
+    });
+
     test('딸의 사위 이름에 뒤따르는 사망 및 묘지 정보가 섞이지 않는다', () {
       final people = JokboParser.parse('女金永洙 安東人 卒 墓山 子格 字良甫');
       expect(people, hasLength(2));
