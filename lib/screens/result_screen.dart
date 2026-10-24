@@ -380,7 +380,27 @@ class _PersonList extends StatelessWidget {
         } else {
           nameLine = '$segaPrefix${fullHangul.isEmpty ? '(이름 미상)' : fullHangul}';
         }
-        return Card(
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (i == 0 || persons[i - 1].sega != p.sega)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(4, 14, 4, 10),
+                child: Row(children: [
+                  const Icon(Icons.account_tree_outlined, size: 18,
+                      color: HanjiColors.ju),
+                  const SizedBox(width: 8),
+                  Text(p.sega == null ? '세대 미확인' : '${p.sega}세대',
+                      style: const TextStyle(fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: HanjiColors.muk)),
+                  const Spacer(),
+                  Text('${generationCounts[p.sega]}명',
+                      style: const TextStyle(fontSize: 13,
+                          color: HanjiColors.mukSoft)),
+                ]),
+              ),
+            Card(
           child: ListTile(
             title: Text(nameLine,
                 maxLines: 3,
@@ -450,6 +470,8 @@ class _PersonList extends StatelessWidget {
                 MaterialPageRoute(
                     builder: (_) => PersonCardScreen(personId: p.id))) : null,
           ),
+            ),
+          ],
         );
       },
     );
