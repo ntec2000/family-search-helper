@@ -25,6 +25,7 @@ class _ResultScreenState extends State<ResultScreen> {
   late final List<Person> _persons;
   bool _saved = false;
   bool _saving = false;
+  final List<(Person, int)> _excluded = [];
 
   @override
   void initState() {
@@ -34,7 +35,18 @@ class _ResultScreenState extends State<ResultScreen> {
 
   Future<void> _deletePerson(Person person) async {
     if (_saved) return;
-    setState(() => _persons.remove(person));
+    final index = _persons.indexOf(person);
+    if (index < 0) return;
+    setState(() {
+      _excluded.add((person, index));
+      _persons.removeAt(index);
+    });
+  }
+
+  void _restoreLastExcluded() {
+    if (_saved || _excluded.isEmpty) return;
+    final (person, index) = _excluded.removeLast();
+    setState(() => _persons.insert(index.clamp(0, _persons.length), person));
   }
 
   Future<void> _saveReviewedPersons() async {
@@ -116,6 +128,11 @@ class _ResultScreenState extends State<ResultScreen> {
             icon: const Icon(Icons.drive_file_rename_outline),
             tooltip: '성씨 입력 (성 미상 인물에 적용)',
             onPressed: _saved ? null : _applySurname,
+          ),
+          IconButton(
+            icon: const Icon(Icons.undo),
+            tooltip: '마지막 제외 후보 복원',
+            onPressed: _saved || _excluded.isEmpty ? null : _restoreLastExcluded,
           ),
           IconButton(
             icon: const Icon(Icons.person_add_alt_1),
