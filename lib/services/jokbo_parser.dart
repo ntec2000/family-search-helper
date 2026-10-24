@@ -101,8 +101,7 @@ class JokboParser {
         dauRun = 0; // 아들 등장 → 딸 연속 묶음 종료
       }
     }
-    // v2.2 — 세(世) 기반 출생연도 추정 보완
-    Genealogy.fillGenerationEstimates(persons);
+    // 간지만으로 서기 연도를 확정할 수 없으므로 세대별 연도 자동 추정은 하지 않습니다.
     return persons;
   }
 
@@ -269,14 +268,11 @@ class JokboParser {
     final pb = _matchGanzhiDate(personPart, '生');
     if (pb != null) {
       person.birthDateLunar = pb.label;
-      person.birthDateSolar = _estimateBirthYear(pb.ganzhi);
     }
     // 본인 사망 (卒)
     final pd = _matchGanzhiDate(personPart, '卒');
     if (pd != null) {
       person.deathDateLunar = pd.label;
-      person.deathDateSolar =
-          _estimateDeathYear(pd.ganzhi, person.birthDateSolar);
     }
     // 忌(기일) — 연도 미상, 월·일만
     final gi = RegExp(
