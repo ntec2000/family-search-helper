@@ -98,7 +98,9 @@ class _ResultScreenState extends State<ResultScreen> {
         context: context,
         builder: (ctx) => AlertDialog(
           title: Text('가족관계 $skippedLinks건 복원 실패'),
-          content: const Text('원문과 가족관계를 다시 확인하세요.'),
+          content: SingleChildScrollView(
+            child: Text('${failedLinkIds.join('\n')}\n\n원문과 가족관계를 다시 확인하세요.'),
+          ),
           actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('확인'))],
         ),
       );
