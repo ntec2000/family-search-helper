@@ -2,6 +2,7 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import '../models/person.dart';
+import 'person_relation_validator.dart';
 
 class DbService {
   DbService._();
@@ -117,6 +118,41 @@ class DbService {
   Future<void> upsertPerson(Person p) async {
     await db.insert('persons', p.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  /// 저장 전에 모든 인물의 관계 참조를 확인하고, 오류가 있으면 전체 롤백한다.
+  /// 기존 upsertPersonsAtomically는 호환성을 위해 유지한다.
+  Future<void> upsertPersonsValidated(Iterable<Person> persons) async {
+    final pending = persons.toList(growable: false);
+    final ids = pending.map((p) => p.id).toList(growable: false);
+    if (ids.any((id) => id.trim().isEmpty) || ids.toSet().length != ids.length) {
+      throw StateError('저장 대상에 빈 인물 ID 또는 중복 ID가 있습니다.');
+    }
+    await db.transaction((txn) async {
+      final rows = await txn.query('persons', columns: ['id']);
+      final knownIds = <String>{
+        ...rows.map((row) => row['id'] as String),
+        ...ids,
+      };
+      for (final person in pending) {
+        final errors = PersonRelationValidator.validate(
+          personId: person.id,
+          fatherId: person.fatherId,
+          motherId: person.motherId,
+          childrenIds: person.childrenIds,
+          sonsInLawIds: person.sonsInLawIds,
+          inLawsIds: person.inLawsIds,
+          knownPersonIds: knownIds,
+        );
+        if (errors.isNotEmpty) {
+          throw StateError('인물 ${person.id}: ${errors.join('; ')}');
+        }
+      }
+      for (final person in pending) {
+        await txn.insert('persons', person.toMap(),
+            conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+    });
   }
 
   Future<void> upsertPersonsAtomically(Iterable<Person> persons) async {
