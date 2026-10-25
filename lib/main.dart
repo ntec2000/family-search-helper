@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app.dart';
@@ -11,6 +12,7 @@ Future<void> main() async {
   // 전역 오류 핸들러 — 예기치 못한 오류로 앱이 강제 종료되지 않도록 한다.
   runZonedGuarded(() async {
     WidgetsFlutterBinding.ensureInitialized();
+    if (kIsWeb) WidgetsBinding.instance.ensureSemantics();
 
     FlutterError.onError = (FlutterErrorDetails details) {
       FlutterError.presentError(details);

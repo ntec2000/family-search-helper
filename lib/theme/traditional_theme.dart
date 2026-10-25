@@ -36,7 +36,7 @@ class TraditionalTheme {
       textTheme: base.textTheme.apply(
         bodyColor: HanjiColors.muk,
         displayColor: HanjiColors.muk,
-        fontFamily: 'serif',
+        fontFamily: 'JokboHanja',
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: HanjiColors.hanji,
@@ -49,7 +49,7 @@ class TraditionalTheme {
           fontWeight: FontWeight.w700,
           color: HanjiColors.muk,
           letterSpacing: 1.5,
-          fontFamily: 'serif',
+          fontFamily: 'JokboHanja',
         ),
       ),
       cardTheme: CardThemeData(

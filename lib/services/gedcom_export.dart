@@ -72,10 +72,11 @@ class GedcomExport {
       final given = surname.isNotEmpty && fullName.startsWith(surname)
           ? fullName.substring(surname.length).trim()
           : fullName;
-      if (surname.isNotEmpty && fullName.startsWith(surname)) {
+      if (surname.isNotEmpty) {
         buf.writeln('1 NAME $given /$surname/');
       } else {
-        buf.writeln('1 NAME ${fullName.isEmpty ? '?' : fullName}');
+        final fallback = fullName.isEmpty ? p.nameHanja.trim() : fullName;
+        buf.writeln('1 NAME ${fallback.isEmpty ? '?' : fallback}');
       }
       if (p.nameHanja.trim().isNotEmpty) {
         buf.writeln('1 NOTE 한자 이름: ${p.nameHanja.trim()}');
@@ -111,6 +112,22 @@ class GedcomExport {
       if (p.ho != null) buf.writeln('1 NICK 號 ${p.ho}');
       if (p.bongwan != null) buf.writeln('1 NOTE 本貫: ${p.bongwan}');
       if (p.pa != null) buf.writeln('1 NOTE 派: ${p.pa}');
+      for (final entry in <String, String?>{
+        '배우자': p.spouseHanja, '배우자 본관': p.spouseBongwan,
+        '배우자 출생': p.spouseBirth, '배우자 사망': p.spouseDeath,
+        '배우자 부친': p.spouseFather, '배우자 조부': p.spouseGrandfather,
+        '배우자 증조부': p.spouseGreatGrandfather,
+        '배우자 외조부': p.spouseMaternalGrandfather,
+        '특이사항': p.note, '근거': p.reasonStatement,
+        '족보 원문': p.rawText, 'PDF 페이지': p.sourcePageNumber?.toString(),
+      }.entries) {
+        if (entry.value?.isNotEmpty == true) {
+          buf.writeln('1 NOTE ${entry.key}: ${entry.value!.replaceAll(RegExp(r'[\r\n]+'), ' ')}');
+        }
+      }
+      if (p.gender == 'F' && p.nameHangul.isEmpty && p.nameHanja.isEmpty) {
+        buf.writeln('1 NOTE 개인 이름 미상, 성씨만 기록됨');
+      }
       if (p.sega != null) buf.writeln('1 NOTE ${p.sega}世');
       final parentFamily = childFamily[p.id];
       if (parentFamily != null) {

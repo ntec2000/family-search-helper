@@ -1,4 +1,5 @@
-import 'dart:io';
+import '../widgets/source_image.dart';
+import '../widgets/candidate_editor.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/person.dart';
@@ -13,10 +14,14 @@ class ResultScreen extends StatefulWidget {
   final String rawText;
   final List<Person> persons;
   final String imagePath;
+  final String? sourceDocumentPath;
+  final int? sourcePageNumber;
   const ResultScreen(
       {super.key,
       required this.rawText,
       required this.persons,
+      this.sourceDocumentPath,
+      this.sourcePageNumber,
       required this.imagePath});
 
   @override
@@ -117,37 +122,15 @@ class _ResultScreenState extends State<ResultScreen> {
 
   Future<void> _editCandidate(Person person) async {
     if (_saved || _saving) return;
-    final hanja = TextEditingController(text: person.nameHanja);
-    final hangul = TextEditingController(text: person.nameHangul);
-    final result = await showDialog<List<String>>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('이름 후보 수정'),
-        content: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(controller: hanja,
-              decoration: const InputDecoration(labelText: '한자 이름')),
-          TextField(controller: hangul,
-              decoration: const InputDecoration(labelText: '한글 이름')),
-        ]),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx),
-              child: const Text('취소')),
-          FilledButton(onPressed: () => Navigator.pop(ctx,
-              [hanja.text.trim(), hangul.text.trim()]),
-              child: const Text('적용')),
-        ],
-      ),
-    );
-    if (result != null && mounted && !_saved && !_saving && _persons.contains(person)) {
-      setState(() {
-        person.nameHanja = result[0];
-        person.nameHangul = result[1];
-        person.updatedAt = DateTime.now();
-        _relationshipsReviewed = false;
-      });
-    }
-    hanja.dispose();
-    hangul.dispose();
+    final edited = await showDialog<Person>(context: context,
+        builder: (_) => CandidateEditor(person: person));
+    if (edited == null || !mounted || _saved || _saving) return;
+    final index = _persons.indexOf(person);
+    if (index < 0) return;
+    setState(() {
+      _persons[index] = edited;
+      _relationshipsReviewed = false;
+    });
   }
 
   Future<void> _chooseParent(Person child) async {
@@ -199,7 +182,7 @@ class _ResultScreenState extends State<ResultScreen> {
       final details = issue.contains(':')
           ? issue.substring(issue.indexOf(':') + 1)
           : issue;
-      for (final token in details.split(RegExp(r'\\s*→\\s*|\\s+'))) {
+      for (final token in details.split(RegExp(r'\s*→\s*|\s+'))) {
         final id = token.trim();
         if (knownIds.contains(id)) involved.add(id);
       }
@@ -209,6 +192,12 @@ class _ResultScreenState extends State<ResultScreen> {
 
   Future<void> _saveReviewedPersons() async {
     if (_saved || _saving) return;
+    if (_persons.isEmpty || _persons.any((p) => p.gender != 'F' &&
+        p.nameHanja.trim().isEmpty && p.nameHangul.trim().isEmpty && p.nameRoman.trim().isEmpty)) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('이름이 비어 있는 후보를 수정하거나 제외하세요.')));
+      return;
+    }
     final issues = ParentChildReview.validateReviewedBatch(_persons);
     if (issues.isNotEmpty) {
       showDialog<void>(
@@ -255,13 +244,13 @@ class _ResultScreenState extends State<ResultScreen> {
         title: const Text('검토한 인물 저장 확인'),
         content: SingleChildScrollView(
           child: Text(
-            '저장 대상: ${_persons.length}명\\n'
-            '검토 중 제외한 후보: ${_excluded.length}명\\n'
-            '부친·모친 모두 연결: ${_persons.where((p) => p.fatherId != null && p.motherId != null).length}명\\n'
-            '한쪽만 연결: ${_persons.where((p) => (p.fatherId == null) != (p.motherId == null)).length}명\\n'
-            '부모 미연결: ${_persons.where((p) => p.fatherId == null && p.motherId == null).length}명\\n\\n'
+            '저장 대상: ${_persons.length}명\n'
+            '검토 중 제외한 후보: ${_excluded.length}명\n'
+            '부친·모친 모두 연결: ${_persons.where((p) => p.fatherId != null && p.motherId != null).length}명\n'
+            '한쪽만 연결: ${_persons.where((p) => (p.fatherId == null) != (p.motherId == null)).length}명\n'
+            '부모 미연결: ${_persons.where((p) => p.fatherId == null && p.motherId == null).length}명\n\n'
             '연결 상태는 원본 족보와 검토한 결과입니다. '
-            '미연결 관계를 임의로 생성하지 않습니다.\\n'
+            '미연결 관계를 임의로 생성하지 않습니다.\n'
             '원본 이미지와 OCR 원문은 변경하지 않습니다.',
           ),
         ),
@@ -277,7 +266,7 @@ class _ResultScreenState extends State<ResultScreen> {
       return;
     }
     try {
-      await DbService.instance.upsertPersonsAtomically(_persons);
+      await DbService.instance.upsertPersonsAtomically(_persons, sourceOcrText: widget.rawText);
       if (!mounted) return;
       setState(() {
         _saved = true;
@@ -297,21 +286,17 @@ class _ResultScreenState extends State<ResultScreen> {
 
   Future<void> _addPerson() async {
     if (_saved || _saving) return;
-    final now = DateTime.now();
-    final np = Person(
-      id: 'manual_${now.millisecondsSinceEpoch}',
-      sourceImagePath: widget.imagePath,
-      createdAt: now,
-      updatedAt: now,
-    );
-    if (!mounted) return;
+    final candidate = Person(id: 'manual_${DateTime.now().microsecondsSinceEpoch}',
+        sourceImagePath: widget.imagePath,
+        sourceDocumentPath: widget.sourceDocumentPath,
+        sourcePageNumber: widget.sourcePageNumber);
+    final person = await showDialog<Person>(context: context,
+        builder: (_) => CandidateEditor(person: candidate));
+    if (person == null || !mounted || _saved || _saving) return;
     setState(() {
-      _persons.add(np);
+      _persons.add(person);
       _relationshipsReviewed = false;
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('새 인물 후보를 추가했습니다. 저장 후 수정할 수 있습니다.')),
-    );
   }
 
   /// v2.6(#7) — 성을 알 수 없는 인물에 성씨(한글+한자)를 수동 적용한다.
@@ -452,6 +437,8 @@ class _ResultScreenState extends State<ResultScreen> {
                     Text('검토 대상 ${_persons.length}명  ·  제외 ${_excluded.length}명',
                         style: const TextStyle(fontSize: 13,
                             fontWeight: FontWeight.w600, color: HanjiColors.ju)),
+                    const Text('누락·오독은 원문을 대조해 수정하거나 인물을 추가하세요.',
+                        style: TextStyle(fontSize: 12, color: HanjiColors.mukSoft)),
                     TextButton.icon(
                       onPressed: () => setState(() => _showReviewGuide = !_showReviewGuide),
                       icon: Icon(_showReviewGuide ? Icons.expand_less : Icons.expand_more),
@@ -526,7 +513,7 @@ class _ResultScreenState extends State<ResultScreen> {
                     panEnabled: true,
                     onInteractionEnd: (_) => setState(() {}),
                     child:
-                        Image.file(File(widget.imagePath), fit: BoxFit.contain),
+                        SourceImage(widget.imagePath),
                   ),
                 ),
               ]),
@@ -577,7 +564,7 @@ class _PersonList extends StatelessWidget {
           child: Text(
             issueIds == null
                 ? '표시할 인물이 없습니다.'
-                : '현재 목록에서 확인할 관계 오류 인물이 없습니다.\\n'
+                : '현재 목록에서 확인할 관계 오류 인물이 없습니다.\n'
                   '오류가 인물 ID 중복 등 목록 전체에 관한 것인지도 확인하세요.',
             textAlign: TextAlign.center,
           ),
@@ -620,7 +607,7 @@ class _PersonList extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (i == 0 || persons[i - 1].sega != p.sega)
+            if (i == 0 || visiblePersons[i - 1].sega != p.sega)
               Padding(
                 padding: const EdgeInsets.fromLTRB(4, 14, 4, 10),
                 child: Row(children: [
@@ -679,7 +666,14 @@ class _PersonList extends StatelessWidget {
                         : HanjiColors.ju,
                   )
                 : null,
-            trailing: PopupMenuButton<String>(
+            trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+              if (!saved && !relationshipMode)
+                IconButton(
+                  tooltip: '인물 아님 · 후보 제외',
+                  icon: const Icon(Icons.person_remove_outlined),
+                  onPressed: () => onDelete(p),
+                ),
+              PopupMenuButton<String>(
               tooltip: '인물 작업 메뉴 · 인물 아님 제외',
               icon: const Icon(Icons.more_vert),
               onSelected: (action) {
@@ -715,13 +709,14 @@ class _PersonList extends StatelessWidget {
                 if (!relationshipMode || saved)
                   PopupMenuItem(value: 'edit',
                     child: ListTile(leading: const Icon(Icons.edit_note),
-                        title: Text(saved ? '인물 상세 보기' : '이름 수정'))),
+                        title: Text(saved ? '인물 상세 보기' : '내용 수정'))),
                 if (!saved && !relationshipMode)
                   const PopupMenuItem(value: 'exclude',
                       child: ListTile(leading: Icon(Icons.person_remove_outlined),
                           title: Text('인물 아님 — 후보 제외'))),
               ],
             ),
+            ]),
             onTap: saved ? () => Navigator.push(
                 context,
                 MaterialPageRoute(

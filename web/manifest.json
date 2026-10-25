@@ -1,0 +1,10 @@
+{
+  "name": "가족역사기록 도우미",
+  "short_name": "족보 도우미",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#F6EFDD",
+  "theme_color": "#F6EFDD",
+  "description": "족보 인물 검토와 FamilySearch 입력 자료 정리",
+  "lang": "ko"
+}

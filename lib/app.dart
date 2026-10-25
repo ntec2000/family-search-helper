@@ -12,6 +12,9 @@ class FamilySearchHelperApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: TraditionalTheme.light(),
       darkTheme: TraditionalTheme.dark(),
+      builder: (context, child) => Center(child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1280),
+          child: child ?? const SizedBox.shrink())),
       home: const HomeScreen(),
     );
   }

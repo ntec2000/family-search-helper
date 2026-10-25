@@ -23,7 +23,20 @@ void main() {
       }
       throw MissingPluginException(call.method);
     });
+    final legacy = await openDatabase('${directory.path}/family_search.db', version: 7,
+        onCreate: (db, version) async {
+      final columns = Person(id: 'legacy').toMap().keys.where((key) =>
+          key != 'source_document_path' && key != 'source_page_number');
+      await db.execute('CREATE TABLE persons (${columns.map((key) =>
+          '$key ${key == 'id' ? 'TEXT PRIMARY KEY' : key == 'sega' ? 'INTEGER' : 'TEXT'}').join(',')})');
+      await db.execute('CREATE TABLE app_config (k TEXT PRIMARY KEY, v TEXT)');
+      await db.insert('persons', Person(id: 'legacy', rawText: '기존 원문 보존').toMap()
+        ..remove('source_document_path')..remove('source_page_number'));
+    });
+    await legacy.close();
     await service.open();
+    expect((await service.getPerson('legacy'))!.rawText, '기존 원문 보존');
+    expect(await service.db.getVersion(), 8);
   });
 
   tearDownAll(() async {
@@ -34,6 +47,18 @@ void main() {
   });
 
   setUp(() async => service.clearAll());
+
+  test('PDF 출처·페이지·OCR 원문을 인물과 함께 보존한다', () async {
+    final person = Person(id: 'pdf-person', nameHanja: '格',
+        sourceDocumentPath: 'original.pdf', sourcePageNumber: 2,
+        sourceImagePath: 'page-2.png', rawText: '子格');
+    await service.upsertPersonsAtomically([person], sourceOcrText: 'OCR 원문 전체');
+    final saved = (await service.getPerson(person.id))!;
+    expect(saved.sourceDocumentPath, 'original.pdf');
+    expect(saved.sourcePageNumber, 2);
+    expect(saved.sourceImagePath, 'page-2.png');
+    expect(await service.getConfig('ocr_source:${person.id}'), 'OCR 원문 전체');
+  });
 
   test('일괄 저장은 가족관계와 OCR 원문을 함께 보존한다', () async {
     final parent = Person(id: 'parent', childrenIds: ['child'], rawText: '원본 父');

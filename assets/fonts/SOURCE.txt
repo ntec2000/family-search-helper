@@ -1,0 +1,4 @@
+NotoSerifCJKkr-Regular.otf
+Source: https://github.com/notofonts/noto-cjk/tree/main/Serif/OTF/Korean
+License: SIL Open Font License 1.1; see OFL.txt.
+Bundled for offline Korean and Hanja display on Android and browsers.

@@ -1,22 +1,21 @@
-import 'dart:io';
 import 'dart:typed_data';
-import 'package:flutter/foundation.dart' show compute;
+import 'package:flutter/foundation.dart' show compute, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:pdfx/pdfx.dart';
 import '../models/person.dart';
 import '../services/ocr_service.dart';
+import '../services/image_store.dart';
+import '../services/pdf_import.dart';
+import '../widgets/source_image.dart';
 import '../services/jokbo_parser.dart';
-import '../services/db_service.dart';
 import '../theme/traditional_theme.dart';
-import '../widgets/surname_input_dialog.dart';
 import 'result_screen.dart';
 import 'crop_screen.dart';
-import 'person_card_screen.dart';
 
 /// 백그라운드 아이솔레이트에서 실행되는 이미지 전처리.
 /// 메인(UI) 스레드를 막지 않도록 compute() 로 분리한다. (ANR 방지)
@@ -72,6 +71,10 @@ class _CaptureScreenState extends State<CaptureScreen> {
 
   /// 미리보기로 표시 중인 (촬영·선택한) 이미지 경로.
   String? _previewPath;
+  String? _sourcePath;
+  String? _sourceDocumentPath;
+  int? _sourcePageNumber;
+  String? _sourceLabel;
 
   bool get _hasPresetSurname =>
       (widget.surnameHangul ?? '').isNotEmpty ||
@@ -83,12 +86,17 @@ class _CaptureScreenState extends State<CaptureScreen> {
     // 홈에서 이미지를 들고 진입한 경우(레거시)는 바로 미리보기.
     if (widget.imagePath != null) {
       _previewPath = widget.imagePath;
+      _sourcePath = widget.imagePath;
     }
     // 그 외에는 선택 화면(_Mode.select)으로 시작 — 카메라 자동 구동 안 함.
   }
 
   /// 사용자가 [카메라로 촬영] 을 선택했을 때만 카메라를 초기화한다.
   Future<void> _useCamera() async {
+    if (kIsWeb) {
+      await _pickFromGallery(source: ImageSource.camera);
+      return;
+    }
     setState(() {
       _mode = _Mode.camera;
       _status = '카메라 준비 중...';
@@ -134,9 +142,14 @@ class _CaptureScreenState extends State<CaptureScreen> {
     setState(() => _busy = true);
     try {
       final f = await _camera!.takePicture();
+      final source = await persistSourceImage(f.path);
       if (!mounted) return;
       setState(() {
-        _previewPath = f.path;
+        _previewPath = source;
+        _sourcePath = source;
+        _sourceDocumentPath = null;
+        _sourcePageNumber = null;
+        _sourceLabel = '카메라 촬영';
         _busy = false;
       });
     } catch (e) {
@@ -150,18 +163,21 @@ class _CaptureScreenState extends State<CaptureScreen> {
   }
 
   /// 갤러리 이미지 선택. 선택하면 미리보기로 표시.
-  Future<void> _pickFromGallery() async {
+  Future<void> _pickFromGallery({ImageSource source = ImageSource.gallery}) async {
     if (_busy) return;
     try {
       final x = await ImagePicker().pickImage(
-        source: ImageSource.gallery,
-        maxWidth: 2600,
-        maxHeight: 2600,
-        imageQuality: 95,
+        source: source,
       );
       if (x != null && mounted) {
+        final sourcePath = await persistSourceImage(x.path);
+        if (!mounted) return;
         setState(() {
-          _previewPath = x.path;
+          _previewPath = sourcePath;
+          _sourcePath = sourcePath;
+          _sourceDocumentPath = null;
+          _sourcePageNumber = null;
+          _sourceLabel = x.name;
           _status = '';
         });
       }
@@ -184,20 +200,62 @@ class _CaptureScreenState extends State<CaptureScreen> {
     }
   }
 
+  Future<void> _pickPdf() async {
+    if (_busy) return;
+    final selection = await FilePicker.platform.pickFiles(
+        type: FileType.custom, allowedExtensions: ['pdf'], withData: true);
+    if (selection == null || !mounted) return;
+    final file = selection.files.single;
+    final bytes = file.bytes;
+    if (bytes == null || bytes.isEmpty) {
+      setState(() => _status = 'PDF 파일을 읽을 수 없습니다. 다른 파일을 선택하세요.');
+      return;
+    }
+    setState(() { _busy = true; _status = 'PDF 페이지 준비 중...'; });
+    PdfDocument? document;
+    try {
+      document = await PdfDocument.openData(bytes);
+      if (!mounted) return;
+      var selectedPage = 1;
+      final pageNumber = await showDialog<int>(context: context, builder: (ctx) =>
+          StatefulBuilder(builder: (ctx, update) => AlertDialog(
+            title: const Text('분석할 PDF 페이지'),
+            content: DropdownButton<int>(value: selectedPage,
+              items: [for (var i = 1; i <= document!.pagesCount; i++)
+                DropdownMenuItem(value: i, child: Text('$i / ${document.pagesCount}쪽'))],
+              onChanged: (value) => update(() => selectedPage = value ?? 1)),
+            actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('취소')),
+              FilledButton(onPressed: () => Navigator.pop(ctx, selectedPage), child: const Text('페이지 선택'))],
+          )));
+      if (pageNumber == null) return;
+      final rendered = await renderPdfPage(document, pageNumber);
+      final original = await storeImageBytes(bytes, temporary: false, extension: 'pdf');
+      final image = await storeImageBytes(rendered, temporary: false, extension: 'png');
+      if (mounted) {
+        setState(() {
+          _previewPath = image; _sourcePath = image;
+          _sourceDocumentPath = original; _sourcePageNumber = pageNumber;
+          _sourceLabel = '${file.name} · $pageNumber쪽'; _status = '';
+        });
+      }
+    } catch (error) {
+      if (mounted) setState(() => _status = 'PDF를 열지 못했습니다. 암호·손상 여부를 확인하세요.\n$error');
+    } finally {
+      await document?.close();
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   /// ML Kit 네이티브 디코더 크래시 방지 + 인식 정확도 향상 전처리.
   /// v2.8 — 무거운 디코드/리사이즈/색보정은 백그라운드 아이솔레이트(compute)에서
   /// 수행하여 UI 스레드 멈춤(ANR)을 막는다.
   Future<String> _normalizeImage(String path) async {
-    final bytes = await File(path).readAsBytes();
+    final bytes = await readImageBytes(path);
     final jpg = await compute(_processImageBytes, bytes);
     if (jpg.isEmpty) {
       throw Exception('지원하지 않는 이미지 형식이거나 파일이 손상되었습니다');
     }
-    final dir = await getTemporaryDirectory();
-    final out = File(
-        p.join(dir.path, 'ocr_${DateTime.now().millisecondsSinceEpoch}.jpg'));
-    await out.writeAsBytes(jpg, flush: true);
-    return out.path;
+    return storeImageBytes(jpg);
   }
 
   /// 사용자가 명시적으로 "한자 인식 시작" 을 눌렀을 때만 호출.
@@ -217,34 +275,24 @@ class _CaptureScreenState extends State<CaptureScreen> {
       final ocr = await OcrService.recognizeBest(
         safePath,
         originalPath: path,
+        onProgress: (status) {
+          if (mounted) setState(() => _status = status);
+        },
       );
 
       if (!mounted) return;
       setState(() => _status = '족보 정보 분석 중...');
-      final persons = JokboParser.parse(
-        ocr.text,
+      final persons = JokboParser.parseRegions(
+        ocr.regionTexts.isEmpty ? [ocr.text] : ocr.regionTexts,
         // OCR 전처리본은 인식용이고, 결과가 가리키는 출처는 사용자의 원본이다.
-        sourceImagePath: path,
+        sourceImagePath: _sourcePath ?? path,
         clanHanjaOverride: widget.surnameHanja,
         clanHangulOverride: widget.surnameHangul,
       );
-
-      if (!_hasPresetSurname) {
-        final needsSurname = persons.any((p) =>
-            (p.surnameHanja ?? '').isEmpty && (p.surnameHangul ?? '').isEmpty);
-        if (needsSurname && persons.isNotEmpty && mounted) {
-          final entered = await showSurnameInputDialog(context);
-          if (entered != null) {
-            final sHanja = entered.$1, sHangul = entered.$2;
-            for (final p in persons) {
-              if ((p.surnameHanja ?? '').isEmpty &&
-                  (p.surnameHangul ?? '').isEmpty) {
-                p.surnameHanja = sHanja.isEmpty ? null : sHanja;
-                p.surnameHangul = sHangul.isEmpty ? null : sHangul;
-              }
-            }
-          }
-        }
+      for (final person in persons) {
+        person.sourceDocumentPath = _sourceDocumentPath;
+        person.sourcePageNumber = _sourcePageNumber;
+        person.reasonStatement = '출처: ${_sourceLabel ?? '선택한 족보 이미지'}. OCR 후보 · 원문 대조 필요.';
       }
 
       // OCR 후보는 검토 전 데이터베이스에 자동 저장하지 않습니다.
@@ -255,7 +303,11 @@ class _CaptureScreenState extends State<CaptureScreen> {
         context,
         MaterialPageRoute(
           builder: (_) => ResultScreen(
-              rawText: ocr.text, persons: persons, imagePath: path),
+              rawText: [ocr.text, ...ocr.alternatives.map((text) =>
+                  '\n[OCR 비교 원문 · 전체/세로 열]\n$text')].join('\n'),
+              persons: persons, imagePath: _sourcePath ?? path,
+              sourceDocumentPath: _sourceDocumentPath,
+              sourcePageNumber: _sourcePageNumber),
         ),
       );
     } catch (e) {
@@ -283,36 +335,13 @@ class _CaptureScreenState extends State<CaptureScreen> {
 
   Future<void> _manualEntry() async {
     if (_busy) return;
-    setState(() => _busy = true);
-    try {
-      final now = DateTime.now();
-      final person = Person(
-        id: 'manual_${now.millisecondsSinceEpoch}',
-        sourceImagePath: _previewPath,
-        surnameHanja:
-            (widget.surnameHanja?.isEmpty ?? true) ? null : widget.surnameHanja,
-        surnameHangul: (widget.surnameHangul?.isEmpty ?? true)
-            ? null
-            : widget.surnameHangul,
-        createdAt: now,
-        updatedAt: now,
-      );
-      await DbService.instance.upsertPerson(person);
-      if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => PersonCardScreen(personId: person.id),
-        ),
-      );
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _busy = false;
-          _status = '직접 입력 준비 오류: $e';
-        });
-      }
-    }
+    final person = Person(id: 'manual_${DateTime.now().microsecondsSinceEpoch}',
+        sourceImagePath: _sourcePath ?? _previewPath,
+        sourceDocumentPath: _sourceDocumentPath,
+        sourcePageNumber: _sourcePageNumber);
+    await Navigator.push(context, MaterialPageRoute(builder: (_) => ResultScreen(
+        rawText: '', persons: [person], imagePath: _sourcePath ?? _previewPath ?? '',
+        sourceDocumentPath: _sourceDocumentPath, sourcePageNumber: _sourcePageNumber)));
   }
 
   /// 다시 선택: 미리보기를 지우고 소스 선택 화면으로 되돌린다.
@@ -324,6 +353,10 @@ class _CaptureScreenState extends State<CaptureScreen> {
     _camera?.dispose();
     setState(() {
       _previewPath = null;
+      _sourcePath = null;
+      _sourceDocumentPath = null;
+      _sourcePageNumber = null;
+      _sourceLabel = null;
       _camera = null;
       _status = '';
       _mode = _Mode.select;
@@ -353,8 +386,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
                   minScale: 1.0,
                   maxScale: 6.0,
                   panEnabled: true,
-                  child: Image.file(File(_previewPath!),
-                      fit: BoxFit.contain, cacheWidth: 1600),
+                  child: SourceImage(_previewPath!),
                 ),
               ),
             )
@@ -403,6 +435,8 @@ class _CaptureScreenState extends State<CaptureScreen> {
                   : null,
               onCamera: _useCamera,
               onGallery: _pickFromGallery,
+              onPdf: _pickPdf,
+              status: _status,
             ),
 
           // 미리보기 상태의 하단 동작 버튼
@@ -513,19 +547,23 @@ class _CaptureScreenState extends State<CaptureScreen> {
 
 /// 입력 소스(카메라/갤러리) 선택 화면.
 class _SourceSelect extends StatelessWidget {
+  final String status;
   final String? presetLine;
   final VoidCallback onCamera;
   final VoidCallback onGallery;
+  final VoidCallback onPdf;
   const _SourceSelect({
     required this.presetLine,
     required this.onCamera,
     required this.onGallery,
+    required this.onPdf,
+    required this.status,
   });
 
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(child: Padding(
         padding: const EdgeInsets.all(28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -538,7 +576,7 @@ class _SourceSelect extends StatelessWidget {
                     fontWeight: FontWeight.bold,
                     color: HanjiColors.muk)),
             const SizedBox(height: 6),
-            const Text('카메라로 촬영하거나 갤러리에서 이미지를 선택하세요',
+            const Text('이미지·PDF를 선택하거나 카메라로 촬영하세요.\n분석 후 내용과 가족관계를 검토하고 저장합니다.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: HanjiColors.mukSoft)),
             if (presetLine != null) ...[
@@ -548,6 +586,7 @@ class _SourceSelect extends StatelessWidget {
                       color: HanjiColors.ju, fontWeight: FontWeight.w600)),
             ],
             const SizedBox(height: 28),
+            if (status.isNotEmpty) Text(status, textAlign: TextAlign.center),
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
@@ -571,9 +610,14 @@ class _SourceSelect extends StatelessWidget {
                 ),
               ),
             ),
+            const SizedBox(height: 14),
+            SizedBox(width: double.infinity, child: OutlinedButton.icon(
+              onPressed: onPdf, icon: const Icon(Icons.picture_as_pdf_outlined),
+              label: const Padding(padding: EdgeInsets.symmetric(vertical: 14),
+                  child: Text('PDF에서 페이지 선택', style: TextStyle(fontSize: 17))))),
           ],
         ),
-      ),
+      )),
     );
   }
 }

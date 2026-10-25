@@ -1,4 +1,9 @@
-import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb, compute;
+import 'dart:typed_data';
+import 'image_store.dart';
+import 'ocr_regions.dart';
+import 'ocr_column_text.dart';
+import 'browser_ocr_stub.dart' if (dart.library.js_interop) 'browser_ocr.dart';
 import 'vertical_reading_order.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
@@ -9,17 +14,20 @@ class OcrService {
 
   /// 이미지 경로에서 한자 텍스트 추출.
   /// 세로쓰기 족보의 경우, 블록 → 줄 → 단어 순으로 위→아래/우→좌 정렬.
-  static Future<OcrResult> recognize(String imagePath) async {
-    final input = InputImage.fromFile(File(imagePath));
+  static Future<OcrResult> recognize(String imagePath, {bool singleColumn = false}) async {
+    if (kIsWeb) {
+      return OcrResult(text: await recognizeInBrowser(imagePath, singleColumn: singleColumn), rawBlocks: []);
+    }
+    final input = InputImage.fromFilePath(imagePath);
     final result = await _recognizer.processImage(input);
 
     // 세로쓰기: 오른쪽 열부터, 같은 열에서는 위에서 아래로 읽는다.
     // 고정 30px 행 기준은 이미지 크기에 따라 순서를 뒤섞을 수 있다.
-    final blocks = [...result.blocks];
+    final lines = [for (final block in result.blocks) ...block.lines];
     final order = verticalReadingOrder(
-      blocks.map((block) => block.boundingBox).toList(),
+      lines.map((line) => line.boundingBox).toList(),
     );
-    final orderedBlocks = [for (final index in order) blocks[index]];
+    final orderedBlocks = [for (final index in order) lines[index]];
 
     final buf = StringBuffer();
     for (final b in orderedBlocks) {
@@ -34,6 +42,7 @@ class OcrService {
   static Future<OcrResult> recognizeBest(
     String processedPath, {
     String? originalPath,
+    void Function(String)? onProgress,
   }) async {
     OcrResult? processed;
     try {
@@ -55,9 +64,42 @@ class OcrService {
     if (processed == null && original == null) {
       throw StateError('OCR 입력을 읽을 수 없습니다');
     }
-    if (processed == null) return original!;
-    if (original == null) return processed;
-    return selectCandidate(processed, original);
+    final wholePage = processed == null ? original! : original == null
+        ? processed : selectCandidate(processed, original);
+    late final List<Uint8List> regions;
+    try {
+      regions = await compute(genealogyOcrRegions,
+          await readImageBytes(originalPath));
+    } catch (_) {
+      return wholePage;
+    }
+    if (regions.length < 2) return wholePage;
+    final texts = <String>[];
+    final rawColumns = <String>[];
+    for (var i = 0; i < regions.length; i++) {
+      onProgress?.call('세대 구획 ${i + 1}/${regions.length} 한자 인식 중...');
+      try {
+        final columns = await compute(genealogyOcrColumns, regions[i]);
+        if (columns.isEmpty) {
+          texts.add((await recognize(await storeImageBytes(regions[i]))).text);
+        } else {
+          final columnTexts = <String>[];
+          for (var j = 0; j < columns.length; j++) {
+            onProgress?.call('구획 ${i + 1}/${regions.length} · 세로 열 ${j + 1}/${columns.length} 인식 중...');
+            columnTexts.add((await recognize(await storeImageBytes(columns[j], extension: 'png'),
+                singleColumn: true)).text);
+          }
+          texts.add(assembleOcrColumns(columnTexts));
+          rawColumns.add(columnTexts.join('\n'));
+        }
+      } catch (_) {
+        // 구획 하나가 실패하면 일부 누락된 결과로 전체 원문을 대체하지 않는다.
+        return wholePage;
+      }
+    }
+    // 구획과 전체 인식은 원문 탭에서 함께 보존한다. 파싱은 구획 결과를 사용한다.
+    return OcrResult(text: texts.join('\n'), rawBlocks: wholePage.rawBlocks,
+        alternatives: [wholePage.text, ...rawColumns], regionTexts: texts);
   }
 
   /// 공백이나 검출 블록 수가 늘어도 한자가 적은 후보를 우선하지 않는다.
@@ -69,12 +111,15 @@ class OcrService {
   }
 
   static Future<void> dispose() async {
-    await _recognizer.close();
+    if (!kIsWeb) await _recognizer.close();
   }
 }
 
 class OcrResult {
   final String text;
   final List<TextBlock> rawBlocks;
-  OcrResult({required this.text, required this.rawBlocks});
+  final List<String> alternatives;
+  final List<String> regionTexts;
+  OcrResult({required this.text, required this.rawBlocks,
+      this.alternatives = const [], this.regionTexts = const []});
 }

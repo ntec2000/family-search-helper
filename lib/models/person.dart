@@ -69,6 +69,8 @@ class Person {
 
   // 메타
   String? sourceImagePath;
+  String? sourceDocumentPath;
+  int? sourcePageNumber;
   String? rawText;
   DateTime createdAt;
   DateTime updatedAt;
@@ -120,6 +122,8 @@ class Person {
     this.note,
     this.relation,
     this.sourceImagePath,
+    this.sourceDocumentPath,
+    this.sourcePageNumber,
     this.rawText,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -176,6 +180,8 @@ class Person {
         'note': note,
         'relation': relation,
         'source_image_path': sourceImagePath,
+        'source_document_path': sourceDocumentPath,
+        'source_page_number': sourcePageNumber,
         'raw_text': rawText,
         'created_at': createdAt.toIso8601String(),
         'updated_at': updatedAt.toIso8601String(),
@@ -234,6 +240,8 @@ class Person {
         note: m['note'],
         relation: m['relation'],
         sourceImagePath: m['source_image_path'],
+        sourceDocumentPath: m['source_document_path'],
+        sourcePageNumber: m['source_page_number'],
         rawText: m['raw_text'],
         createdAt: DateTime.parse(m['created_at']),
         updatedAt: DateTime.parse(m['updated_at']),

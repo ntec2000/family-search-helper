@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,7 +7,6 @@ import 'package:share_plus/share_plus.dart';
 import '../models/person.dart';
 import '../services/db_service.dart';
 import '../theme/traditional_theme.dart';
-import '../widgets/surname_input_dialog.dart';
 import 'capture_screen.dart';
 import 'person_card_screen.dart';
 import 'lunar_converter_screen.dart';
@@ -111,16 +111,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   /// 2) 완료하면 한글 성 + 한자 성을 기본 성씨로 삼아
   /// 3) 이미지 입력 화면(촬영/갤러리)으로 이동 → 인식 → 이름 추출 규칙대로 나열
   Future<void> _startCompose() async {
-    // (한자성, 한글성) — 건너뛰면 null
-    final surname = await showSurnameInputDialog(context);
-    if (!mounted) return;
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => CaptureScreen(
-          surnameHanja: surname?.$1,
-          surnameHangul: surname?.$2,
-        ),
+        builder: (_) => const CaptureScreen(),
       ),
     );
     _reload();
@@ -128,6 +122,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   /// #2 — 앱 종료: 화면만 사라지는 것이 아니라 프로세스를 완전히 종료한다.
   Future<void> _confirmExit() async {
+    if (kIsWeb) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('저장 후 브라우저 탭을 닫으세요.')));
+      return;
+    }
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
@@ -314,7 +313,7 @@ class _EmptyState extends StatelessWidget {
             SizedBox(height: 16),
             Text('族譜', style: TextStyle(fontSize: 36, color: HanjiColors.muk, letterSpacing: 8)),
             SizedBox(height: 8),
-            Text('아래 [족보작성] 버튼을 눌러 성씨를 입력한 뒤\n족보 사진을 촬영하거나 갤러리에서 선택하여\n한자 인식을 시작하세요',
+            Text('족보 이미지·PDF를 선택하거나 카메라로 촬영하세요.\n분석 → 내용 수정 → 가족관계 검토 → 최종 저장\n원문과 대조한 인물만 저장합니다.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: HanjiColors.mukSoft, height: 1.6)),
           ],

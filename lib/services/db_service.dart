@@ -1,8 +1,11 @@
 import 'package:path/path.dart' as p;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import '../models/person.dart';
 import 'person_relation_validator.dart';
+import 'web_database_stub.dart'
+    if (dart.library.js_interop) 'web_database.dart';
 
 class DbService {
   DbService._();
@@ -12,11 +15,12 @@ class DbService {
 
   Future<void> open() async {
     if (_db != null) return;
-    final dir = await getApplicationDocumentsDirectory();
-    final path = p.join(dir.path, 'family_search.db');
+    configureWebDatabase();
+    final path = kIsWeb ? 'family_search.db' : p.join(
+        (await getApplicationDocumentsDirectory()).path, 'family_search.db');
     _db = await openDatabase(
       path,
-      version: 7,
+      version: 8,
       onCreate: (db, v) async {
         await db.execute('''
           CREATE TABLE persons (
@@ -39,6 +43,7 @@ class DbService {
             in_laws_spouse_note TEXT, reason_statement TEXT, note TEXT,
             relation TEXT,
             source_image_path TEXT, raw_text TEXT,
+            source_document_path TEXT, source_page_number INTEGER,
             created_at TEXT, updated_at TEXT
           )''');
         await db.execute(
@@ -48,6 +53,10 @@ class DbService {
             'CREATE TABLE app_config (k TEXT PRIMARY KEY, v TEXT)');
       },
       onUpgrade: (db, oldV, newV) async {
+        if (oldV < 8) {
+          await db.execute('ALTER TABLE persons ADD COLUMN source_document_path TEXT');
+          await db.execute('ALTER TABLE persons ADD COLUMN source_page_number INTEGER');
+        }
         if (oldV < 2) {
           await db.execute(
               'CREATE TABLE IF NOT EXISTS app_config (k TEXT PRIMARY KEY, v TEXT)');
@@ -155,10 +164,15 @@ class DbService {
     });
   }
 
-  Future<void> upsertPersonsAtomically(Iterable<Person> persons) async {
+  Future<void> upsertPersonsAtomically(Iterable<Person> persons, {String? sourceOcrText}) async {
+    final pending = persons.toList(growable: false);
     await db.transaction((txn) async {
-      for (final person in persons) {
+      for (final person in pending) {
         await txn.insert('persons', person.toMap(),
+            conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+      if (sourceOcrText != null && pending.isNotEmpty) {
+        await txn.insert('app_config', {'k': 'ocr_source:${pending.first.id}', 'v': sourceOcrText},
             conflictAlgorithm: ConflictAlgorithm.replace);
       }
     });

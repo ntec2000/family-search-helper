@@ -1,9 +1,7 @@
-import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
+import '../services/image_store.dart';
 import '../services/ocr_service.dart';
 import '../services/hanja_dict.dart';
 import '../theme/traditional_theme.dart';
@@ -71,13 +69,10 @@ class _HandwritingScreenState extends State<HandwritingScreen> {
       image.dispose();
       if (byteData == null) throw Exception('렌더 실패');
       final bytes = byteData.buffer.asUint8List();
-      final dir = await getTemporaryDirectory();
-      final f = File(p.join(
-          dir.path, 'hw_${DateTime.now().millisecondsSinceEpoch}.png'));
-      await f.writeAsBytes(bytes, flush: true);
+      final path = await storeImageBytes(bytes, extension: 'png');
 
       // 2) 내장 한자 OCR 로 인식
-      final result = await OcrService.recognize(f.path);
+      final result = await OcrService.recognize(path);
       // 인식 텍스트에서 한자만 추출 (중복 제거)
       final chars = <String>[];
       for (final r in result.text.runes) {

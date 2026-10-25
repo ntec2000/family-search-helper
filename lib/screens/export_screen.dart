@@ -1,11 +1,11 @@
-import 'dart:io';
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
-import 'package:path/path.dart' as path;
-import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../models/person.dart';
 import '../services/db_service.dart';
 import '../services/gedcom_export.dart';
+import '../services/familysearch_record.dart';
 import '../services/hanja_dict.dart';
 import '../services/genealogy.dart';
 import '../services/romanizer.dart';
@@ -23,16 +23,33 @@ class _State extends State<ExportScreen> {
   bool _busy = false;
   String _status = '';
 
+  Future<void> _exportFamilySearchJson() async {
+    try {
+      final people = await DbService.instance.listPersons();
+      final json = const JsonEncoder.withIndent('  ').convert(
+          FamilySearchRecord.document(people));
+      const filename = 'familysearch-records.json';
+      await Share.shareXFiles([XFile.fromData(
+          Uint8List.fromList(utf8.encode(json)),
+          mimeType: 'application/json', name: filename)],
+          fileNameOverrides: [filename]);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('FamilySearch 자료를 내보내지 못했습니다. 다시 시도하세요.')));
+      }
+    }
+  }
+
   Future<void> _exportGedcom() async {
     try {
       final list = await DbService.instance.listPersons();
       final ged = GedcomExport.toGedcom(list);
-      final dir = await getTemporaryDirectory();
-      final f = File(path.join(dir.path,
-          'family_${DateTime.now().millisecondsSinceEpoch}.ged'));
-      await f.writeAsString(ged);
-      await Share.shareXFiles([XFile(f.path)],
-          subject: '가족역사기록 GEDCOM');
+      final filename = 'family_${DateTime.now().millisecondsSinceEpoch}.ged';
+      await Share.shareXFiles([
+        XFile.fromData(Uint8List.fromList(utf8.encode(ged)),
+            mimeType: 'text/plain', name: filename),
+      ], fileNameOverrides: [filename], subject: '가족역사기록 GEDCOM');
     } on StateError {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -381,6 +398,13 @@ class _State extends State<ExportScreen> {
                 onTap: _previewText,
               ),
             ),
+            const SizedBox(height: 8),
+            Card(child: ListTile(
+              leading: const Icon(Icons.download_outlined),
+              title: const Text('FamilySearch 항목별 자료 (.json)'),
+              subtitle: const Text('성·이름·한자·생졸·출처·검토한 가족관계'),
+              onTap: _exportFamilySearchJson,
+            )),
             const SizedBox(height: 32),
             const Text('② FamilySearch 직접 동기화',
                 style: TextStyle(fontWeight: FontWeight.bold, color: HanjiColors.ju)),

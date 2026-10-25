@@ -18,6 +18,8 @@ ios/
 linux/
 macos/
 windows/
-web/
 *.lock
+!pubspec.lock
 .DS_Store
+web/*.js.deps
+web/*.js.map

@@ -1,9 +1,9 @@
-import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
+import 'dart:typed_data';
+import '../services/image_store.dart';
+import '../widgets/source_image.dart';
 import '../theme/traditional_theme.dart';
 
 /// #1 족보 촬영/선택 이미지에서 필요한 부분만 잘라내는 화면.
@@ -33,7 +33,7 @@ class _CropScreenState extends State<CropScreen> {
 
   Future<void> _loadDimensions() async {
     try {
-      final bytes = await File(widget.imagePath).readAsBytes();
+      final bytes = await readImageBytes(widget.imagePath);
       final codec = await ui.instantiateImageCodec(bytes);
       final frame = await codec.getNextFrame();
       if (mounted) {
@@ -68,7 +68,7 @@ class _CropScreenState extends State<CropScreen> {
     if (_imgW == null || _busy) return;
     setState(() => _busy = true);
     try {
-      final bytes = await File(widget.imagePath).readAsBytes();
+      final bytes = await readImageBytes(widget.imagePath);
       final decoded = img.decodeImage(bytes);
       if (decoded == null) throw Exception('decode failed');
       final oriented = img.bakeOrientation(decoded);
@@ -79,11 +79,8 @@ class _CropScreenState extends State<CropScreen> {
       final h = ((_b - _t) * ih).round().clamp(1, ih - y);
       final cropped = img.copyCrop(oriented, x: x, y: y, width: w, height: h);
       final jpg = img.encodeJpg(cropped, quality: 92);
-      final dir = await getTemporaryDirectory();
-      final out = File(p.join(
-          dir.path, 'crop_${DateTime.now().millisecondsSinceEpoch}.jpg'));
-      await out.writeAsBytes(jpg, flush: true);
-      if (mounted) Navigator.pop(context, out.path);
+      final path = await storeImageBytes(Uint8List.fromList(jpg));
+      if (mounted) Navigator.pop(context, path);
     } catch (e) {
       if (mounted) {
         setState(() => _busy = false);
@@ -121,8 +118,7 @@ class _CropScreenState extends State<CropScreen> {
                 children: [
                   Positioned.fromRect(
                     rect: disp,
-                    child: Image.file(File(widget.imagePath),
-                        fit: BoxFit.fill),
+                    child: SourceImage(widget.imagePath, fit: BoxFit.fill),
                   ),
                   // 어두운 마스크 + 테두리
                   Positioned.fill(

@@ -1,8 +1,9 @@
 import 'dart:convert';
-import 'dart:io';
+import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 import '../models/person.dart';
 import 'db_service.dart';
+import 'familysearch_record.dart';
 
 /// FamilySearch.org 공식 API 연동 (OAuth 2.0)
 ///
@@ -68,20 +69,16 @@ class FamilySearchService {
 
   /// Authorization Code → Access Token 교환
   static Future<bool> exchangeCode(String code) async {
-    final client = HttpClient();
+    final client = http.Client();
     try {
-      final req =
-          await client.postUrl(Uri.parse('$_identBase/cis-web/oauth2/v3/token'));
-      req.headers
-          .set('Content-Type', 'application/x-www-form-urlencoded');
-      req.write(Uri(queryParameters: {
+      final resp = await client.post(
+        Uri.parse('$_identBase/cis-web/oauth2/v3/token'), body: {
         'grant_type': 'authorization_code',
         'code': code.trim(),
         'client_id': clientId,
         'redirect_uri': redirectUri,
-      }).query);
-      final resp = await req.close();
-      final body = await resp.transform(utf8.decoder).join();
+      });
+      final body = utf8.decode(resp.bodyBytes);
       if (resp.statusCode == 200) {
         final json = jsonDecode(body) as Map<String, dynamic>;
         _accessToken = json['access_token'] as String?;
@@ -121,52 +118,7 @@ class FamilySearchService {
         (p.deathDateLunar ?? '').trim().isEmpty) {
       return null;
     }
-    final body = {
-      'persons': [
-        {
-          'living': false,
-          'gender': {
-            'type': p.gender == 'M'
-                ? 'http://gedcomx.org/Male'
-                : p.gender == 'F'
-                    ? 'http://gedcomx.org/Female'
-                    : 'http://gedcomx.org/Unknown'
-          },
-          'names': [
-            {
-              'nameForms': [
-                {
-                  'fullText': p.nameHangul.trim().isNotEmpty
-                      ? p.nameHangul.trim()
-                      : p.nameHanja.trim().isNotEmpty
-                          ? p.nameHanja.trim()
-                          : p.nameRoman.trim(),
-                }
-              ]
-            }
-          ],
-          'facts': [
-            if (p.birthDateSolar != null || p.birthDateLunar != null || p.birthPlace != null)
-              {
-                'type': 'http://gedcomx.org/Birth',
-                'date': {'original': p.birthDateSolar ?? p.birthDateLunar ?? ''},
-                'place': {'original': p.birthPlace ?? ''},
-              },
-            if (p.deathDateSolar != null || p.deathDateLunar != null || p.deathPlace != null)
-              {
-                'type': 'http://gedcomx.org/Death',
-                'date': {'original': p.deathDateSolar ?? p.deathDateLunar ?? ''},
-                'place': {'original': p.deathPlace ?? ''},
-              },
-            if (p.burialPlace != null)
-              {
-                'type': 'http://gedcomx.org/Burial',
-                'place': {'original': p.burialPlace!},
-              },
-          ],
-        }
-      ]
-    };
+    final body = {'persons': [FamilySearchRecord.person(p)]};
     final result = await _post('/platform/tree/persons', body);
     if (result == null) return null;
     final persons = (result['persons'] as List?) ?? [];
@@ -178,13 +130,13 @@ class FamilySearchService {
 
   static Future<Map<String, dynamic>?> _get(String path) async {
     if (_accessToken == null) return null;
-    final client = HttpClient();
+    final client = http.Client();
     try {
-      final req = await client.getUrl(Uri.parse('$_base$path'));
-      req.headers.set('Authorization', 'Bearer $_accessToken');
-      req.headers.set('Accept', 'application/x-gedcomx-v1+json');
-      final resp = await req.close();
-      final body = await resp.transform(utf8.decoder).join();
+      final resp = await client.get(Uri.parse('$_base$path'), headers: {
+        'Authorization': 'Bearer $_accessToken',
+        'Accept': 'application/x-gedcomx-v1+json',
+      });
+      final body = utf8.decode(resp.bodyBytes);
       if (resp.statusCode == 200) {
         return jsonDecode(body) as Map<String, dynamic>;
       }
@@ -201,15 +153,14 @@ class FamilySearchService {
   static Future<Map<String, dynamic>?> _post(
       String path, Map<String, dynamic> body) async {
     if (_accessToken == null) return null;
-    final client = HttpClient();
+    final client = http.Client();
     try {
-      final req = await client.postUrl(Uri.parse('$_base$path'));
-      req.headers.set('Authorization', 'Bearer $_accessToken');
-      req.headers.set('Content-Type', 'application/x-gedcomx-v1+json');
-      req.headers.set('Accept', 'application/x-gedcomx-v1+json');
-      req.write(jsonEncode(body));
-      final resp = await req.close();
-      final respBody = await resp.transform(utf8.decoder).join();
+      final resp = await client.post(Uri.parse('$_base$path'), headers: {
+        'Authorization': 'Bearer $_accessToken',
+        'Content-Type': 'application/x-gedcomx-v1+json',
+        'Accept': 'application/x-gedcomx-v1+json',
+      }, body: jsonEncode(body));
+      final respBody = utf8.decode(resp.bodyBytes);
       if (resp.statusCode == 200 || resp.statusCode == 201) {
         if (respBody.trim().isNotEmpty) {
           final decoded = jsonDecode(respBody);
@@ -218,7 +169,7 @@ class FamilySearchService {
             return decoded;
           }
         }
-        final location = resp.headers.value('location');
+        final location = resp.headers['location'];
         if (location != null) {
           final segments = Uri.parse(location).pathSegments;
           final index = segments.lastIndexOf('persons');
