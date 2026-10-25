@@ -340,12 +340,12 @@ class _ResultScreenState extends State<ResultScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.drive_file_rename_outline),
-            tooltip: '성씨 입력 (성 미상 인물에 적용)',
+            tooltip: '성씨 입력',
             onPressed: _saved || _saving ? null : _applySurname,
           ),
           IconButton(
             icon: const Icon(Icons.undo),
-            tooltip: '마지막 제외 후보 복원',
+            tooltip: '제외 복원',
             onPressed: _saved || _saving || _excluded.isEmpty ? null : _restoreLastExcluded,
           ),
           IconButton(
@@ -355,17 +355,25 @@ class _ResultScreenState extends State<ResultScreen> {
           ),
         ],
       ),
-      floatingActionButton: _saved ? null : FloatingActionButton.extended(
+      bottomNavigationBar: _saved ? null : SafeArea(top: false, child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+        child: FilledButton.icon(
         onPressed: _saving || _reviewStep != 1 || !_relationshipsReviewed
             ? null : _saveReviewedPersons,
         icon: const Icon(Icons.save),
         label: Text(_saving ? '저장 중...' : '검토한 인물 저장'),
-      ),
+      ))),
       body: SafeArea(
         child: DefaultTabController(
           length: 3,
           child: Column(children: [
-            Padding(
+            const TabBar(
+              isScrollable: true, tabAlignment: TabAlignment.start,
+              tabs: [Tab(text: '추출 인물'), Tab(text: '한자/한글'), Tab(text: '원본 이미지')],
+              labelColor: HanjiColors.muk, indicatorColor: HanjiColors.ju,
+            ),
+            Expanded(child: NestedScrollView(
+            headerSliverBuilder: (_, __) => [SliverToBoxAdapter(child: Padding(
               padding: const EdgeInsets.fromLTRB(12, 6, 12, 4),
               child: Container(
                 width: double.infinity,
@@ -452,16 +460,8 @@ class _ResultScreenState extends State<ResultScreen> {
                   ],
                 ),
               ),
-            ),
-            const TabBar(
-              tabs: [
-                Tab(text: '추출 인물'),
-                Tab(text: '한자/한글'),
-                Tab(text: '원본 이미지'),
-              ],
-              labelColor: HanjiColors.muk,
-              indicatorColor: HanjiColors.ju,
-            ),
+            )),
+            SliverToBoxAdapter(child: Column(children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(children: [
@@ -500,8 +500,8 @@ class _ResultScreenState extends State<ResultScreen> {
                   label: const Text('이미지 확대 초기화'),
                 ),
               ),
-            Expanded(
-              child: TabBarView(children: [
+            ]))],
+            body: TabBarView(children: [
                 _PersonList(persons: _persons, onDelete: _deletePerson, onEdit: _editCandidate, onParent: _chooseParent, onUnlink: _clearParentLinks, saved: _saved || _saving, largeText: _largeText, relationshipMode: _reviewStep == 1, issueIds: _reviewStep == 1 && _showOnlyRelationshipIssues ? _relationshipIssueIds() : null),
                 _TextCompare(hanja: widget.rawText, hangul: hangulText),
                 Container(
@@ -517,7 +517,7 @@ class _ResultScreenState extends State<ResultScreen> {
                   ),
                 ),
               ]),
-            ),
+          )),
           ]),
         ),
       ),
@@ -614,14 +614,13 @@ class _PersonList extends StatelessWidget {
                   const Icon(Icons.account_tree_outlined, size: 18,
                       color: HanjiColors.ju),
                   const SizedBox(width: 8),
-                  Text(p.sega == null ? '세대 미확인' : '${p.sega}세대',
+                  Expanded(child: Text(p.sega == null ? '세대 미확인' : '${p.sega}세대',
                       style: const TextStyle(fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: HanjiColors.muk)),
-                  const Spacer(),
-                  Text('전체 ${generationCounts[p.sega]}명',
+                          color: HanjiColors.muk))),
+                  Flexible(child: Text('전체 ${generationCounts[p.sega]}명',
                       style: const TextStyle(fontSize: 13,
-                          color: HanjiColors.mukSoft)),
+                          color: HanjiColors.mukSoft))),
                 ]),
               ),
             Card(

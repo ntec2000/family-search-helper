@@ -286,12 +286,11 @@ class _Banner extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: HanjiColors.hanjiDark, width: 1),
       ),
-      child: Row(children: [
-        const Icon(Icons.family_restroom, color: HanjiColors.ju, size: 20),
-        const SizedBox(width: 8),
+      child: Wrap(alignment: WrapAlignment.spaceBetween,
+        spacing: 12, runSpacing: 8, crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
         Text('등록된 인물 $count명',
             style: const TextStyle(color: HanjiColors.muk, fontSize: 14)),
-        const Spacer(),
         const Text('族譜 → FamilySearch',
             style: TextStyle(color: HanjiColors.mukSoft, fontSize: 12, letterSpacing: 1)),
       ]),
@@ -304,7 +303,7 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Center(
-      child: Padding(
+      child: SingleChildScrollView(child: Padding(
         padding: EdgeInsets.all(32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -318,7 +317,7 @@ class _EmptyState extends StatelessWidget {
                 style: TextStyle(color: HanjiColors.mukSoft, height: 1.6)),
           ],
         ),
-      ),
+      )),
     );
   }
 }

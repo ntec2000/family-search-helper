@@ -1,10 +1,14 @@
 import 'dart:io';
 
 import 'package:flutter/services.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:family_search_helper/models/person.dart';
 import 'package:family_search_helper/services/db_service.dart';
+import 'package:family_search_helper/screens/home_screen.dart';
+import 'package:family_search_helper/theme/traditional_theme.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -47,6 +51,25 @@ void main() {
   });
 
   setUp(() async => service.clearAll());
+
+  testWidgets('홈 화면은 좁은 화면과 큰 글씨에서도 가로로 넘치지 않는다', (tester) async {
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    for (final size in [const Size(360, 740), const Size(740, 360)]) {
+      tester.view.physicalSize = size;
+      await tester.pumpWidget(ProviderScope(child: MaterialApp(
+        theme: TraditionalTheme.light(),
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(textScaler: const TextScaler.linear(1.7)),
+          child: child!), home: const HomeScreen())));
+      await tester.runAsync(() => service.listPersons());
+      await tester.pumpAndSettle();
+      expect(find.text('등록된 인물 0명'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    }
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
 
   test('PDF 출처·페이지·OCR 원문을 인물과 함께 보존한다', () async {
     final person = Person(id: 'pdf-person', nameHanja: '格',
