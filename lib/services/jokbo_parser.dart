@@ -44,6 +44,17 @@ class JokboParser {
     '六': '여섯째', '七': '일곱째', '八': '여덟째', '九': '아홉째', '十': '열째',
   };
 
+  /// 구획 사이에서 이름을 놓쳐도 앞 인물에게 다음 구획의 정보가 붙지 않게 한다.
+  static List<Person> parseRegions(List<String> regions, {String? sourceImagePath,
+      String? clanHanjaOverride, String? clanHangulOverride}) {
+    if (regions.isEmpty) return [];
+    final clan = Genealogy.detectClanSurname(regions.first);
+    return [for (final region in regions) ...parse(region,
+      sourceImagePath: sourceImagePath,
+      clanHanjaOverride: clanHanjaOverride ?? clan?.$1,
+      clanHangulOverride: clanHangulOverride ?? clan?.$2)];
+  }
+
   /// OCR 인식 텍스트(세로쓰기 → 정렬된 평문)를 받아 인물 카드 목록 추출
   static List<Person> parse(String rawText,
       {String? sourceImagePath,
@@ -51,7 +62,9 @@ class JokboParser {
       String? clanHangulOverride}) {
     final normalized = _normalize(rawText);
     // 문서 전체에서 가문(본관) 성씨 자동 감지 — 예: "固城李氏…" → 李/이
-    final detected = Genealogy.detectClanSurname(normalized);
+    final firstPerson = RegExp(r'(?<!\S)[子女男]\s*[一-鿿]').firstMatch(normalized);
+    final detected = Genealogy.detectClanSurname(firstPerson == null
+        ? normalized : normalized.substring(0, firstPerson.start));
     // v2.7 — [족보작성]에서 미리 입력받은 성씨가 있으면 자동 감지보다 우선 적용한다.
     final clanHanja = (clanHanjaOverride != null && clanHanjaOverride.isNotEmpty)
         ? clanHanjaOverride
@@ -161,7 +174,7 @@ class JokboParser {
     // 성별 + (차례) + 이름: 子/女 [차례한자] 이름(한자 1~3자)
     // 子/男=아들, 女=딸 + (차례) + 이름(한자 1~3자)
     final nameMatch =
-        RegExp(r'^([子女男])\s*([一二三四五六七八九十]+)?\s*([一-鿿]{1,3})')
+        RegExp('^([子女男])\\s*([一二三四五六七八九十]+)?\\s*([一-鿿]{1,3}?)(?=\\s|\$|[出字配生卒墓忌號娶贈系]|[$_gan][$_ji](?:年|[一二三四五六七八九十正閏0-9]|生|卒)|[一二三四五六七八九十百0-9]+世)')
             .firstMatch(t);
     if (nameMatch == null) return null;
     final isFemale = nameMatch.group(1) == '女';
@@ -171,7 +184,16 @@ class JokboParser {
     // 이름 뒤에 구조 키워드가 붙어버린 경우 잘라낸다 (예: 承勳出 → 承勳)
     for (final kw in const ['出', '字', '配', '生', '卒', '墓', '忌', '號', '娶', '贈', '系']) {
       final ki = headName.indexOf(kw);
-      if (ki > 0) headName = headName.substring(0, ki);
+      if (ki >= 0) headName = headName.substring(0, ki);
+    }
+    if (!isFemale && (headName.isEmpty ||
+        RegExp(r'^(?:父|祖|曾祖|外祖|判官|通政|[零一二三四五六七八九十百]+世?|[一-鿿]*氏)$')
+            .hasMatch(headName))) {
+      return null;
+    }
+    if (!isFemale && RegExp('^[$_gan][$_ji](?:[一二三四五六七八九十百]+)?\$')
+        .hasMatch(headName)) {
+      return null;
     }
 
     // 차례 숫자가 명시된 경우에만 순서를 부여한다.
@@ -191,6 +213,8 @@ class JokboParser {
     final paeIdx = t.indexOf('配');
     final personPart = paeIdx >= 0 ? t.substring(0, paeIdx) : t;
     final spousePart = paeIdx >= 0 ? t.substring(paeIdx) : '';
+    final segaMatch = RegExp(r'([0-9]+|[一二三四五六七八九十百]+)\s*世').firstMatch(personPart);
+    if (segaMatch != null) person.sega = _segaToInt(segaMatch[1]!);
 
     // ── 딸(女): 표기된 한자는 남편(사위) 이름, 딸 본인은 이름이 없으므로
     //    아버지(가문) 성을 따라 "○씨" 로 표기한다. 사위 본관(○○人)도 추출.
@@ -212,6 +236,7 @@ class JokboParser {
       }
       person.spouseHanja = husband.isEmpty ? null : husband;
       person.spouseHangul = husband.isEmpty ? null : dict.toHangul(husband);
+      addNote('딸의 개인 이름 미상. 女 뒤 표기는 사위 후보이며 원문 대조가 필요합니다.');
       // 딸의 성은 가문 성씨 상속 (이름 없음 → 내보내기에서 "○씨")
       if ((clanHanja ?? '').isNotEmpty) person.surnameHanja = clanHanja;
       if ((clanHangul ?? '').isNotEmpty) person.surnameHangul = clanHangul;
@@ -239,14 +264,6 @@ class JokboParser {
     if (ho != null) person.ho = ho.group(1);
     final siho = RegExp(r'諡號?([一-鿿]{1,3})').firstMatch(personPart);
     if (siho != null) person.siho = siho.group(1);
-
-    // 世 (세대 번호)
-    final segaM =
-        RegExp(r'([0-9]+|[一二三四五六七八九十百]+)\s*世').firstMatch(t);
-    if (segaM != null) {
-      final n = _segaToInt(segaM.group(1)!);
-      if (n != null) person.sega = n;
-    }
 
     // 본인 출생 (干支 + 월·일 선택)
     final pb = _matchGanzhiDate(personPart, '生');
@@ -304,6 +321,11 @@ class JokboParser {
       if (sb != null) person.spouseBirth = sb.label;
       final sd = _matchGanzhiDate(spousePart, '卒');
       if (sd != null) person.spouseDeath = sd.label;
+      final spouseGi = RegExp(r'忌\s*([正冬臘閏零一二三四五六七八九十百○0-9]{1,4}月\s*[初廿卅零一二三四五六七八九十○0-9]{1,4}日)')
+          .firstMatch(spousePart);
+      if (person.spouseDeath == null && spouseGi != null) {
+        person.spouseDeath = '忌 ${spouseGi[1]} (연도 미상)';
+      }
 
       // 처가 조상: 外祖 → 曾祖 → 祖 → 父 순으로 추출(겹침 방지 위해 추출 후 제거)
       var w = spousePart;
@@ -318,15 +340,15 @@ class JokboParser {
       }
 
       // 外祖(외가) — 자체 성씨 보유 → 앞 본관(지역) 두 글자만 제거
-      final outer = grab(RegExp(r'(?:聘\s*)?外祖\s*([一-鿿]{2,6})'));
+      final outer = grab(RegExp(r'(?:聘\s*)?外祖\s*([一-鿿]{2,6}?)(?=\s|$|[·父祖配生卒忌墓]|曾祖)'));
       person.spouseMaternalGrandfather =
           outer == null ? null : _stripBongwanPrefix(outer);
       // 曾祖/祖/父(친가 직계) — 관직·품계 제거(아내 성씨는 내보내기에서 부여)
-      final gGf = grab(RegExp(r'曾祖\s*([一-鿿]{2,5})'));
+      final gGf = grab(RegExp(r'曾祖\s*([一-鿿]{2,5}?)(?=\s|$|[·父祖配生卒忌墓]|外祖)'));
       person.spouseGreatGrandfather = gGf == null ? null : _stripTitle(gGf);
-      final gf = grab(RegExp(r'祖\s*([一-鿿]{2,4})'));
+      final gf = grab(RegExp(r'祖\s*([一-鿿]{2,4}?)(?=\s|$|[·父配生卒忌墓]|曾祖|外祖)'));
       person.spouseGrandfather = gf == null ? null : _stripTitle(gf);
-      final fa = grab(RegExp(r'父\s*([一-鿿]{1,4})'));
+      final fa = grab(RegExp(r'父\s*([一-鿿]{1,4}?)(?=\s|$|[·祖配生卒忌墓]|曾祖|外祖)'));
       person.spouseFather = fa == null ? null : _stripTitle(fa);
     }
 
@@ -384,14 +406,9 @@ class JokboParser {
     }
 
     // 성(姓) 분리 — 본인 이름은 외자/이름만(예: 格) → 가문 성씨 상속
-    final np = Genealogy.split(
-      hanja: person.nameHanja,
-      hangul: person.nameHangul,
-      fallbackSurnameHanja: clanHanja,
-      fallbackSurnameHangul: clanHangul,
-    );
-    if (np.surnameHanja.isNotEmpty) person.surnameHanja = np.surnameHanja;
-    if (np.surnameHangul.isNotEmpty) person.surnameHangul = np.surnameHangul;
+    // 子 뒤는 이름이다. 첫 글자가 金·安 등이어도 성씨라고 추측하지 않는다.
+    person.surnameHanja = clanHanja;
+    person.surnameHangul = clanHangul;
 
     return person;
   }
