@@ -26,6 +26,8 @@ jobs:
         run: flutter analyze
       - name: Unit and widget tests
         run: flutter test
+      - name: Build browser application
+        run: flutter build web --release --no-wasm-dry-run --no-web-resources-cdn
 
   android-debug:
     runs-on: ubuntu-latest
@@ -41,7 +43,7 @@ jobs:
       - name: Install Android SDK and NDK
         uses: android-actions/setup-android@v3
         with:
-          packages: 'platform-tools platforms;android-36 build-tools;36.0.0 ndk;28.2.13676358 cmake;3.22.1'
+          packages: 'platform-tools platforms;android-34 platforms;android-35 platforms;android-36 build-tools;35.0.0 build-tools;36.0.0 ndk;28.2.13676358 cmake;3.22.1'
       - name: Install Flutter
         uses: subosito/flutter-action@v2
         with:
