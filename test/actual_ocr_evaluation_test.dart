@@ -12,9 +12,13 @@ void main() {
   test('실제 OCR과 정답 전사의 인식·파싱 결과를 따로 기록한다', () async {
     await HanjaDict.instance.load();
     final data = jsonDecode(File(path).readAsStringSync()) as Map<String, dynamic>;
-    final regions = (data['results'] as List).map((r) => r['columns'] == null
-        ? r['text'] as String : assembleOcrColumns(
-            (r['columns'] as List).map((c) => c['text'] as String).toList())).toList();
+    final regions = (data['results'] as List).expand((r) {
+      if (r['columns'] == null) return [r['text'] as String];
+      final columns = r['columns'] as List;
+      return assembleOcrEntries(columns.map((c) => c['text'] as String).toList(),
+        headings: columns.any((c) => c.containsKey('heading'))
+          ? columns.map((c) => c['heading'] == true).toList() : null);
+    }).toList();
     final people = JokboParser.parseRegions(regions);
     const reference = ['昃','格','聖甲','核','顯五','承烈','承勳','賢東',
       '炳吉','炳旭','炳烈','炳直','權頭','權龜壽','李集','金免傑','尹兢秀'];

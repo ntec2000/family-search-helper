@@ -89,7 +89,8 @@ class OcrService {
             columnTexts.add((await recognize(await storeImageBytes(columns[j], extension: 'png'),
                 singleColumn: true)).text);
           }
-          texts.add(assembleOcrColumns(columnTexts));
+          final headings = await compute(genealogyOcrColumnHeadings, columns);
+          texts.addAll(assembleOcrEntries(columnTexts, headings: headings));
           rawColumns.add(columnTexts.join('\n'));
         }
       } catch (_) {

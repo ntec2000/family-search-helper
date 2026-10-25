@@ -2,6 +2,20 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:family_search_helper/services/jokbo_parser.dart';
 
 void main() {
+  test('첫 구획의 표제가 누락되어도 배우자 성을 본손에게 상속하지 않는다', () {
+    final person = JokboParser.parseRegions(['字良甫丁未生配原州邊氏', '子甲順']).single;
+    expect(person.surnameHanja, isNull);
+    expect(person.surnameHangul, isNull);
+  });
+  test('이름 뒤 OCR 문장부호는 이름에 넣지 않고 원문에 남긴다', () {
+    final people = JokboParser.parseRegions(['子甲順: 字仁平', '女金免傑: 金海人', '女尹兢秀-']);
+    expect(people, hasLength(3));
+    expect(people.first.nameHanja, '甲順');
+    expect(people[1].spouseHanja, '金免傑');
+    expect(people[1].spouseBongwan, '金海');
+    expect(people[2].spouseHanja, '尹兢秀');
+    expect(people[1].rawText, contains(':'));
+  });
   test('차례와 간지 날짜를 가짜 이름으로 만들지 않는다', () {
     for (final text in ['子 四', '子四', '子 甲子十月二十八日卒', '子甲子生']) {
       expect(JokboParser.parse(text), isEmpty, reason: text);

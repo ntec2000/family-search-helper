@@ -11,6 +11,8 @@ List<Uint8List> genealogyOcrRegions(Uint8List bytes) {
   final right = (image.width * .94).round();
   final tolerance = (image.height * .005).round().clamp(2, 20);
   final rows = <int>[];
+  int? ruleStart;
+  var ruleEnd = 0;
   for (var y = (image.height * .03).round(); y < image.height * .98; y++) {
     var dark = 0;
     var samples = 0;
@@ -25,18 +27,21 @@ List<Uint8List> genealogyOcrRegions(Uint8List bytes) {
       samples++;
     }
     if (samples > 0 && dark / samples > .72) {
-      if (rows.isEmpty || y - rows.last > tolerance * 2 + 2) {
-        rows.add(y);
-      } else {
-        rows[rows.length - 1] = y;
+      if (ruleStart != null && y - ruleEnd > tolerance * 2 + 2) {
+        rows.add((ruleStart + ruleEnd) ~/ 2);
+        ruleStart = null;
       }
+      ruleStart ??= y;
+      ruleEnd = y;
     }
   }
+  if (ruleStart != null) rows.add((ruleStart + ruleEnd) ~/ 2);
   if (rows.length < 3 || rows.length > 16) return [];
   final regions = <Uint8List>[];
   for (var i = 0; i < rows.length - 1; i++) {
-    final top = rows[i] + 5;
-    final height = rows[i + 1] - top - 4;
+    // 허용 폭의 아래 끝에서 자르면 선 바로 아래 子/女 표제가 잘린다.
+    final top = rows[i] + 2;
+    final height = rows[i + 1] - top - 2;
     if (height < image.height * .045) continue;
     var crop = img.copyCrop(image, x: left, y: top,
         width: right - left, height: height);
@@ -94,4 +99,16 @@ List<Uint8List> genealogyOcrColumns(Uint8List bytes) {
         backgroundColor: img.ColorRgb8(255, 255, 255)))));
   }
   return columns;
+}
+
+/// shortcut: 큰 표제/작은 주석의 두 글자 크기를 쓰는 구획용이며 자유 배치는 수동 검토한다.
+List<bool> genealogyOcrColumnHeadings(List<Uint8List> columns) {
+  final headings = <bool>[];
+  for (final bytes in columns) {
+    final image = img.decodeImage(bytes);
+    if (image == null) throw const FormatException('열 이미지를 해독할 수 없습니다.');
+    // 열에 추가한 흰 여백 24px은 글자 크기 판단에서 제외한다.
+    headings.add(image.width - 24 > (image.height - 24) * .19);
+  }
+  return headings;
 }

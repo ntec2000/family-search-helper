@@ -1,5 +1,30 @@
 # 2026-10-25 개발 검증 기록
 
+## 후속 OCR 경계 수정
+
+- 구획선 검출 허용 폭의 아래 끝을 경계로 사용해 子/女 윗부분이 잘리던 문제를 수정했다.
+  선의 중심을 기준으로 자르며 원본 이미지는 변경하지 않는다.
+- 큰 글씨 표제 열은 인식에 실패해도 별도 파싱 단위로 남긴다.
+  다음 인물의 出系가 앞 인물에 붙는 것을 막는다. 표제 크기 판단은 정형 구획용 휴리스틱이다.
+- 이름 뒤 문장부호를 경계로 인정해 女金免傑: 같은 후보를 누락하지 않는다.
+- 첫 표제 누락 시 配 뒤 배우자의 성씨를 본손 성씨로 가져오지 않게 했다.
+- A: 실제 사진을 다시 구획/열 분리하고 로컬 Tesseract 세로 한자 모델로 인식했다.
+  기준 이름 문자열 발견은 10/17 → 8/17, 구조화된 정확한 이름은 1/17 → 8/17이다.
+  이 둘은 다른 지표이며 전체 문자 정확도나 관계 정확도가 아니다.
+  현재 후보 12개 중 이름 오독 4개(相, 權雞壽, 媽吉, 娟右秀)가 남는다.
+  女 후보의 사위 이름도 이름 평가에 포함했다. 정답을 운영 코드에 넣지 않았다.
+- A: 실제 사진/저장 OCR 결과를 포함한 전체 테스트 96개 통과.
+  `flutter test --no-pub --reporter expanded --dart-define=OCR_RESULTS=<결과JSON> --dart-define=JOKBO_SAMPLE=<원본사진>`.
+- 평가: artifacts/ocr-centered-headings.json.evaluation.json.
+  실행 로그: centered-tests.txt, centered-analyze.txt, centered-web-build.txt,
+  centered-android-build.txt. 아래 항목은 앞선 개발 체크포인트의 기록이다.
+- A: 최신 정적 분석 경고 없음, 웹 release 및 Android debug 빌드 성공.
+  실제 Chrome 앱에서 사진 입력 → OCR → 12명 검토 화면 진입 성공.
+  pageerror 및 외부 non-GET 요청 없음(centered-browser-ocr.txt).
+  최신 APK는 artifacts/family-search-helper-ocr-boundaries-debug.apk이며 v2 서명을 검증했다.
+  빌드 복사본의 모든 lib 파일이 실제 작업 트리와 동일한 해시인지 확인했다.
+  루트 main의 원래 수정 파일 2개도 시작 시 해시와 일치한다.
+
 기존 work/jokbo-update-20261024 작업과 미추적 파일을 보존하여 이어서 구현했다.
 원격 브랜치는 1b75557이며 사위 정규식 수정 cc255e9 이후 로컬에서만 작업했다.
 파서 경계 수정은 4c6e91d에 기록했다. GitHub 게시 및 웹 배포는 하지 않았다.
