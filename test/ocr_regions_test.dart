@@ -7,6 +7,12 @@ import 'package:family_search_helper/services/ocr_column_text.dart';
 import 'package:family_search_helper/services/jokbo_parser.dart';
 
 void main() {
+  test('묘지 좌향의 子坐 표기는 새로운 인물 열이 아니다', () {
+    final entries = assembleOcrEntries(['子格', '墓山', '子坐午向', '子核']);
+    expect(entries, hasLength(2));
+    expect(entries.first, contains('子坐午向'));
+    expect(entries.last, startsWith('子核'));
+  });
   test('세로 주석은 잇고 다음 인물 열에서는 경계를 유지한다', () {
     final text = assembleOcrColumns(['子格', '字君平壬辰生', '配豊壤趙氏',
       '父永復', '子核', '字君實丁酉生']);
