@@ -26,6 +26,39 @@ void main() {
     }
   });
 
+  test('224쪽 세대별 인물과 처가 기록을 열 단위로 격리한다', () {
+    final entries = assembleOcrEntries([
+      '子昃', '字良甫丁未生庚申八月三日卒',
+      '配原州邊氏壬戌生甲子十月二十八日卒', '父國聖',
+      '子格', '字君平壬辰生', '配豊壤趙氏癸巳生', '父永復',
+      '子核', '字君實丁酉生', '配坡平尹氏乙巳生', '父光岳',
+      '子聖甲', '甲子生',
+      '子顯五', '庚午生',
+      '子承烈', '字聖模辛丑生', '配務安朴氏癸卯生', '父基豊',
+      '子二承勳', '出系顯龍后',
+      '子賢東', '字致安癸酉生庚午十二月十六日卒',
+      '配交河盧氏丁亥生', '父愼',
+      '子炳吉', '子二炳旭', '出系寅東后',
+      '子三炳烈', '子四炳直',
+    ]);
+    final people = JokboParser.parseRegions(entries,
+        clanHanjaOverride: '李', clanHangulOverride: '이');
+    expect(entries, hasLength(12));
+    expect(people.map((p) => p.nameHanja).toList(),
+        ['昃', '格', '核', '聖甲', '顯五', '承烈', '承勳',
+         '賢東', '炳吉', '炳旭', '炳烈', '炳直']);
+    expect(people[0].spouseFather, '國聖');
+    expect(people[1].spouseFather, '永復');
+    expect(people[2].spouseFather, '光岳');
+    expect(people[3].spouseFather, isNull);
+    expect(people[5].spouseFather, '基豊');
+    expect(people[6].spouseFather, isNull);
+    expect(people[7].spouseFather, '愼');
+    expect(people[8].spouseFather, isNull);
+    expect(people[9].note, contains('出系'));
+    expect(people[10].spouseFather, isNull);
+  });
+
   test('224쪽 세로 열: 오른쪽 인물의 배우자 정보가 왼쪽 인물로 넘어가지 않는다', () {
     final entries = assembleOcrEntries([
       '子昃', '字良甫丁未生', '配原州邊氏壬戌生', '父國聖',
