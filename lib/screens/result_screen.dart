@@ -473,7 +473,7 @@ class _ResultScreenState extends State<ResultScreen> {
                         padding: EdgeInsets.symmetric(vertical: 6),
                         child: Text(
                           '가족관계 오류가 남아 있습니다. 아래 「관계 오류 인물만 보기」를 선택하고 원문과 대조해 수정하세요.',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Colors.redAccent,
                             fontWeight: FontWeight.w600,
                             fontSize: 13,
