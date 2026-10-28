@@ -19,3 +19,8 @@ Read [docs/CODEX_HANDOFF_20261024.md](docs/CODEX_HANDOFF_20261024.md) before edi
 6. Provide Korean status updates listing changed files, commit SHAs, test results and blockers.
 
 Current development branch and additional history are documented in the handoff file.
+
+## Web / mobile AI token-saving workflow
+- For this project, including follow-up requests like '다음', read [docs/WEB_AI_COST_RULES.md](docs/WEB_AI_COST_RULES.md) and apply it before modifying files.
+- Prefer scoped file reads, verified free/local tools where available, minimal diffs, targeted tests and concise status reports.
+- Do not assume external free API calls reduce Codex subscription usage; obtain approval for paid API calls or private-data transmission.
