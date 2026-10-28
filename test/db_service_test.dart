@@ -96,6 +96,29 @@ void main() {
     expect(savedChild.rawText, child.rawText);
   });
 
+  test('잘못된 관계 ID는 인물과 OCR 원문을 모두 저장하지 않는다', () async {
+    await service.upsertPerson(Person(id: 'existing', rawText: '기존 원문'));
+    await expectLater(
+      service.upsertPersonsAtomically([
+        Person(id: 'existing', rawText: '변경 시도'),
+        Person(id: 'new-child', fatherId: 'missing-father'),
+      ], sourceOcrText: '저장되면 안 되는 OCR'),
+      throwsA(isA<StateError>()),
+    );
+    expect((await service.getPerson('existing'))!.rawText, '기존 원문');
+    expect(await service.getPerson('new-child'), isNull);
+    expect(await service.getConfig('ocr_source:existing'), isNull);
+  });
+
+  test('기존 DB 인물과의 관계는 OCR 원문과 함께 저장한다', () async {
+    await service.upsertPerson(Person(id: 'existing-father', gender: 'M'));
+    await service.upsertPersonsAtomically([
+      Person(id: 'new-child', fatherId: 'existing-father'),
+    ], sourceOcrText: '원본 족보 OCR');
+    expect((await service.getPerson('new-child'))!.fatherId, 'existing-father');
+    expect(await service.getConfig('ocr_source:new-child'), '원본 족보 OCR');
+  });
+
   test('중간 저장 실패 시 수정과 신규 삽입을 모두 롤백한다', () async {
     await service.upsertPerson(Person(id: 'existing', rawText: '보존할 원문'));
     await service.db.execute('''
