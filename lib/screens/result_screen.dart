@@ -432,6 +432,41 @@ class _ResultScreenState extends State<ResultScreen> {
                         onChanged: (value) => setState(
                           () => _showOnlyRelationshipIssues = value ?? false),
                       ),
+                    if (_reviewStep == 1 &&
+                        ParentChildReview.validateReviewedBatch(_persons).isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('수정이 필요한 가족관계',
+                                    style: TextStyle(fontWeight: FontWeight.bold)),
+                                const SizedBox(height: 6),
+                                ...ParentChildReview.validateReviewedBatch(_persons)
+                                    .map((issue) => Padding(
+                                          padding: const EdgeInsets.only(bottom: 6),
+                                          child: Text(_persons.fold<String>(
+                                            issue,
+                                            (message, person) {
+                                              final name = person.nameHanja.isNotEmpty
+                                                  ? person.nameHanja
+                                                  : person.nameHangul;
+                                              return name.isEmpty
+                                                  ? message
+                                                  : message.replaceAll(
+                                                      person.id, '$name (${person.id})');
+                                            },
+                                          )),
+                                        )),
+                                const Text('해당 인물의 부모 연결을 원본과 대조해 수정하세요.'),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                     if (_reviewStep == 1) ...[
                       const SizedBox(height: 6),
                       Text(
