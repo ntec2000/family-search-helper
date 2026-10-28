@@ -11,7 +11,10 @@ void main() {
     final image = img.Image(width: 320, height: 220);
     img.fill(image, color: img.ColorRgb8(255, 255, 255));
     for (final x in [55, 105, 155, 205, 255]) {
-      img.fillRect(image, x1: x, y1: 25, x2: x + 14, y2: 190,
+      // 긴 실선은 테두리로 판정되므로 실제 글자처럼 중간을 띄운다.
+      img.fillRect(image, x1: x, y1: 25, x2: x + 14, y2: 90,
+          color: img.ColorRgb8(0, 0, 0));
+      img.fillRect(image, x1: x, y1: 115, x2: x + 14, y2: 185,
           color: img.ColorRgb8(0, 0, 0));
     }
     final columns = genealogyOcrColumns(
@@ -38,7 +41,7 @@ void main() {
     expect(people[0].spouseFather, '國聖');
     expect(people[1].spouseHanja, '豊壤趙氏');
     expect(people[1].spouseFather, '永復');
-    expect(people[2].spouseHanja, '尹氏');
+    expect(people[2].spouseHanja, '坡平尹氏');
     expect(people[2].spouseFather, '光岳');
   });
 
