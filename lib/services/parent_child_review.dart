@@ -88,6 +88,26 @@ class ParentChildReview {
         issues.add('중복 자녀 연결: ${parent.id}');
       }
     }
+    // Detect parent cycles even when generation numbers are unavailable.
+    for (final person in entries) {
+      final visited = <String>{};
+      final pending = <String>[person.id];
+      while (pending.isNotEmpty) {
+        final id = pending.removeLast();
+        if (!visited.add(id)) continue;
+        final current = byId[id];
+        if (current == null) continue;
+        for (final parentId in [current.fatherId, current.motherId]) {
+          if (parentId == null || !byId.containsKey(parentId)) continue;
+          if (parentId == person.id) {
+            issues.add('순환 부모 관계 확인 필요: ${person.id}');
+            pending.clear();
+            break;
+          }
+          pending.add(parentId);
+        }
+      }
+    }
     return issues;
   }
 
