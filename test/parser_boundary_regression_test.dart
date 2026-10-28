@@ -2,6 +2,21 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:family_search_helper/services/jokbo_parser.dart';
 
 void main() {
+  test('배우자 외조부와 친가 조상은 다른 인물에게 넘어가지 않는다', () {
+    final people = JokboParser.parseRegions([
+      '子格 配原州邊氏 父國聖 祖同知 曾祖判官尙 外祖文化柳承春',
+      '子核 字君實 乙未生',
+    ]);
+    expect(people, hasLength(2));
+    expect(people.first.spouseHanja, '邊氏');
+    expect(people.first.spouseFather, '國聖');
+    expect(people.first.spouseGrandfather, '同知');
+    expect(people.first.spouseGreatGrandfather, '尙');
+    expect(people.first.spouseMaternalGrandfather, '柳承春');
+    expect(people.last.spouseHanja, isNull);
+    expect(people.last.spouseFather, isNull);
+    expect(people.last.spouseMaternalGrandfather, isNull);
+  });
   test('본인 字號와 배우자 생졸은 서로 섞이지 않는다', () {
     final people = JokboParser.parse(
       '子格 字君平 號松軒 壬辰生 甲午卒 配原州邊氏 丁未生 庚申卒 父國聖 '
