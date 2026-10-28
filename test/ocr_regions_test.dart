@@ -54,6 +54,15 @@ void main() {
       ['子格', '字君平'],
     );
   });
+  test('子 뒤의 주석 표기는 새로운 인물 경계로 취급하지 않는다', () {
+    final entries = assembleOcrEntries([
+      '子格', '字君平', '子配原州邊氏', '子墓山', '子核',
+    ]);
+    expect(entries, hasLength(2));
+    expect(entries.first, contains('子配原州邊氏'));
+    expect(entries.last, startsWith('子核'));
+  });
+
   test('묘지 좌향의 子坐 표기는 새로운 인물 열이 아니다', () {
     final entries = assembleOcrEntries(['子格', '墓山', '子坐午向', '子核']);
     expect(entries, hasLength(2));
