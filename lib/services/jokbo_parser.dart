@@ -196,6 +196,18 @@ class JokboParser {
       return null;
     }
 
+    // 인물 표제에 뒤따르는 구조어·본관·날짜를 본명으로 채택하지 않는다.
+    // OCR에서 子 다음에 이름 대신 주석이 붙는 경우를 보수적으로 제외한다.
+    if (!isFemale && (headName.endsWith('氏') ||
+        headName.endsWith('人') ||
+        headName.startsWith('外祖') ||
+        headName.startsWith('曾祖') ||
+        headName.startsWith('配') ||
+        headName.startsWith('墓') ||
+        headName.startsWith('忌'))) {
+      return null;
+    }
+
     // 차례 숫자가 명시된 경우에만 순서를 부여한다.
     final orderLab = (orderChar != null &&
             orderChar.length == 1 &&
