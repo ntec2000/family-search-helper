@@ -26,6 +26,19 @@ void main() {
     }
   });
 
+  test('224쪽 표제가 누락된 열은 다른 인물의 배우자로 합치지 않는다', () {
+    final entries = assembleOcrEntries([
+      '子昃', '字良甫丁未生',
+      '', '子格', '字君平壬辰生',
+      '子核', '字君實丁酉生',
+    ], headings: [true, false, true, true, false, true, false]);
+    expect(entries, hasLength(4));
+    expect(entries[0], contains('昃'));
+    expect(entries[1], isEmpty);
+    expect(entries[2], startsWith('子格'));
+    expect(entries[3], startsWith('子核'));
+  });
+
   test('224쪽 세대별 인물과 처가 기록을 열 단위로 격리한다', () {
     final entries = assembleOcrEntries([
       '子昃', '字良甫丁未生庚申八月三日卒',
