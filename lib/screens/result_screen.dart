@@ -333,16 +333,25 @@ class _ResultScreenState extends State<ResultScreen> {
     }
     try {
       await DbService.instance.upsertPersonsAtomically(_persons, sourceOcrText: widget.rawText);
+    } catch (_) {
       if (!mounted) return;
-      // DB 저장이 끝난 뒤 다시 읽어 검증한다. 조회 실패 시 재저장을 유도하지 않는다.
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('저장 중 오류가 발생했습니다. 다시 시도해 주세요.')),
+      );
+      return;
+    }
+    if (!mounted) return;
+    // 저장은 확정되었으므로 조회 실패를 저장 실패로 안내하지 않는다.
+    setState(() {
+      _saved = true;
+      _saving = false;
+    });
+    try {
       final stored = await DbService.instance.listPersons();
       if (!mounted) return;
       final savedIds = _persons.map((p) => p.id).toSet();
       final verified = stored.where((p) => savedIds.contains(p.id)).toList();
-      setState(() {
-        _saved = true;
-        _saving = false;
-      });
       await showDialog<void>(
         context: context,
         builder: (ctx) => AlertDialog(
@@ -392,9 +401,8 @@ class _ResultScreenState extends State<ResultScreen> {
       );
     } catch (_) {
       if (!mounted) return;
-      setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('저장 중 오류가 발생했습니다. 다시 시도해 주세요.')),
+        const SnackBar(content: Text('저장은 완료됐지만 저장 목록을 확인하지 못했습니다. 인물 목록에서 확인해 주세요.')),
       );
     }
   }
