@@ -24,3 +24,7 @@ Current development branch and additional history are documented in the handoff 
 - For this project, including follow-up requests like '다음', read [docs/WEB_AI_COST_RULES.md](docs/WEB_AI_COST_RULES.md) and apply it before modifying files.
 - Prefer scoped file reads, verified free/local tools where available, minimal diffs, targeted tests and concise status reports.
 - Do not assume external free API calls reduce Codex subscription usage; obtain approval for paid API calls or private-data transmission.
+
+## Consolidated prompt auto-invocation
+- On EVERY task, including short follow-ups, read [docs/AI_WORKFLOW_MASTER.md](docs/AI_WORKFLOW_MASTER.md) and apply the relevant project-specific and shared prompts. This rule supplements, not replaces, the existing handoff and cost rules.
+- Reuse unchanged context; do not repeatedly reload long prompts in a single task. Record and use progress between sessions.
