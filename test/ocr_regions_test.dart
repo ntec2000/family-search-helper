@@ -7,6 +7,22 @@ import 'package:family_search_helper/services/ocr_column_text.dart';
 import 'package:family_search_helper/services/jokbo_parser.dart';
 
 void main() {
+  test('좁은 세로 열도 오른쪽부터 순서대로 추출한다', () {
+    final image = img.Image(width: 320, height: 220);
+    img.fill(image, color: img.ColorRgb8(255, 255, 255));
+    for (final x in [55, 105, 155, 205, 255]) {
+      img.fillRect(image, x1: x, y1: 25, x2: x + 8, y2: 190,
+          color: img.ColorRgb8(0, 0, 0));
+    }
+    final columns = genealogyOcrColumns(
+        Uint8List.fromList(img.encodePng(image)));
+    expect(columns, hasLength(5));
+    for (final column in columns) {
+      final decoded = img.decodePng(column)!;
+      expect(decoded.width, greaterThan(24));
+    }
+  });
+
   test('224쪽 세로 열: 오른쪽 인물의 배우자 정보가 왼쪽 인물로 넘어가지 않는다', () {
     final entries = assembleOcrEntries([
       '子昃', '字良甫丁未生', '配原州邊氏壬戌生', '父國聖',
