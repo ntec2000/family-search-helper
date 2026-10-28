@@ -2,6 +2,20 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:family_search_helper/services/jokbo_parser.dart';
 
 void main() {
+  test('다른 인물 표제가 없는 주석 구획은 인물로 생성하지 않는다', () {
+    final people = JokboParser.parseRegions([
+      '子格 字君平 壬辰生',
+      '字君實 丁酉生 配原州邊氏 父國聖',
+      '子核 乙未生',
+    ]);
+    expect(people, hasLength(2));
+    expect(people.first.nameHanja, '格');
+    expect(people.first.ja, '君平');
+    expect(people.first.spouseHanja, isNull);
+    expect(people.last.nameHanja, '核');
+    expect(people.last.spouseHanja, isNull);
+    expect(people.last.spouseFather, isNull);
+  });
   test('배우자 외조부와 친가 조상은 다른 인물에게 넘어가지 않는다', () {
     final people = JokboParser.parseRegions([
       '子格 配原州邊氏 父國聖 祖同知 曾祖判官尙 外祖文化柳承春',
