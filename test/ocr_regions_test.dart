@@ -13,6 +13,12 @@ void main() {
     expect(entries.first, contains('子坐午向'));
     expect(entries.last, startsWith('子核'));
   });
+  test('공백을 포함한 자녀 표제도 별도 인물로 구분한다', () {
+    final entries = assembleOcrEntries(['子格', '字君平', '子 核', '配原州邊氏']);
+    expect(entries, hasLength(2));
+    expect(entries.first, '子格 字君平');
+    expect(entries.last, '子 核 配原州邊氏');
+  });
   test('세로 주석은 잇고 다음 인물 열에서는 경계를 유지한다', () {
     final text = assembleOcrColumns(['子格', '字君平壬辰生', '配豊壤趙氏',
       '父永復', '子核', '字君實丁酉生']);
