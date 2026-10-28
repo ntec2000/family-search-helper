@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import '../models/person.dart';
 import '../services/hanja_dict.dart';
 import '../services/db_service.dart';
+import '../services/lunar_service.dart';
 import '../services/parent_child_review.dart';
 import '../theme/traditional_theme.dart';
 import '../widgets/surname_input_dialog.dart';
@@ -188,6 +189,64 @@ class _ResultScreenState extends State<ResultScreen> {
       }
     }
     return involved;
+  }
+
+  Future<void> _reviewApproximateYear(Person person) async {
+    if (_saved || _saving) return;
+    final controller = TextEditingController();
+    try {
+      final approved = await showDialog<String>(
+        context: context,
+        builder: (ctx) => StatefulBuilder(builder: (ctx, refresh) {
+          final reference = int.tryParse(controller.text.trim());
+          final proposal = LunarService.approximateYear(
+              person.birthDateLunar ?? '', referenceYear: reference);
+          return AlertDialog(
+            title: const Text('출생 연도 추정 검토'),
+            content: SingleChildScrollView(child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('족보 원문: ${person.birthDateLunar ?? "없음"}'),
+                Text('세대: ${person.sega?.toString() ?? "미상"}'),
+                TextField(
+                  controller: controller,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(
+                    labelText: '근거가 있는 기준 서기 연도',
+                    hintText: '예: 1850',
+                  ),
+                  onChanged: (_) => refresh(() {}),
+                ),
+                const SizedBox(height: 12),
+                Text('후보: ${proposal ?? "간지·기준 연도를 확인하세요"}'),
+                const Text('60갑자는 반복됩니다. 추정 연도는 확정값이 아닙니다.'),
+              ],
+            )),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx),
+                  child: const Text('취소')),
+              FilledButton(
+                onPressed: proposal == null ? null :
+                    () => Navigator.pop(ctx, proposal),
+                child: const Text('승인'),
+              ),
+            ],
+          );
+        }),
+      );
+      if (approved == null || !mounted || _saved || _saving) return;
+      setState(() {
+        person.birthDateSolar = approved;
+        person.reasonStatement = [
+          if (person.reasonStatement?.isNotEmpty == true) person.reasonStatement!,
+          '간지 ${person.birthDateLunar ?? ""}와 검토자가 입력한 기준 연도에서 추정: $approved',
+        ].join('\\n');
+        _relationshipsReviewed = false;
+      });
+    } finally {
+      controller.dispose();
+    }
   }
 
   Future<void> _saveReviewedPersons() async {
@@ -600,7 +659,7 @@ class _ResultScreenState extends State<ResultScreen> {
               ),
             ]))],
             body: TabBarView(children: [
-                _PersonList(persons: _persons, onDelete: _deletePerson, onEdit: _editCandidate, onParent: _chooseParent, onUnlink: _clearParentLinks, saved: _saved || _saving, largeText: _largeText, relationshipMode: _reviewStep == 1, issueIds: _reviewStep == 1 && _showOnlyRelationshipIssues ? _relationshipIssueIds() : null),
+                _PersonList(persons: _persons, onEstimate: _reviewApproximateYear, onDelete: _deletePerson, onEdit: _editCandidate, onParent: _chooseParent, onUnlink: _clearParentLinks, saved: _saved || _saving, largeText: _largeText, relationshipMode: _reviewStep == 1, issueIds: _reviewStep == 1 && _showOnlyRelationshipIssues ? _relationshipIssueIds() : null),
                 _TextCompare(hanja: widget.rawText, hangul: hangulText),
                 Container(
                   color: Colors.black,
@@ -625,6 +684,7 @@ class _ResultScreenState extends State<ResultScreen> {
 
 class _PersonList extends StatelessWidget {
   final List<Person> persons;
+  final Future<void> Function(Person) onEstimate;
   final Future<void> Function(Person) onDelete;
   final Future<void> Function(Person) onEdit;
   final Future<void> Function(Person) onParent;
@@ -633,7 +693,7 @@ class _PersonList extends StatelessWidget {
   final bool largeText;
   final bool relationshipMode;
   final Set<String>? issueIds;
-  const _PersonList({required this.persons, required this.onDelete, required this.onEdit, required this.onParent, required this.onUnlink, required this.saved, required this.largeText, required this.relationshipMode, this.issueIds});
+  const _PersonList({required this.persons, required this.onEstimate, required this.onDelete, required this.onEdit, required this.onParent, required this.onUnlink, required this.saved, required this.largeText, required this.relationshipMode, this.issueIds});
 
   // 한자(한글) 표기
   static String _a(String? s) =>
@@ -738,6 +798,7 @@ class _PersonList extends StatelessWidget {
 
               if (p.ja != null) '字 ${_a(p.ja)}',
               if (p.birthDateLunar != null) '生 ${p.birthDateLunar}',
+              if (p.birthDateSolar?.isNotEmpty == true) '서기 ${p.birthDateSolar}',
               if (p.birthPlace != null) '生地 ${_a(p.birthPlace)}',
               if (p.deathDateLunar != null) '卒 ${p.deathDateLunar}',
               if (p.burialPlace != null) '墓 ${_a(p.burialPlace)}',
@@ -775,6 +836,9 @@ class _PersonList extends StatelessWidget {
               icon: const Icon(Icons.more_vert),
               onSelected: (action) {
                 switch (action) {
+                  case 'estimate':
+                    onEstimate(p);
+                    break;
                   case 'parent':
                     onParent(p);
                     break;
@@ -795,6 +859,10 @@ class _PersonList extends StatelessWidget {
                 }
               },
               itemBuilder: (_) => [
+                if (!saved && p.birthDateLunar?.isNotEmpty == true)
+                  const PopupMenuItem(value: 'estimate',
+                    child: ListTile(leading: Icon(Icons.calendar_month),
+                      title: Text('만세력 출생 연도 추정'))),
                 if (!saved && relationshipMode)
                   const PopupMenuItem(value: 'parent',
                       child: ListTile(leading: Icon(Icons.account_tree_outlined),
