@@ -2,6 +2,35 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:family_search_helper/services/jokbo_parser.dart';
 
 void main() {
+  test('224쪽 세대별 이름은 차례와 자·호·출계를 구분한다', () {
+    final people = JokboParser.parseRegions([
+      '子顯五 字行之 庚午生 配原州元氏 甲戌生 父載億',
+      '子承烈 字聖模 辛丑生 配務安朴氏 癸卯生 父基豊 祖奎秀 曾祖師元 外祖丁若萬',
+      '子二承勳 出系顯龍后',
+      '子賢東 字致安 癸酉生 庚午十二月十六日卒 墓謹峴壬坐合窆 配交河盧氏 丁亥生 父愼',
+      '子炳吉',
+      '子二炳旭 出系寅東后',
+      '子三炳烈',
+      '子四炳直',
+      '女金免傑 金海人',
+      '女二尹兢秀',
+    ], clanHanjaOverride: '李', clanHangulOverride: '이');
+    expect(people, hasLength(10));
+    expect(people.take(8).map((p) => p.nameHanja).toList(), [
+      '顯五', '承烈', '承勳', '賢東', '炳吉', '炳旭', '炳烈', '炳直',
+    ]);
+    expect(people[1].spouseFather, '基豊');
+    expect(people[1].spouseMaternalGrandfather, '丁若萬');
+    expect(people[2].note, contains('出系'));
+    expect(people[5].note, contains('寅東'));
+    expect(people[7].relation, '넷째아들');
+    expect(people[8].nameHanja, isEmpty);
+    expect(people[8].spouseHanja, '金免傑');
+    expect(people[8].spouseBongwan, '金海');
+    expect(people[9].nameHanja, isEmpty);
+    expect(people[9].spouseHanja, '尹兢秀');
+  });
+
   test('224쪽 이름 판별: 본관과 주석은 인물로 만들지 않는다', () {
     for (final text in [
       '子原州邊氏',
