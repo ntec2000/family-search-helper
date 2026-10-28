@@ -7,6 +7,25 @@ import 'package:family_search_helper/services/ocr_column_text.dart';
 import 'package:family_search_helper/services/jokbo_parser.dart';
 
 void main() {
+  test('224쪽 세로 열: 오른쪽 인물의 배우자 정보가 왼쪽 인물로 넘어가지 않는다', () {
+    final entries = assembleOcrEntries([
+      '子昃', '字良甫丁未生', '配原州邊氏壬戌生', '父國聖',
+      '子格', '字君平壬辰生', '配豊壤趙氏癸巳生', '父永復',
+      '子核', '字君實丁酉生', '配坡平尹氏乙巳生', '父光岳',
+    ]);
+    final people = JokboParser.parseRegions(entries,
+        clanHanjaOverride: '李', clanHangulOverride: '이');
+    expect(entries, hasLength(3));
+    expect(people, hasLength(3));
+    expect(people.map((p) => p.nameHanja).toList(), ['昃', '格', '核']);
+    expect(people[0].spouseHanja, '邊氏');
+    expect(people[0].spouseFather, '國聖');
+    expect(people[1].spouseHanja, '趙氏');
+    expect(people[1].spouseFather, '永復');
+    expect(people[2].spouseHanja, '尹氏');
+    expect(people[2].spouseFather, '光岳');
+  });
+
   test('빈 OCR 열은 건너뛰고 명시적 빈 표제는 경계로 유지한다', () {
     expect(assembleOcrEntries(['子格', '', '字君平', '子核']),
         ['子格 字君平', '子核']);
