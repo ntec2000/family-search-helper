@@ -2,6 +2,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:family_search_helper/services/jokbo_parser.dart';
 
 void main() {
+  test('묘지 좌향을 별도 인물로 나누지 않고 배우자 정보도 섞지 않는다', () {
+    final people = JokboParser.parse(
+      '子格 墓山 子坐午向 配原州邊氏 父國聖 子核 字君實 乙未生',
+    );
+    expect(people, hasLength(2));
+    expect(people.first.nameHanja, '格');
+    expect(people.first.spouseHanja, '邊氏');
+    expect(people.first.spouseFather, '國聖');
+    expect(people.last.nameHanja, '核');
+    expect(people.last.spouseHanja, isNull);
+    expect(people.last.spouseFather, isNull);
+  });
   test('첫 구획의 표제가 누락되어도 배우자 성을 본손에게 상속하지 않는다', () {
     final person = JokboParser.parseRegions(['字良甫丁未生配原州邊氏', '子甲順']).single;
     expect(person.surnameHanja, isNull);
