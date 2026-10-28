@@ -272,8 +272,57 @@ class _ResultScreenState extends State<ResultScreen> {
         _saved = true;
         _saving = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('검토한 인물 ${_persons.length}명을 저장했습니다.')),
+      // 저장 직후 DB에서 다시 읽어 실제 영속화된 데이터를 보여준다.
+      final stored = await DbService.instance.listPersons();
+      if (!mounted) return;
+      final savedIds = _persons.map((p) => p.id).toSet();
+      final verified = stored.where((p) => savedIds.contains(p.id)).toList();
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text('저장 완료 · 데이터 확인 (${verified.length}명)'),
+          content: SizedBox(
+            width: 560,
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              Text(verified.length == _persons.length
+                  ? '저장된 인물 정보를 데이터베이스에서 다시 불러왔습니다.'
+                  : '저장 대상 ${_persons.length}명 중 ${verified.length}명이 조회됩니다. 목록을 확인하세요.'),
+              const SizedBox(height: 12),
+              Flexible(child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: verified.length,
+                itemBuilder: (_, index) {
+                  final p = verified[index];
+                  final displayName = p.gender == 'F' &&
+                          p.nameHanja.isEmpty && p.nameHangul.isEmpty
+                      ? '${p.surnameHangul ?? p.surnameHanja ?? "성씨 미상"}씨'
+                      : '${p.surnameHangul ?? ""}${p.nameHangul.isNotEmpty ? p.nameHangul : p.nameHanja}';
+                  return ListTile(
+                    dense: true,
+                    title: Text('${p.sega != null ? "${p.sega}世 · " : ""}$displayName'
+                        ' ${p.nameHanja.isNotEmpty ? "(${p.nameHanja})" : ""}'),
+                    subtitle: Text([
+                      if (p.birthDateLunar?.isNotEmpty == true) '출생 ${p.birthDateLunar}',
+                      if (p.deathDateLunar?.isNotEmpty == true) '사망 ${p.deathDateLunar}',
+                      if (p.spouseHanja?.isNotEmpty == true) '배우자/사위 ${p.spouseHanja}',
+                      if (p.spouseFather?.isNotEmpty == true) '장인 ${p.spouseFather}',
+                    ].join(' · ')),
+                  );
+                },
+              )),
+            ]),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('이 화면에서 확인')),
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                Navigator.of(context).popUntil((route) => route.isFirst);
+              },
+              child: const Text('저장 인물 목록으로 이동'),
+            ),
+          ],
+        ),
       );
     } catch (_) {
       if (!mounted) return;
