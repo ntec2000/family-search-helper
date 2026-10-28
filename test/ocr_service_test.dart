@@ -17,6 +17,12 @@ void main() {
     expect(OcrService.selectCandidate(processed, result('子核')), same(processed));
   });
 
+  test('족보 인물 표기가 있는 후보를 단순 한자 잡음보다 우선한다', () {
+    final structured = result('子格 配原州邊氏 丁未生');
+    final noise = result('山川天地日月星辰花鳥風雨春夏秋冬');
+    expect(OcrService.selectCandidate(structured, noise), same(structured));
+  });
+
   test('compatibility Han characters count as Han characters', () {
     final processed = result('子');
     final original = result('子\uF900');
