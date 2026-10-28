@@ -334,15 +334,15 @@ class _ResultScreenState extends State<ResultScreen> {
     try {
       await DbService.instance.upsertPersonsAtomically(_persons, sourceOcrText: widget.rawText);
       if (!mounted) return;
-      setState(() {
-        _saved = true;
-        _saving = false;
-      });
-      // 저장 직후 DB에서 다시 읽어 실제 영속화된 데이터를 보여준다.
+      // DB 저장이 끝난 뒤 다시 읽어 검증한다. 조회 실패 시 재저장을 유도하지 않는다.
       final stored = await DbService.instance.listPersons();
       if (!mounted) return;
       final savedIds = _persons.map((p) => p.id).toSet();
       final verified = stored.where((p) => savedIds.contains(p.id)).toList();
+      setState(() {
+        _saved = true;
+        _saving = false;
+      });
       await showDialog<void>(
         context: context,
         builder: (ctx) => AlertDialog(
