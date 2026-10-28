@@ -193,6 +193,13 @@ class _ResultScreenState extends State<ResultScreen> {
 
   Future<void> _reviewApproximateYear(Person person) async {
     if (_saved || _saving) return;
+    if (person.birthDateSolar?.isNotEmpty == true &&
+        !person.birthDateSolar!.startsWith('about ')) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('이미 입력된 출생일이 있습니다. 정확한 날짜는 인물 수정에서 확인하세요.'),
+      ));
+      return;
+    }
     final controller = TextEditingController();
     try {
       final approved = await showDialog<String>(
