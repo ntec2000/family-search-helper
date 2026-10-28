@@ -118,7 +118,7 @@ class JokboParser {
     // 인물 시작 표지는 독립 토큰일 때만 인정한다.
     // 子坐午向의 子, 본문 속 女/男 및 간지의 子를 인물로 오인하지 않는다.
     // OCR가 공백 없이 붙여 놓은 애매한 후보는 자동 분리하지 않고 원문에 남긴다.
-    final pattern = RegExp(r'(?<!\S)(?=[子女男]\s*[一-鿿])');
+    final pattern = RegExp(r'(?<!\S)(?=[子女男](?!坐|向|孫|女|男)\s*[一-鿿])');
     final parts = text.split(pattern).where((s) => s.trim().isNotEmpty).toList();
     return parts.where((p) {
       final t = p.trim();
