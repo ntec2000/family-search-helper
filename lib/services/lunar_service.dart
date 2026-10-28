@@ -40,6 +40,45 @@ class LunarService {
     return results;
   }
 
+  /// 간지와 기준 연도로 서기 연도 후보를 추정한다.
+  /// 기준 연도는 확인된 조상 기록 또는 사용자가 검토한 세대 추정값이어야 한다.
+  /// 60년마다 반복되므로 정확한 날짜로 확정하지 않고 about 표기로 반환한다.
+  static String? approximateYear(String rawGanzhi, {int? referenceYear,
+      int from = 1700, int to = 2100, int maxDistance = 45}) {
+    if (referenceYear == null) return null;
+    final match = RegExp(r'([甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥])')
+        .firstMatch(rawGanzhi);
+    final gz = match?.group(1);
+    if (gz == null || normalizeGanzhi(gz) == null) return null;
+    final candidates = estimateYearsFromGanzhi(gz, from: from, to: to);
+    if (candidates.isEmpty) return null;
+    candidates.sort((a, b) {
+      final da = (a - referenceYear).abs();
+      final db = (b - referenceYear).abs();
+      return da != db ? da.compareTo(db) : a.compareTo(b);
+    });
+    if ((candidates.first - referenceYear).abs() > maxDistance) return null;
+    return 'about ${candidates.first}';
+  }
+
+  /// 기준 조상 출생 연도와 世 차이로 출생 연도를 느슨하게 추정한다.
+  /// 世와 世孫의 기산 방식이 확인되지 않았다면 호출하지 않는다.
+  static String? approximateYearByGeneration({
+    required int? ancestorBirthYear,
+    required int? ancestorGeneration,
+    required int? personGeneration,
+    int yearsPerGeneration = 30,
+  }) {
+    if (ancestorBirthYear == null || ancestorGeneration == null ||
+        personGeneration == null || ancestorGeneration <= 0 ||
+        personGeneration <= 0 || yearsPerGeneration < 20 ||
+        yearsPerGeneration > 40 ||
+        personGeneration < ancestorGeneration) return null;
+    final year = ancestorBirthYear +
+        (personGeneration - ancestorGeneration) * yearsPerGeneration;
+    return 'about $year';
+  }
+
   /// 천간(天干) 10
   static const tianGan = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
 
