@@ -6,6 +6,17 @@ void main() {
   Person person(String id, int generation, {String gender = 'M'}) =>
       Person(id: id, nameHanja: id, gender: gender, sega: generation);
 
+  test('rejects cyclic parent references without generation data', () {
+    final first = Person(id: 'first', nameHanja: '甲', gender: 'M');
+    final second = Person(id: 'second', nameHanja: '乙', gender: 'M');
+    first.fatherId = second.id;
+    second.childrenIds.add(first.id);
+    second.fatherId = first.id;
+    first.childrenIds.add(second.id);
+    final errors = ParentChildReview.validateReviewedBatch([first, second]);
+    expect(errors.any((error) => error.contains('순환 부모 관계')), isTrue);
+  });
+
   test('invalid parent assignments are flagged', () {
     final child = person('child', 22);
     child.fatherId = 'parent';
