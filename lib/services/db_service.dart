@@ -166,7 +166,30 @@ class DbService {
 
   Future<void> upsertPersonsAtomically(Iterable<Person> persons, {String? sourceOcrText}) async {
     final pending = persons.toList(growable: false);
+    final ids = pending.map((p) => p.id).toList(growable: false);
+    if (ids.any((id) => id.trim().isEmpty) || ids.toSet().length != ids.length) {
+      throw StateError('저장 대상에 빈 인물 ID 또는 중복 ID가 있습니다.');
+    }
     await db.transaction((txn) async {
+      final rows = await txn.query('persons', columns: ['id']);
+      final knownIds = <String>{
+        ...rows.map((row) => row['id'] as String),
+        ...ids,
+      };
+      for (final person in pending) {
+        final errors = PersonRelationValidator.validate(
+          personId: person.id,
+          fatherId: person.fatherId,
+          motherId: person.motherId,
+          childrenIds: person.childrenIds,
+          sonsInLawIds: person.sonsInLawIds,
+          inLawsIds: person.inLawsIds,
+          knownPersonIds: knownIds,
+        );
+        if (errors.isNotEmpty) {
+          throw StateError('인물 ${person.id}: ${errors.join('; ')}');
+        }
+      }
       for (final person in pending) {
         await txn.insert('persons', person.toMap(),
             conflictAlgorithm: ConflictAlgorithm.replace);
