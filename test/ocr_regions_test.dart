@@ -7,6 +7,15 @@ import 'package:family_search_helper/services/ocr_column_text.dart';
 import 'package:family_search_helper/services/jokbo_parser.dart';
 
 void main() {
+  test('빈 OCR 열은 건너뛰고 명시적 빈 표제는 경계로 유지한다', () {
+    expect(assembleOcrEntries(['子格', '', '字君平', '子核']),
+        ['子格 字君平', '子核']);
+    expect(
+      assembleOcrEntries(['子格', '', '字君平'],
+          headings: [true, true, false]),
+      ['子格', '字君平'],
+    );
+  });
   test('묘지 좌향의 子坐 표기는 새로운 인물 열이 아니다', () {
     final entries = assembleOcrEntries(['子格', '墓山', '子坐午向', '子核']);
     expect(entries, hasLength(2));
