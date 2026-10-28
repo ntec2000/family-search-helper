@@ -472,16 +472,6 @@ class _ResultScreenState extends State<ResultScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 6),
                         child: Text(
-                          '가족관계 오류가 남아 있습니다. 아래 「관계 오류 인물만 보기」를 선택해 해당 인물을 수정한 후 검토를 완료하세요.',
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
-                              color: HanjiColors.ju),
-                        ),
-                      ),
-                    if (_reviewStep == 1 &&
-                        ParentChildReview.validateReviewedBatch(_persons).isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        child: Text(
                           '가족관계 오류가 남아 있습니다. 아래 「관계 오류 인물만 보기」를 선택하고 원문과 대조해 수정하세요.',
                           style: const TextStyle(
                             color: Colors.redAccent,
