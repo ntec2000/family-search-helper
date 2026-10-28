@@ -160,6 +160,8 @@ class AboutScreen extends StatelessWidget {
                 ListTile(
                   leading: const Icon(Icons.share_outlined),
                   title: const Text('앱 다운로드·저장소 링크 공유'),
+                  // 좁은 화면과 큰 글꼴에서도 제목이 trailing 영역을 침범하지 않는다.
+                  titleTextStyle: const TextStyle(fontSize: 15, color: HanjiColors.muk),
                   onTap: () => Share.share(
                     '가족역사기록 도우미\n다운로드: https://github.com/ntec2000/family-search-helper/releases\n저장소: https://github.com/ntec2000/family-search-helper',
                   ),
