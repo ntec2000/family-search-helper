@@ -17,7 +17,7 @@ List<String> assembleOcrEntries(List<String> columns, {List<bool>? headings}) {
     // 빈 열은 새로운 인물 경계를 만들지 않는다.
     if (text.isEmpty && headings?[i] != true) continue;
     // 子坐午向 같은 묘지 표기와 干支의 子를 이름 표제로 보지 않는다.
-    if (headings?[i] == true || RegExp(r'^[子女男](?!坐|向|孫|女|男)\s*[一-鿿]').hasMatch(text)) {
+    if (headings?[i] == true || RegExp(r'^[子女男](?!坐|向|孫|女|男|配|字|號|墓|忌|生|卒|父|祖)\s*[一-鿿]').hasMatch(text)) {
       if (output.isNotEmpty) entries.add(output.toString().trim());
       output.clear();
       output.write('${text.replaceAll(RegExp(r'\s+'), ' ')} ');
