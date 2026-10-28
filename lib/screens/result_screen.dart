@@ -412,9 +412,10 @@ class _ResultScreenState extends State<ResultScreen> {
                     CheckboxListTile(
                       contentPadding: EdgeInsets.zero,
                       title: const Text('가족관계 검토 완료'),
-                      subtitle: const Text('먼저 인물 이름을 수정하고 부모 연결과 원본 기록을 대조한 뒤 체크하세요. 수정하면 다시 확인해야 합니다.'),
+                      subtitle: const Text('먼저 인물 이름을 수정하고 부모 연결과 원본 기록을 대조한 뒤 체크하세요. 관계 오류가 남아 있으면 완료할 수 없습니다.'),
                       value: _relationshipsReviewed,
-                      onChanged: _saved || _saving || _reviewStep != 1
+                      onChanged: _saved || _saving || _reviewStep != 1 ||
+                              ParentChildReview.validateReviewedBatch(_persons).isNotEmpty
                           ? null
                           : (value) => setState(
                               () => _relationshipsReviewed = value ?? false),
