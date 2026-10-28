@@ -90,7 +90,10 @@ List<Uint8List> genealogyOcrColumns(Uint8List bytes) {
     final (start, end) = spans[i];
     final left = (start - 14).clamp(i == 0 ? 0 : (spans[i - 1].$2 + start) ~/ 2, start);
     final edge = i == spans.length - 1 ? right : (end + spans[i + 1].$1) ~/ 2;
-    final columnRight = (end + 14).clamp(end, edge - 1);
+    // OCR 열의 오른쪽 가장자리 글자를 포함하되 이웃 열을 침범하지 않는다.
+    // 폭이 매우 좁은 열에서도 crop 범위가 유효하도록 경계를 보정한다.
+    final safeEdge = edge.clamp(end + 1, image.width);
+    final columnRight = (end + 14).clamp(end, safeEdge - 1);
     final crop = img.copyCrop(image, x: left, y: 0,
         width: columnRight - left + 1, height: image.height);
     columns.add(Uint8List.fromList(img.encodePng(img.copyExpandCanvas(crop,
