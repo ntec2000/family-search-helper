@@ -73,7 +73,9 @@ class LunarService {
         personGeneration == null || ancestorGeneration <= 0 ||
         personGeneration <= 0 || yearsPerGeneration < 20 ||
         yearsPerGeneration > 40 ||
-        personGeneration < ancestorGeneration) return null;
+        personGeneration < ancestorGeneration) {
+      return null;
+    }
     final year = ancestorBirthYear +
         (personGeneration - ancestorGeneration) * yearsPerGeneration;
     return 'about $year';
