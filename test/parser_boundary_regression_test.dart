@@ -2,6 +2,34 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:family_search_helper/services/jokbo_parser.dart';
 
 void main() {
+  test('224쪽 이름 판별: 본관과 주석은 인물로 만들지 않는다', () {
+    for (final text in [
+      '子原州邊氏',
+      '子安東人',
+      '子外祖文化柳承春',
+      '子曾祖判官尙',
+      '子墓白石面鶴洞',
+      '子忌三月五日',
+    ]) {
+      expect(JokboParser.parse(text), isEmpty, reason: text);
+    }
+    final people = JokboParser.parseRegions([
+      '子昃 字良甫 丁未生 庚申八月三日卒 配原州邊氏 壬戌生 甲子十月二十八日卒 父國聖',
+      '子格 字君平 壬辰生 配豊壤趙氏 癸巳生 父永復',
+      '子核 字君實 丁酉生 配坡平尹氏 乙巳生 父光岳',
+      '子聖甲 甲子生',
+      '女權頭 安東人',
+    ], clanHanjaOverride: '李', clanHangulOverride: '이');
+    expect(people, hasLength(5));
+    expect(people[0].nameHanja, '昃');
+    expect(people[1].nameHanja, '格');
+    expect(people[2].nameHanja, '核');
+    expect(people[3].nameHanja, '聖甲');
+    expect(people[4].nameHanja, isEmpty);
+    expect(people[4].spouseHanja, '權頭');
+    expect(people[4].surnameHanja, '李');
+  });
+
   test('다른 인물 표제가 없는 주석 구획은 인물로 생성하지 않는다', () {
     final people = JokboParser.parseRegions([
       '子格 字君平 壬辰生',
