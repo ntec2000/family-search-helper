@@ -2,6 +2,28 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:family_search_helper/services/jokbo_parser.dart';
 
 void main() {
+  test('본인 字號와 배우자 생졸은 서로 섞이지 않는다', () {
+    final people = JokboParser.parse(
+      '子格 字君平 號松軒 壬辰生 甲午卒 配原州邊氏 丁未生 庚申卒 父國聖 '
+      '子核 字君實 乙未生',
+    );
+    expect(people, hasLength(2));
+    final first = people.first;
+    expect(first.nameHanja, '格');
+    expect(first.ja, '君平');
+    expect(first.ho, '松軒');
+    expect(first.birthDateLunar, contains('壬辰'));
+    expect(first.deathDateLunar, contains('甲午'));
+    expect(first.spouseBirth, contains('丁未'));
+    expect(first.spouseDeath, contains('庚申'));
+    expect(first.spouseFather, '國聖');
+    final second = people.last;
+    expect(second.nameHanja, '核');
+    expect(second.ja, '君實');
+    expect(second.birthDateLunar, contains('乙未'));
+    expect(second.spouseBirth, isNull);
+    expect(second.spouseFather, isNull);
+  });
   test('묘지 좌향을 별도 인물로 나누지 않고 배우자 정보도 섞지 않는다', () {
     final people = JokboParser.parse(
       '子格 墓山 子坐午向 配原州邊氏 父國聖 子核 字君實 乙未生',
