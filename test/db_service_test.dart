@@ -119,6 +119,30 @@ void main() {
     expect(await service.getConfig('ocr_source:new-child'), '원본 족보 OCR');
   });
 
+  test('중복 인물 ID는 기존 기록을 덮어쓰지 않고 저장을 거부한다', () async {
+    await service.upsertPerson(Person(id: 'same', rawText: '원본 보존'));
+    await expectLater(
+      service.upsertPersonsAtomically([
+        Person(id: 'same', rawText: '첫 번째 후보'),
+        Person(id: 'same', rawText: '두 번째 후보'),
+      ], sourceOcrText: '중복 OCR'),
+      throwsA(isA<StateError>()),
+    );
+    expect((await service.getPerson('same'))!.rawText, '원본 보존');
+    expect(await service.getConfig('ocr_source:same'), isNull);
+  });
+
+  test('자녀 참조가 저장 대상에 포함되면 함께 저장한다', () async {
+    final parent = Person(id: 'batch-parent', gender: 'M',
+        childrenIds: ['batch-child']);
+    final child = Person(id: 'batch-child', fatherId: parent.id);
+    await service.upsertPersonsAtomically([parent, child],
+        sourceOcrText: '父子 원문');
+    expect((await service.getPerson(parent.id))!.childrenIds, ['batch-child']);
+    expect((await service.getPerson(child.id))!.fatherId, parent.id);
+    expect(await service.getConfig('ocr_source:batch-parent'), '父子 원문');
+  });
+
   test('중간 저장 실패 시 수정과 신규 삽입을 모두 롤백한다', () async {
     await service.upsertPerson(Person(id: 'existing', rawText: '보존할 원문'));
     await service.db.execute('''
