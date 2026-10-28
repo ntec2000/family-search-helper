@@ -11,7 +11,7 @@ void main() {
     final image = img.Image(width: 320, height: 220);
     img.fill(image, color: img.ColorRgb8(255, 255, 255));
     for (final x in [55, 105, 155, 205, 255]) {
-      img.fillRect(image, x1: x, y1: 25, x2: x + 8, y2: 190,
+      img.fillRect(image, x1: x, y1: 25, x2: x + 14, y2: 190,
           color: img.ColorRgb8(0, 0, 0));
     }
     final columns = genealogyOcrColumns(
@@ -36,7 +36,7 @@ void main() {
     expect(people.map((p) => p.nameHanja).toList(), ['昃', '格', '核']);
     expect(people[0].spouseHanja, '邊氏');
     expect(people[0].spouseFather, '國聖');
-    expect(people[1].spouseHanja, '趙氏');
+    expect(people[1].spouseHanja, '豊壤趙氏');
     expect(people[1].spouseFather, '永復');
     expect(people[2].spouseHanja, '尹氏');
     expect(people[2].spouseFather, '光岳');
