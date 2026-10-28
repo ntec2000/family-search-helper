@@ -1,9 +1,6 @@
 name: Work Branch Validation
 
 on:
-  push:
-    branches:
-      - work/jokbo-update-20261024
   workflow_dispatch:
 
 permissions:
