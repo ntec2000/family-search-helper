@@ -718,7 +718,7 @@ class _PersonList extends StatelessWidget {
               if (!saved && !relationshipMode)
                 IconButton(
                   tooltip: '인물 아님 · 후보 제외',
-                  icon: const Icon(Icons.person_remove_outlined),
+                  icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
                   onPressed: () => onDelete(p),
                 ),
               PopupMenuButton<String>(
