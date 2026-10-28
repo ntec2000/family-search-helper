@@ -13,7 +13,7 @@ List<String> assembleOcrEntries(List<String> columns, {List<bool>? headings}) {
   final output = StringBuffer();
   for (var i = 0; i < columns.length; i++) {
     final text = columns[i].trim();
-    if (headings?[i] == true || RegExp(r'^[子女男](?!坐|向|孫|女|男)\\s*[一-鿿]').hasMatch(text)) {
+    if (headings?[i] == true || RegExp(r'^[子女男](?!坐|向|孫|女|男)\s*[一-鿿]').hasMatch(text)) {
       if (output.isNotEmpty) entries.add(output.toString().trim());
       output.clear();
       output.write('${text.replaceAll(RegExp(r'\s+'), ' ')} ');
