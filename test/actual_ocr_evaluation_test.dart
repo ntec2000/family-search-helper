@@ -92,6 +92,21 @@ void main() {
     expect(counts.length, 2);
   });
 
+  test('실제 정답 인물이 있으면 고정된 224쪽 이름 목록을 사용하지 않는다', () {
+    expect(_evaluationReferenceNames({
+      'referencePersons': [
+        {'nameHanja': '甲'},
+        {'nameHanja': ' 乙 '},
+        {'nameHanja': '甲'},
+        {'nameHanja': ''},
+      ],
+    }), ['甲', '乙']);
+    expect(_evaluationReferenceNames({'referencePersons': []}).length, 17);
+    expect(_evaluationReferenceNames({'referencePersons': [
+      {'nameHanja': ''},
+    ]}), isEmpty);
+  });
+
   test('OCR 평가 입력의 잘못된 열과 정답 필드 형식을 거부한다', () {
     expect(
       () => _validateOcrEvaluationInput({'results': '잘못된 자료'}),
@@ -132,8 +147,9 @@ void main() {
           ? columns.map((c) => c['heading'] == true).toList() : null);
     }).toList();
     final people = JokboParser.parseRegions(regions);
-    const reference = ['昃','格','聖甲','核','顯五','承烈','承勳','賢東',
-      '炳吉','炳旭','炳烈','炳直','權頭','權龜壽','李集','金免傑','尹兢秀'];
+    // 실제 정답이 제공되면 해당 페이지의 정답 이름을 우선 사용한다.
+    // 정답이 없을 때만 기존 224쪽 기준 이름 목록을 사용한다.
+    final reference = _evaluationReferenceNames(data);
     // 열 단위 OCR에는 text 필드가 없을 수 있다. 실제 인식된 열만 모아 비교한다.
     final rawColumns = (data['results'] as List).expand<String>((result) {
       final columns = result['columns'] as List?;
@@ -160,8 +176,8 @@ void main() {
       'parsedNamesCorrect': parsedNamesCorrect,
       'parsedNamesMissing': parsedNamesMissing,
       'parsedOtherCandidates': parsedOtherCandidates,
-      'rawReferenceNameCoverage': rawNamesPresent.length / reference.length,
-      'parsedReferenceNameCoverage': parsedNamesCorrect.length / reference.length,
+      'rawReferenceNameCoverage': reference.isEmpty ? null : rawNamesPresent.length / reference.length,
+      'parsedReferenceNameCoverage': reference.isEmpty ? null : parsedNamesCorrect.length / reference.length,
       'note': 'Name-string coverage only; missing and extra candidates require manual review.',
       'persons': people.map((p) => p.toMap()).toList(),
       'regionsAssembled': regions,
@@ -329,4 +345,12 @@ void _validateOcrEvaluationInput(Map<String, dynamic> data) {
       }
     }
   }
+}
+
+List<String> _evaluationReferenceNames(Map<String, dynamic> data) {
+  const fallback = ['昃', '格', '聖甲', '核', '顯五', '承烈', '承勳', '賢東',
+    '炳吉', '炳旭', '炳烈', '炳直', '權頭', '權龜壽', '李集', '金免傑', '尹兢秀'];
+  final references = data['referencePersons'] as List?;
+  if (references == null || references.isEmpty) return fallback;
+  return _referenceNameCounts(references).keys.toList();
 }
