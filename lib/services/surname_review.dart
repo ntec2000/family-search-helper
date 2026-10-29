@@ -3,7 +3,11 @@ import '../models/person.dart';
 /// Applies a verified surname only to explicitly selected, eligible records.
 class SurnameReview {
   static bool eligible(Person person, String hanja, String hangul) =>
-      person.gender == 'M' &&
+      (person.gender == 'M' || person.gender == 'F') &&
+      ((person.surnameHanja ?? '').trim().isEmpty ||
+       (hanja.isNotEmpty && person.surnameHanja!.trim() == hanja)) &&
+      ((person.surnameHangul ?? '').trim().isEmpty ||
+       (hangul.isNotEmpty && person.surnameHangul!.trim() == hangul)) &&
       (((person.surnameHanja ?? '').trim().isEmpty && hanja.isNotEmpty) ||
        ((person.surnameHangul ?? '').trim().isEmpty && hangul.isNotEmpty));
 

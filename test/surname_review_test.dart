@@ -8,7 +8,7 @@ void main() {
     final other = Person(id: 'p2', gender: 'M');
     final woman = Person(id: 'p3', gender: 'F');
     final people = [chosen, other, woman];
-    expect(SurnameReview.eligible(woman, '李', '이'), isFalse);
+    expect(SurnameReview.eligible(woman, '李', '이'), isTrue);
     expect(SurnameReview.applySelected(
       people, {'p1'}, hanja: '李', hangul: '이',
     ), 1);
@@ -61,6 +61,25 @@ void main() {
       [p], {'p1'}, hanja: '李', hangul: '이',
     ), throwsStateError);
     expect(p.surnameHangul, isNull);
+  });
+
+  test('선택한 딸의 성씨를 보완하고 OCR 원문을 보존한다', () {
+    final daughter = Person(id: 'd', gender: 'F', rawText: '女權龜壽');
+    final other = Person(id: 'other', gender: 'F');
+    expect(SurnameReview.applySelected([daughter, other], {'d'},
+        hanja: '李', hangul: '이'), 1);
+    expect(daughter.surnameHangul, '이');
+    expect(daughter.surnameHanja, '李');
+    expect(daughter.rawText, '女權龜壽');
+    expect(other.surnameHangul, isNull);
+  });
+
+  test('기존 한자 성씨와 충돌하는 한글 성씨는 추가하지 않는다', () {
+    final person = Person(id: 'p', gender: 'F', surnameHanja: '金');
+    expect(SurnameReview.eligible(person, '李', '이'), isFalse);
+    expect(() => SurnameReview.applySelected([person], {'p'},
+        hanja: '李', hangul: '이'), throwsStateError);
+    expect(person.surnameHangul, isNull);
   });
 
 }

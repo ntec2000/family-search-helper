@@ -511,7 +511,7 @@ class _ResultScreenState extends State<ResultScreen> {
     ).toList();
     if (candidates.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('성씨를 보완할 남성 인물이 없습니다.')),
+        const SnackBar(content: Text('성씨를 보완할 인물이 없습니다.')),
       );
       return;
     }
@@ -528,7 +528,7 @@ class _ResultScreenState extends State<ResultScreen> {
               shrinkWrap: true,
               children: [
                 const Text('원문을 확인한 인물만 선택하세요. '
-                    '여성·성별 미확인 인물과 기존 성씨는 변경하지 않습니다.'),
+                    '딸도 직접 선택할 수 있습니다. 성별 미확인 인물과 기존 성씨는 변경하지 않습니다.'),
                 ...candidates.map((p) => CheckboxListTile(
                   value: selectedIds.contains(p.id),
                   onChanged: (checked) => refresh(() {
@@ -538,7 +538,7 @@ class _ResultScreenState extends State<ResultScreen> {
                       selectedIds.remove(p.id);
                     }
                   }),
-                  title: Text('${p.nameHanja} ${p.nameHangul} (ID: ${p.id})'),
+                  title: Text('${p.nameHanja} ${p.nameHangul} (${p.gender == 'F' ? '여' : '남'}, ID: ${p.id})'),
                   subtitle: Text('세대: ${p.sega?.toString() ?? "미상"}'
                       '${p.rawText?.trim().isNotEmpty == true ? " · 원문: ${p.rawText!.trim()}" : ""}',
                       maxLines: 3, overflow: TextOverflow.ellipsis),
