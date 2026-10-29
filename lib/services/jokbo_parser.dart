@@ -145,6 +145,11 @@ class JokboParser {
     final ch = r.runes.map(String.fromCharCode).toList();
     // [본관(지역) 2자][성씨 1자][이름…] 구조이면 3번째 글자가 성씨 → 앞 2자 제거.
     // (예: 文化柳承春 → 柳承春, 濟州高 → 高).  丁若萬처럼 3번째가 이름이면 유지.
+    // 세 글자가 모두 개인 이름일 수 있다(예: 李承金). 첫 글자도
+    // 성씨로 쓰이면 본관인지 단정할 근거가 없으므로 원문을 보존한다.
+    if (ch.length == 3 && Genealogy.surnamesHanja.contains(ch[0])) {
+      return r;
+    }
     if (ch.length >= 3 && Genealogy.surnamesHanja.contains(ch[2])) {
       return ch.sublist(2).join();
     }

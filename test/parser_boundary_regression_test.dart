@@ -164,4 +164,10 @@ void main() {
     expect(person.spouseGreatGrandfather, '尙');
     expect(person.spouseMaternalGrandfather, '柳承春');
   });
+  test('외조부 이름의 끝 글자가 성씨 한자여도 앞 이름을 삭제하지 않는다', () {
+    final person = JokboParser.parse('子格 配原州邊氏 外祖李承金').single;
+    expect(person.spouseMaternalGrandfather, '李承金');
+    expect(person.rawText, contains('外祖李承金'));
+  });
+
 }
