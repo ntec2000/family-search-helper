@@ -34,7 +34,7 @@
 
 `results` 배열의 각 항목은 `text` 문자열 하나 또는 `columns` 배열을 사용합니다. `columns` 항목에는 `text` 문자열이 필수이고 `heading` 불리언은 선택 사항입니다. `heading`이 일부 열에만 지정된 경우 미지정 열은 `false`로 처리됩니다.
 
-`referencePersons`는 선택 사항입니다. 현재 평가 코드는 `nameHanja`를 기준으로 파싱된 인물과 연결합니다. 동일한 한자 이름이 여러 명 발견되거나 해당 이름이 없으면 자동 연결하지 않고 `unresolvedNames`에 남깁니다. 정답에 입력하지 않은 필드는 점수 계산에서 제외됩니다.
+`referencePersons`는 선택 사항입니다. 현재 평가 코드는 `nameHanja`를 기준으로 파싱된 인물과 연결합니다. 정답 자료나 파싱 결과에서 동일한 한자 이름이 여러 명 발견되거나 해당 이름이 없으면 자동 연결하지 않고 `unresolvedNames`에 남깁니다. 정답에 입력하지 않은 필드는 점수 계산에서 제외됩니다.
 
 비교 가능한 필드: `nameHanja`, `ja`, `ho`, `spouseHanja`, `spouseFather`, `birthDateLunar`, `deathDateLunar`, `spouseBirth`, `spouseDeath`.
 
@@ -57,7 +57,10 @@ flutter test test/actual_ocr_evaluation_test.dart --dart-define=OCR_RESULTS=loca
 - `rawReferenceNameCoverage`: 각 OCR 열 내부에 정답 이름 문자열이 있는 비율입니다. 전체 OCR 글자 정확도가 아닙니다.
 - `parsedReferenceNameCoverage`: 파싱 결과에 기준 이름이 포함된 비율입니다.
 - `referenceFieldEvaluation.fieldScores`: 제공한 정답 필드별 비교 수, 일치 수, 불일치 수입니다.
-- `referenceFieldEvaluation.unresolvedNames`: 이름이 없거나 중복되어 자동 대조할 수 없는 인물입니다.
+- `referenceFieldEvaluation.fieldMismatches`: 인물별 불일치 세부 내용입니다. `nameHanja`, `field`, `expected`, `actual`을 기록하며, **일치한 항목은 포함하지 않습니다.**
+- `referenceFieldEvaluation.missingReferenceNames`: 정답 인물 목록에는 있지만 파싱 결과에서 발견되지 않은 이름입니다.
+- `referenceFieldEvaluation.extraParsedNames`: 파싱 결과에만 나타난 이름 후보입니다. 잘못 읽힌 이름과 누락 이름을 임의로 짝짓지 않습니다.
+- `referenceFieldEvaluation.unresolvedNames`: 이름이 없거나, 정답 자료 또는 파싱 결과에서 이름이 중복되어 자동 대조할 수 없는 인물입니다. 이름 앞뒤 공백은 비교 전에 제거합니다.
 - `persons`, `regionsAssembled`: 수작업 검토를 위한 분석 결과입니다.
 
 현재 기본 기준 이름 17개는 테스트 코드에 고정돼 있습니다. 실제 평가 대상 페이지가 다르면 이 고정 목록과 일치하지 않을 수 있으므로, 해당 수치를 전체 족보 인식률로 해석하지 마세요. 본인·배우자의 출생·사망 필드가 바뀌거나 다른 인물의 기록이 섞였는지도 원문과 대조해야 합니다.
