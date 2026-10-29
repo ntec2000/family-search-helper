@@ -29,4 +29,19 @@ void main() {
     expect(UnknownSpouseName.wifeDisplayName(
         Person(id: 'y', gender: 'F', nameHangul: '홍길동')), isNull);
   });
+  test('본관과 성씨가 있으면 남편 이름 대신 성씨만 표시한다', () {
+    final husband = Person(id: 'h', gender: 'M', nameHangul: '홍길동',
+        spouseHanja: '坡平尹氏', spouseBongwan: '坡平');
+    expect(UnknownSpouseName.wifeDisplayName(husband), '윤씨');
+    expect(husband.spouseHanja, '坡平尹氏');
+    expect(husband.spouseBongwan, '坡平');
+  });
+
+  test('원주 변씨와 성씨만 기록된 김씨를 구분한다', () {
+    expect(UnknownSpouseName.wifeDisplayName(Person(id: 'b', gender: 'M',
+        nameHangul: '홍길동', spouseHanja: '原州邊氏')), '변씨');
+    expect(UnknownSpouseName.wifeDisplayName(Person(id: 'k', gender: 'M',
+        nameHangul: '홍길동', spouseHanja: '金氏')), '김씨');
+  });
+
 }
