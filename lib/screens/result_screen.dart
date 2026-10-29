@@ -379,6 +379,17 @@ class _ResultScreenState extends State<ResultScreen> {
       setState(() => _saving = false);
       return;
     }
+    // Recheck immediately before persistence, after the confirmation dialog.
+    // No invalid relationship or stale review approval may be written.
+    final finalIssues = ParentChildReview.validateReviewedBatch(_persons);
+    if (finalIssues.isNotEmpty || !_relationshipsReviewed || _reviewStep != 1) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('저장 직전 관계 검증이 실패했습니다. 관계를 다시 확인하세요.'),
+      ));
+      return;
+    }
     try {
       await DbService.instance.upsertPersonsAtomically(_persons, sourceOcrText: widget.rawText);
     } on StateError catch (error) {
