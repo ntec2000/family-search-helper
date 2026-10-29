@@ -110,7 +110,7 @@ class OcrService {
     final originalCount = hanja.allMatches(original.text).length;
     // 족보의 인물·배우자·간지 문맥을 우선하되 원문은 변경하지 않는다.
     int score(String value, int count) {
-      final person = RegExp(r'(?:^|\\s)[子女男][一-鿿]{1,3}');
+      final person = RegExp(r'(?:^|\s)[子女男][一-鿿]{1,3}');
       final spouse = RegExp(r'配[一-鿿]{1,8}氏');
       final birth = RegExp(r'[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥][生卒]');
       return count + person.allMatches(value).length * 4 +
