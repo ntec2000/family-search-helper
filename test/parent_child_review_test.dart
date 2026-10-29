@@ -250,4 +250,33 @@ void main() {
     expect(child.motherId, 'mother');
   });
 
+  test('역방향 자녀 목록의 세대 불일치를 감지한다', () {
+    final parent = Person(id: 'p20', gender: 'M', sega: 20);
+    final child = Person(id: 'p22', gender: 'M', sega: 22);
+    parent.childrenIds.add(child.id);
+    final issues = ParentChildReview.validateReviewedBatch([parent, child]);
+    expect(issues.any((issue) => issue.contains('자녀 세대 불일치')), isTrue);
+    expect(child.fatherId, isNull);
+  });
+
+  test('세대가 올바른 역방향 연결은 세대 불일치로 신고하지 않는다', () {
+    final parent = Person(id: 'p20', gender: 'M', sega: 20);
+    final child = Person(id: 'p21', gender: 'M', sega: 21);
+    ParentChildReview.applyReviewedLink(parent, child);
+    final issues = ParentChildReview.validateReviewedBatch([parent, child]);
+    expect(issues.any((issue) => issue.contains('세대 불일치')), isFalse);
+    expect(issues, isEmpty);
+  });
+
+  test('중복 자녀 ID를 감지하고 기존 관계는 유지한다', () {
+    final parent = Person(id: 'father', gender: 'M', sega: 20);
+    final child = Person(id: 'child', gender: 'M', sega: 21);
+    ParentChildReview.applyReviewedLink(parent, child);
+    parent.childrenIds.add(child.id);
+    final issues = ParentChildReview.validateReviewedBatch([parent, child]);
+    expect(issues.any((issue) => issue.contains('중복 자녀 연결')), isTrue);
+    expect(child.fatherId, parent.id);
+    expect(parent.childrenIds, ['child', 'child']);
+  });
+
 }
