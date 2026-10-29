@@ -15,6 +15,7 @@ class SurnameReview {
     required String hangul,
   }) {
     if (selectedIds.isEmpty) return 0;
+    if (selectedIds.contains('')) throw StateError('빈 인물 ID는 선택할 수 없습니다.');
     final selected = persons.where((p) => selectedIds.contains(p.id)).toList();
     if (selected.length != selectedIds.length ||
         selected.map((p) => p.id).toSet().length != selectedIds.length ||
