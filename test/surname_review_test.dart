@@ -46,4 +46,21 @@ void main() {
     expect(first.surnameHangul, isNull);
     expect(second.surnameHangul, isNull);
   });
+  test('empty selected ID does not modify person', () {
+    final p = Person(id: 'p1', gender: 'M');
+    expect(() => SurnameReview.applySelected(
+      [p], {'p1', ''}, hanja: '李', hangul: '이',
+    ), throwsStateError);
+    expect(p.surnameHanja, isNull);
+  });
+
+  test('unknown gender is not eligible', () {
+    final p = Person(id: 'p1', gender: 'U');
+    expect(SurnameReview.eligible(p, '李', '이'), isFalse);
+    expect(() => SurnameReview.applySelected(
+      [p], {'p1'}, hanja: '李', hangul: '이',
+    ), throwsStateError);
+    expect(p.surnameHangul, isNull);
+  });
+
 }
