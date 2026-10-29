@@ -23,6 +23,13 @@ void main() {
     expect(OcrService.selectCandidate(structured, noise), same(structured));
   });
 
+  test('공백 뒤 인물 표제도 OCR 후보 점수에 반영한다', () {
+    final structured = result('山川 子格');
+    final noise = result('山川天地日');
+    // structured: 4 Han + 4 heading points; noise: 5 Han.
+    expect(OcrService.selectCandidate(structured, noise), same(structured));
+  });
+
   test('compatibility Han characters count as Han characters', () {
     final processed = result('子');
     final original = result('子\uF900');
