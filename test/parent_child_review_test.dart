@@ -224,4 +224,30 @@ void main() {
     expect(other.childrenIds, isEmpty);
   });
 
+  test('동명이인 두 명 중 잘못된 부친 연결을 감지한다', () {
+    final first = Person(id: 'person-1', nameHanja: '格', gender: 'M', sega: 20);
+    final second = Person(id: 'person-2', nameHanja: '格', gender: 'M', sega: 20);
+    final child = Person(id: 'child', gender: 'M', sega: 21);
+    ParentChildReview.applyReviewedLink(second, child);
+    first.childrenIds.add(child.id);
+    final errors = ParentChildReview.validateReviewedBatch([first, second, child]);
+    expect(errors.any((error) => error.contains('역방향')), isTrue);
+    expect(child.fatherId, second.id);
+    expect(second.childrenIds, [child.id]);
+  });
+
+  test('부친과 모친을 모두 연결해도 자녀 정보는 유지된다', () {
+    final father = Person(id: 'father', gender: 'M', sega: 20);
+    final mother = Person(id: 'mother', gender: 'F', sega: 20);
+    final child = Person(id: 'child', nameHanja: '核', gender: 'M', sega: 21,
+        rawText: '核 字君平');
+    ParentChildReview.applyReviewedLink(father, child);
+    ParentChildReview.applyReviewedLink(mother, child);
+    expect(ParentChildReview.validateReviewedBatch([father, mother, child]), isEmpty);
+    expect(child.rawText, '核 字君平');
+    expect(child.nameHanja, '核');
+    expect(child.fatherId, 'father');
+    expect(child.motherId, 'mother');
+  });
+
 }
