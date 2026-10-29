@@ -92,10 +92,38 @@ void main() {
     expect(counts.length, 2);
   });
 
+  test('OCR 평가 입력의 잘못된 열과 정답 필드 형식을 거부한다', () {
+    expect(
+      () => _validateOcrEvaluationInput({'results': '잘못된 자료'}),
+      throwsFormatException,
+    );
+    expect(
+      () => _validateOcrEvaluationInput({
+        'results': [{'columns': [{'text': 123}]}],
+      }),
+      throwsFormatException,
+    );
+    expect(
+      () => _validateOcrEvaluationInput({
+        'results': [{'text': '子昃'}],
+        'referencePersons': [{'nameHanja': '昃', 'ja': 123}],
+      }),
+      throwsFormatException,
+    );
+    expect(
+      () => _validateOcrEvaluationInput({
+        'results': [{'text': '子昃'}],
+        'referencePersons': [{'nameHanja': '昃', 'ja': '良甫'}],
+      }),
+      returnsNormally,
+    );
+  });
+
   if (path.isEmpty) return;
   test('실제 OCR과 정답 전사의 인식·파싱 결과를 따로 기록한다', () async {
     await HanjaDict.instance.load();
     final data = jsonDecode(File(path).readAsStringSync()) as Map<String, dynamic>;
+    _validateOcrEvaluationInput(data);
     final regions = (data['results'] as List).expand((r) {
       if (r['columns'] == null) return [r['text'] as String];
       final columns = r['columns'] as List;
@@ -255,4 +283,50 @@ void _recordFieldMismatch(
     'expected': expected,
     'actual': actual,
   });
+}
+
+void _validateOcrEvaluationInput(Map<String, dynamic> data) {
+  final results = data['results'];
+  if (results is! List) {
+    throw const FormatException('results must be a list');
+  }
+  for (final result in results) {
+    if (result is! Map) {
+      throw const FormatException('each OCR result must be an object');
+    }
+    if (result.containsKey('columns')) {
+      final columns = result['columns'];
+      if (columns is! List) {
+        throw const FormatException('columns must be a list');
+      }
+      for (final column in columns) {
+        if (column is! Map || column['text'] is! String ||
+            (column.containsKey('heading') && column['heading'] is! bool)) {
+          throw const FormatException('each column needs text and optional boolean heading');
+        }
+      }
+    } else if (result['text'] is! String) {
+      throw const FormatException('each OCR result needs text or columns');
+    }
+  }
+  final references = data['referencePersons'];
+  if (references == null) return;
+  if (references is! List) {
+    throw const FormatException('referencePersons must be a list');
+  }
+  const fields = [
+    'nameHanja', 'ja', 'ho', 'spouseHanja', 'spouseFather',
+    'birthDateLunar', 'deathDateLunar', 'spouseBirth', 'spouseDeath',
+  ];
+  for (final person in references) {
+    if (person is! Map) {
+      throw const FormatException('each reference person must be an object');
+    }
+    for (final field in fields) {
+      if (person.containsKey(field) &&
+          person[field] != null && person[field] is! String) {
+        throw FormatException('$field must be a string or null');
+      }
+    }
+  }
 }
