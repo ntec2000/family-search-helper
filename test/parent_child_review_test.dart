@@ -6,6 +6,37 @@ void main() {
   Person person(String id, int generation, {String gender = 'M'}) =>
       Person(id: id, nameHanja: id, gender: gender, sega: generation);
 
+  test('blocks a two-person cycle before changing either relationship', () {
+    final first = Person(id: 'first', gender: 'M');
+    final second = Person(id: 'second', gender: 'M');
+    ParentChildReview.applyReviewedLink(first, second);
+    expect(ParentChildReview.cycleConflict(second, first, [first, second]),
+        contains('순환'));
+    expect(first.fatherId, isNull);
+    expect(second.fatherId, first.id);
+    expect(first.childrenIds, [second.id]);
+  });
+
+  test('blocks an indirect cycle across three generations', () {
+    final grandparent = Person(id: 'grandparent', gender: 'M');
+    final parent = Person(id: 'parent', gender: 'M');
+    final child = Person(id: 'child', gender: 'M');
+    ParentChildReview.applyReviewedLink(grandparent, parent);
+    ParentChildReview.applyReviewedLink(parent, child);
+    expect(ParentChildReview.cycleConflict(child, grandparent,
+        [grandparent, parent, child]), contains('순환'));
+    expect(ParentChildReview.cycleConflict(grandparent, child,
+        [grandparent, parent, child]), isNull);
+  });
+
+  test('detects cycles from one-way children lists', () {
+    final first = Person(id: 'first', gender: 'M');
+    final second = Person(id: 'second', gender: 'M');
+    first.childrenIds.add(second.id);
+    expect(ParentChildReview.cycleConflict(second, first, [first, second]),
+        contains('순환'));
+  });
+
   test('rejects cyclic parent references without generation data', () {
     final first = Person(id: 'first', nameHanja: '甲', gender: 'M');
     final second = Person(id: 'second', nameHanja: '乙', gender: 'M');
