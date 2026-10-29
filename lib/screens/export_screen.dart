@@ -156,9 +156,15 @@ class _State extends State<ExportScreen> {
         if (ss != null) return '${ss.$1}$n (${ss.$2}${dict.toHangul(n)})';
         return '$n (${dict.toHangul(n)})';
       }
-      if ((p.spouseFather ?? '').isNotEmpty) {
-        buf.writeln('  장인      : ${inLawName(p.spouseFather)}');
-        buf.writeln('  장모      : ${p.spouseMother ?? '${inLawName(p.spouseFather)}의 부인'}');
+      final father = (p.spouseFather ?? '').trim();
+      final mother = (p.spouseMother ?? '').trim();
+      if (father.isNotEmpty) {
+        buf.writeln('  배우자 부친 : ${inLawName(father)}');
+      }
+      if (mother.isNotEmpty) {
+        buf.writeln('  배우자 모친 : $mother');
+      } else if (father.isNotEmpty) {
+        buf.writeln('  배우자 모친 : ${inLawName(father)}의 부인 (이름 미상)');
       }
       if ((p.spouseGrandfather ?? '').isNotEmpty) {
         buf.writeln('  장인의 부 : ${inLawName(p.spouseGrandfather)}');

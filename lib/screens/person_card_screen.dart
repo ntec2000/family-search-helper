@@ -160,8 +160,8 @@ class _PersonCardScreenState extends State<PersonCardScreen> {
           '${p.sega != null ? '   世: ${p.sega}' : ''}')
       ..writeln('출생: ${_birth.text}   출생지: $birthPlace')
       ..writeln('결혼: ${p.marriageDate ?? ''}   배우자: ${d.annotate(p.spouseHanja ?? '')}')
-      ..writeln('장인: ${d.annotate(p.spouseFather ?? '')}'
-          '   장모: ${p.spouseMother ?? '${d.annotate(p.spouseFather ?? '')}의 부인'}')
+      ..writeln('배우자 부친: ${d.annotate(p.spouseFather ?? '')}'
+          '   배우자 모친: ${p.spouseMother?.trim().isNotEmpty == true ? p.spouseMother : (p.spouseFather?.trim().isNotEmpty == true ? '${d.annotate(p.spouseFather!)}의 부인 (이름 미상)' : '미상')}')
       ..writeln('사망: ${_death.text}   사망지: $deathPlace')
       ..writeln('매장: ${p.burialPlace ?? ''}')
       ..writeln('字: ${d.annotate(p.ja ?? '')}   號: ${d.annotate(p.ho ?? '')}')
