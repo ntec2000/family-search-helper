@@ -152,7 +152,8 @@ class _ResultScreenState extends State<ResultScreen> {
         !_persons.contains(child) || !_persons.contains(parent)) {
       return;
     }
-    final error = ParentChildReview.conflict(parent, child);
+    final error = ParentChildReview.conflict(parent, child) ??
+        ParentChildReview.cycleConflict(parent, child, _persons);
     if (error != null) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
       return;
