@@ -89,9 +89,9 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    await tester.pumpWidget(MaterialApp(home: ResultScreen(
+    await tester.pumpWidget(const MaterialApp(home: ResultScreen(
       rawText: 'm炳直', persons: [], imagePath: 'missing-test-image',
-      unparsedRegions: const ['m炳直'],
+      unparsedRegions: ['m炳直'],
     )));
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('인물 미분류 구획'));
