@@ -103,6 +103,13 @@ void main() {
       }
       final fieldScores = <String, Map<String, int>>{};
       final unresolved = <String>[];
+      final referenceNameCounts = <String, int>{};
+      for (final item in referencePersons) {
+        final name = (item as Map)['nameHanja']?.toString().trim() ?? '';
+        if (name.isNotEmpty) {
+          referenceNameCounts[name] = (referenceNameCounts[name] ?? 0) + 1;
+        }
+      }
       for (final field in fields.keys) {
         fieldScores[field] = {'checked': 0, 'matched': 0, 'mismatched': 0};
       }
@@ -110,8 +117,10 @@ void main() {
         final expected = Map<String, dynamic>.from(item as Map);
         final name = expected['nameHanja']?.toString() ?? '';
         final matches = byName[name] ?? const [];
-        if (name.isEmpty || matches.length != 1) {
-          unresolved.add(name.isEmpty ? '(정답 이름 없음)' : name);
+        if (name.isEmpty || matches.length != 1 ||
+            referenceNameCounts[name] != 1) {
+          final label = name.isEmpty ? '(정답 이름 없음)' : name;
+          if (!unresolved.contains(label)) unresolved.add(label);
           continue;
         }
         final actual = matches.single.toMap();
