@@ -23,6 +23,38 @@ class ParentChildReview {
     return null;
   }
 
+  /// Returns an error if the proposed parent is already a descendant of the
+  /// child. Checks both parent references and child lists without changing data.
+  static String? cycleConflict(
+      Person parent, Person child, Iterable<Person> persons) {
+    if (parent.id == child.id) {
+      return '동일 인물은 자신의 부모가 될 수 없습니다.';
+    }
+    final byId = {for (final person in persons) person.id: person};
+    final visited = <String>{};
+    final pending = <String>[parent.id];
+    while (pending.isNotEmpty) {
+      final id = pending.removeLast();
+      if (!visited.add(id)) continue;
+      if (id == child.id) {
+        return '순환 가족관계가 발생합니다. 부모와 자녀의 연결을 확인하세요.';
+      }
+      final current = byId[id];
+      if (current == null) continue;
+      for (final ancestorId in [current.fatherId, current.motherId]) {
+        if (ancestorId != null && ancestorId.isNotEmpty) {
+          pending.add(ancestorId);
+        }
+      }
+      // A recorded parent-to-child link also proves ancestry, even when
+      // the reciprocal parent ID has not yet been filled in.
+      for (final candidate in persons) {
+        if (candidate.childrenIds.contains(id)) pending.add(candidate.id);
+      }
+    }
+    return null;
+  }
+
   static void unlink(Person parent, Person child) {
     if (child.fatherId == parent.id) child.fatherId = null;
     if (child.motherId == parent.id) child.motherId = null;
