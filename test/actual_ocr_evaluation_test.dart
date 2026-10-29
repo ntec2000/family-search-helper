@@ -133,6 +133,7 @@ void main() {
         byName.putIfAbsent(person.nameHanja.trim(), () => []).add(person);
       }
       final fieldScores = <String, Map<String, int>>{};
+      final fieldMismatches = <Map<String, String>>[];
       final unresolved = <String>[];
       final referenceNameCounts = _referenceNameCounts(referencePersons);
       for (final field in fields.keys) {
@@ -157,6 +158,14 @@ void main() {
           score['checked'] = score['checked']! + 1;
           final key = target == found ? 'matched' : 'mismatched';
           score[key] = score[key]! + 1;
+          if (target != found) {
+            fieldMismatches.add({
+              'nameHanja': name,
+              'field': field,
+              'expected': target,
+              'actual': found,
+            });
+          }
         }
       }
       // 정답 이름의 누락과 추가 인식 후보를 별도로 보고한다.
@@ -167,6 +176,7 @@ void main() {
       final extraParsedNames = parsedNames.difference(referenceNames).toList()..sort();
       report['referenceFieldEvaluation'] = {
         'fieldScores': fieldScores,
+        'fieldMismatches': fieldMismatches,
         'missingReferenceNames': missingReferenceNames,
         'extraParsedNames': extraParsedNames,
         'unresolvedNames': unresolved,
