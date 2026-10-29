@@ -146,7 +146,7 @@ class _ResultScreenState extends State<ResultScreen> {
         title: const Text('원문을 확인한 부모 선택'),
         children: options.map((p) => SimpleDialogOption(
           onPressed: () => Navigator.pop(ctx, p),
-          child: Text('${p.nameHanja} ${p.nameHangul} (${p.sega ?? "세대 미상"}世)'),
+          child: Text('${p.nameHanja} ${p.nameHangul} · ID: ${p.id} · ${p.sega == null ? "세대 미상" : "${p.sega}世"} · ${p.gender == "M" ? "남" : p.gender == "F" ? "여" : "성별 미상"}'),
         )).toList(),
       ),
     );
