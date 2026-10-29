@@ -8,6 +8,7 @@ import '../services/db_service.dart';
 import '../services/lunar_service.dart';
 import '../services/parent_child_review.dart';
 import '../services/surname_review.dart';
+import '../services/family_name_candidates.dart';
 import '../theme/traditional_theme.dart';
 import '../widgets/surname_input_dialog.dart';
 import 'person_card_screen.dart';
@@ -578,6 +579,30 @@ class _ResultScreenState extends State<ResultScreen> {
     ));
   }
 
+  void _showFamilyCandidates() {
+    final rows = [for (final person in _persons)
+      ...FamilyNameCandidates.fromPerson(person)];
+    showDialog<void>(context: context, builder: (ctx) => AlertDialog(
+      title: Text('가족 이름 후보 (${rows.length}건)'),
+      content: SizedBox(width: double.maxFinite, child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text('원문 확인 전 후보입니다. 미상 표시는 실제 이름이 아니며 '
+              '동일 인물이 중복될 수 있습니다. 이 목록은 별도로 저장되지 않습니다.'),
+          const SizedBox(height: 8),
+          Flexible(child: ListView.builder(shrinkWrap: true, itemCount: rows.length,
+            itemBuilder: (_, index) {
+              final row = rows[index];
+              return ListTile(title: Text('${index + 1}. ${row.display}'),
+                subtitle: Text('${row.role}${row.placeholder ? ' · 표시명' : ''} · 원본 인물 ID: ${row.sourcePersonId}'));
+            })),
+        ],
+      )),
+      actions: [TextButton(onPressed: () => Navigator.pop(ctx),
+        child: const Text('닫기'))],
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     final hangulText = HanjaDict.instance.toHangul(widget.rawText);
@@ -585,6 +610,8 @@ class _ResultScreenState extends State<ResultScreen> {
       appBar: AppBar(
         title: Text('인식 결과 (${_persons.length}명)'),
         actions: [
+          IconButton(icon: const Icon(Icons.people_outline),
+            tooltip: '가족 이름 후보 목록', onPressed: _showFamilyCandidates),
           IconButton(
             icon: const Icon(Icons.drive_file_rename_outline),
             tooltip: '성씨 입력',
