@@ -1,3 +1,18 @@
+String _fieldColumn(String field) {
+  const columns = <String, String>{
+    'nameHanja': 'name_hanja',
+    'ja': 'ja',
+    'ho': 'ho',
+    'spouseHanja': 'spouse_hanja',
+    'spouseFather': 'spouse_father',
+    'birthDateLunar': 'birth_date_lunar',
+    'deathDateLunar': 'death_date_lunar',
+    'spouseBirth': 'spouse_birth',
+    'spouseDeath': 'spouse_death',
+  };
+  return columns[field]!;
+}
+
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
@@ -81,6 +96,57 @@ void main() {
       'persons': people.map((p) => p.toMap()).toList(),
       'regionsAssembled': regions,
     };
+    // 선택적으로 제공된 인물별 정답과 대조한다. 정답이 없는 필드는
+    // 평가 대상에서 제외하며, 이름이 중복되면 임의로 인물을 연결하지 않는다.
+    // JSON: "referencePersons": [{"nameHanja":"昃","ja":"良甫",...}]
+    final referencePersons = (data['referencePersons'] as List?) ?? const [];
+    if (referencePersons.isNotEmpty) {
+      const fields = <String, String>{
+        'nameHanja': 'nameHanja',
+        'ja': 'ja',
+        'ho': 'ho',
+        'spouseHanja': 'spouseHanja',
+        'spouseFather': 'spouseFather',
+        'birthDateLunar': 'birthDateLunar',
+        'deathDateLunar': 'deathDateLunar',
+        'spouseBirth': 'spouseBirth',
+        'spouseDeath': 'spouseDeath',
+      };
+      final byName = <String, List<dynamic>>{};
+      for (final person in people) {
+        byName.putIfAbsent(person.nameHanja, () => []).add(person);
+      }
+      final fieldScores = <String, Map<String, int>>{};
+      final unresolved = <String>[];
+      for (final field in fields.keys) {
+        fieldScores[field] = {'checked': 0, 'matched': 0, 'mismatched': 0};
+      }
+      for (final item in referencePersons) {
+        final expected = Map<String, dynamic>.from(item as Map);
+        final name = expected['nameHanja']?.toString() ?? '';
+        final matches = byName[name] ?? const [];
+        if (name.isEmpty || matches.length != 1) {
+          unresolved.add(name.isEmpty ? '(정답 이름 없음)' : name);
+          continue;
+        }
+        final actual = matches.single.toMap();
+        for (final field in fields.keys) {
+          if (!expected.containsKey(field)) continue;
+          final target = expected[field]?.toString().trim() ?? '';
+          final found = actual[_fieldColumn(field)]?.toString().trim() ?? '';
+          final score = fieldScores[field]!;
+          score['checked'] = score['checked']! + 1;
+          final key = target == found ? 'matched' : 'mismatched';
+          score[key] = score[key]! + 1;
+        }
+      }
+      report['referenceFieldEvaluation'] = {
+        'fieldScores': fieldScores,
+        'unresolvedNames': unresolved,
+        'note': 'Only explicitly supplied ground truth is evaluated. '
+            'Duplicate or missing names are excluded from field comparisons.',
+      };
+    }
     File('$path.evaluation.json').writeAsStringSync(const JsonEncoder.withIndent('  ').convert(report));
     expect(names.contains('四'), isFalse);
     expect(names.contains('甲子十'), isFalse);
