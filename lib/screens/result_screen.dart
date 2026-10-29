@@ -615,8 +615,7 @@ class _ResultScreenState extends State<ResultScreen> {
                                 ...ParentChildReview.validateReviewedBatch(_persons)
                                     .map((issue) => Padding(
                                           padding: const EdgeInsets.only(bottom: 6),
-                                          child: Text(_describeRelationshipIssue(issue),
-                                          )),
+                                          child: Text(_describeRelationshipIssue(issue)),
                                         )),
                                 const Text('해당 인물의 부모 연결을 원본과 대조해 수정하세요.'),
                               ],
