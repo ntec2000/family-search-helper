@@ -26,10 +26,12 @@ class FamilyNameCandidates {
     final spouse = value(person.spouseHangul).isNotEmpty
         ? value(person.spouseHangul) : value(person.spouseHanja);
     if (spouse.isNotEmpty) {
-      final display = person.gender == 'M'
+      final surnameOnly = spouse.endsWith('씨') || spouse.endsWith('氏');
+      final usePlaceholder = person.gender == 'M' && surnameOnly;
+      final display = usePlaceholder
           ? (UnknownSpouseName.wifeDisplayName(person) ?? spouse) : spouse;
       result.add(FamilyNameCandidate(person.gender == 'F' ? '남편 후보' : '배우자 후보',
-          display, person.id, placeholder: person.gender == 'M'));
+          display, person.id, placeholder: usePlaceholder));
     }
     final father = value(person.spouseFather);
     if (father.isNotEmpty) {
