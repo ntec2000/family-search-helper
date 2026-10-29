@@ -297,4 +297,29 @@ void main() {
     expect(second.nameHanja, '格');
   });
 
+  test('자녀 목록만으로 구성된 순환 관계를 저장 전 검출한다', () {
+    final first = Person(id: 'a', gender: 'M');
+    final second = Person(id: 'b', gender: 'M');
+    final third = Person(id: 'c', gender: 'M');
+    first.childrenIds.add('b');
+    second.childrenIds.add('c');
+    third.childrenIds.add('a');
+    final errors = ParentChildReview.validateReviewedBatch([first, second, third]);
+    expect(errors.any((e) => e.contains('순환 자녀 관계')), isTrue);
+    expect(first.fatherId, isNull);
+    expect(second.fatherId, isNull);
+    expect(third.fatherId, isNull);
+  });
+
+  test('정상적인 자녀 목록은 순환 관계로 오인하지 않는다', () {
+    final first = Person(id: 'a', gender: 'M');
+    final second = Person(id: 'b', gender: 'M');
+    final third = Person(id: 'c', gender: 'M');
+    ParentChildReview.applyReviewedLink(first, second);
+    ParentChildReview.applyReviewedLink(second, third);
+    final errors = ParentChildReview.validateReviewedBatch([first, second, third]);
+    expect(errors.where((e) => e.contains('순환')), isEmpty);
+    expect(errors, isEmpty);
+  });
+
 }
