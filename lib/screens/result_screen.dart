@@ -295,8 +295,8 @@ class _ResultScreenState extends State<ResultScreen> {
         person.birthDateSolar = approved;
         person.reasonStatement = [
           if (person.reasonStatement?.isNotEmpty == true) person.reasonStatement!,
-          '간지 ${person.birthDateLunar ?? ""}와 검토자가 입력한 기준 연도에서 추정: $approved',
-        ].join('\\n');
+          '간지 ${person.birthDateLunar ?? ""}, 검토자가 입력한 기준 연도 ${controller.text.trim()}년에서 추정: $approved',
+        ].join('\n');
         _relationshipsReviewed = false;
       });
     } finally {

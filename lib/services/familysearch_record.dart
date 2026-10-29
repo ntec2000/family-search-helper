@@ -32,6 +32,8 @@ class FamilySearchRecord {
       for (final entry in <String, String?>{
         '로마자 표기': person.nameRoman, '字': person.ja, '號': person.ho, '본관': person.bongwan,
         '배우자': person.spouseHanja, '배우자 본관': person.spouseBongwan,
+        '출생 원문(간지·음력)': person.birthDateLunar,
+        '사망 원문(간지·음력)': person.deathDateLunar,
         '배우자 출생': person.spouseBirth, '배우자 사망': person.spouseDeath,
         '배우자 부친': person.spouseFather, '배우자 모친': person.spouseMother,
         '배우자 조부': person.spouseGrandfather,

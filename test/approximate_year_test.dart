@@ -29,4 +29,17 @@ void main() {
     expect(facts.first['date']['original'], 'about 1850');
     expect(person.birthDateLunar, '庚戌生');
   });
+  test('서기 추정과 간지 생몰 원문을 함께 내보낸다', () {
+    final person = Person(id: 'p', nameHanja: '昃',
+      birthDateSolar: 'about 1847', birthDateLunar: '丁未年 生',
+      deathDateSolar: 'about 1920', deathDateLunar: '庚申八月三日 卒');
+    final record = FamilySearchRecord.person(person);
+    final facts = record['facts'] as List;
+    expect(facts[0]['date']['original'], 'about 1847');
+    expect(facts[1]['date']['original'], 'about 1920');
+    final notes = (record['notes'] as List).first['text'] as String;
+    expect(notes, contains('출생 원문(간지·음력): 丁未年 生'));
+    expect(notes, contains('사망 원문(간지·음력): 庚申八月三日 卒'));
+  });
+
 }
