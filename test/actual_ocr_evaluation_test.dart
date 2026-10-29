@@ -35,6 +35,16 @@ void main() {
     expect(rawPresent.length / reference.length, closeTo(2 / 3, 0.000001));
     expect(parsedCorrect.length / reference.length, closeTo(2 / 3, 0.000001));
   });
+  test('OCR 정답의 이름 앞뒤 공백은 같은 인물로 비교한다', () {
+    final names = _referenceNameCounts([
+      {'nameHanja': ' 昃 '},
+      {'nameHanja': '昃'},
+      {'nameHanja': ' 格 '},
+    ]);
+    expect(names['昃'], 2);
+    expect(names['格'], 1);
+  });
+
   test('중복된 정답 이름은 횟수로 식별하며 누락 이름은 제외한다', () {
     final counts = _referenceNameCounts([
       {'nameHanja': '昃'},
@@ -113,7 +123,7 @@ void main() {
       };
       final byName = <String, List<dynamic>>{};
       for (final person in people) {
-        byName.putIfAbsent(person.nameHanja, () => []).add(person);
+        byName.putIfAbsent(person.nameHanja.trim(), () => []).add(person);
       }
       final fieldScores = <String, Map<String, int>>{};
       final unresolved = <String>[];
@@ -123,7 +133,7 @@ void main() {
       }
       for (final item in referencePersons) {
         final expected = Map<String, dynamic>.from(item as Map);
-        final name = expected['nameHanja']?.toString() ?? '';
+        final name = expected['nameHanja']?.toString().trim() ?? '';
         final matches = byName[name] ?? const [];
         if (name.isEmpty || matches.length != 1 ||
             referenceNameCounts[name] != 1) {
