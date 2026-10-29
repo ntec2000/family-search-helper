@@ -12,7 +12,7 @@ void main() {
     const reference = '聖甲';
     final rawColumns = ['子聖', '甲子生'];
     final normalizedColumns = rawColumns
-        .map((column) => column.replaceAll(RegExp(r'\\s+'), ''))
+        .map((column) => column.replaceAll(RegExp(r'\s+'), ''))
         .toList();
     expect(normalizedColumns.any((column) => column.contains(reference)), isFalse);
     expect(normalizedColumns.join().contains(reference), isTrue);
