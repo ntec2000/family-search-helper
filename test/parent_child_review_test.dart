@@ -279,4 +279,22 @@ void main() {
     expect(parent.childrenIds, ['child', 'child']);
   });
 
+  test('빈 인물 ID를 검증 오류로 보고 원본을 보존한다', () {
+    final blank = Person(id: '  ', nameHanja: '格', gender: 'M');
+    final valid = Person(id: 'p1', nameHanja: '格', gender: 'M');
+    final errors = ParentChildReview.validateReviewedBatch([blank, valid]);
+    expect(errors.any((e) => e.contains('빈 인물 ID')), isTrue);
+    expect(blank.id, '  ');
+    expect(valid.id, 'p1');
+  });
+
+  test('중복 인물 ID는 이름이 달라도 감지한다', () {
+    final first = Person(id: 'p1', nameHanja: '昃', gender: 'M');
+    final second = Person(id: 'p1', nameHanja: '格', gender: 'M');
+    final errors = ParentChildReview.validateReviewedBatch([first, second]);
+    expect(errors.any((e) => e.contains('중복 인물 ID')), isTrue);
+    expect(first.nameHanja, '昃');
+    expect(second.nameHanja, '格');
+  });
+
 }
