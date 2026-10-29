@@ -61,6 +61,28 @@ void main() {
     expect(entries[2], contains('父光岳'));
   });
 
+  test('이름이 누락된 표제에 글자가 남아도 앞뒤 인물 정보와 합치지 않는다', () {
+    final entries = assembleOcrEntries([
+      '子昃', '丁未生', '配原州邊氏',
+      '□', '壬辰生', '配豊壤趙氏',
+      '子核', '丁酉生', '配坡平尹氏',
+    ], headings: [
+      true, false, false,
+      true, false, false,
+      true, false, false,
+    ]);
+    expect(entries, hasLength(3));
+    expect(entries[0], isNot(contains('豊壤趙氏')));
+    expect(entries[1], contains('壬辰生'));
+    expect(entries[1], contains('豊壤趙氏'));
+    expect(entries[2], isNot(contains('豊壤趙氏')));
+    final people = JokboParser.parseRegions(entries,
+        clanHanjaOverride: '李', clanHangulOverride: '이');
+    expect(people.map((p) => p.nameHanja).toList(), ['昃', '核']);
+    expect(people[0].spouseHanja, '邊氏');
+    expect(people[1].spouseHanja, '坡平尹氏');
+  });
+
   test('이름이 누락된 중간 인물의 배우자 기록을 앞뒤 인물에 배정하지 않는다', () {
     final entries = assembleOcrEntries([
       '子昃', '字良甫丁未生', '配原州邊氏', '父國聖',
