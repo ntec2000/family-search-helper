@@ -35,6 +35,20 @@ void main() {
     expect(rawPresent.length / reference.length, closeTo(2 / 3, 0.000001));
     expect(parsedCorrect.length / reference.length, closeTo(2 / 3, 0.000001));
   });
+  test('중복된 정답 이름은 횟수로 식별하며 누락 이름은 제외한다', () {
+    final counts = _referenceNameCounts([
+      {'nameHanja': '昃'},
+      {'nameHanja': '昃'},
+      {'nameHanja': '格'},
+      {'nameHanja': ''},
+      <String, String>{},
+    ]);
+    expect(counts['昃'], 2);
+    expect(counts['格'], 1);
+    expect(counts.containsKey(''), isFalse);
+    expect(counts.length, 2);
+  });
+
   if (path.isEmpty) return;
   test('실제 OCR과 정답 전사의 인식·파싱 결과를 따로 기록한다', () async {
     await HanjaDict.instance.load();
@@ -103,13 +117,7 @@ void main() {
       }
       final fieldScores = <String, Map<String, int>>{};
       final unresolved = <String>[];
-      final referenceNameCounts = <String, int>{};
-      for (final item in referencePersons) {
-        final name = (item as Map)['nameHanja']?.toString().trim() ?? '';
-        if (name.isNotEmpty) {
-          referenceNameCounts[name] = (referenceNameCounts[name] ?? 0) + 1;
-        }
-      }
+      final referenceNameCounts = _referenceNameCounts(referencePersons);
       for (final field in fields.keys) {
         fieldScores[field] = {'checked': 0, 'matched': 0, 'mismatched': 0};
       }
@@ -163,3 +171,12 @@ String _fieldColumn(String field) {
   return columns[field]!;
 }
 
+
+Map<String, int> _referenceNameCounts(List<dynamic> referencePersons) {
+  final counts = <String, int>{};
+  for (final item in referencePersons) {
+    final name = (item as Map)['nameHanja']?.toString().trim() ?? '';
+    if (name.isNotEmpty) counts[name] = (counts[name] ?? 0) + 1;
+  }
+  return counts;
+}
