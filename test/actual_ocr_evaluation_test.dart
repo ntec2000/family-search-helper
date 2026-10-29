@@ -101,7 +101,8 @@ void main() {
         {'nameHanja': ''},
       ],
     }), ['甲', '乙']);
-    expect(_evaluationReferenceNames({'referencePersons': []}).length, 17);
+    expect(_evaluationReferenceNames({'referencePersons': []}), isEmpty);
+    expect(_evaluationReferenceNames({'results': []}), isEmpty);
     expect(_evaluationReferenceNames({'referencePersons': [
       {'nameHanja': ''},
     ]}), isEmpty);
@@ -148,7 +149,7 @@ void main() {
     }).toList();
     final people = JokboParser.parseRegions(regions);
     // 실제 정답이 제공되면 해당 페이지의 정답 이름을 우선 사용한다.
-    // 정답이 없을 때만 기존 224쪽 기준 이름 목록을 사용한다.
+    // 정답이 없으면 커버리지 값은 null이며, 특정 페이지 이름을 대입하지 않는다.
     final reference = _evaluationReferenceNames(data);
     // 열 단위 OCR에는 text 필드가 없을 수 있다. 실제 인식된 열만 모아 비교한다.
     final rawColumns = (data['results'] as List).expand<String>((result) {
@@ -348,9 +349,8 @@ void _validateOcrEvaluationInput(Map<String, dynamic> data) {
 }
 
 List<String> _evaluationReferenceNames(Map<String, dynamic> data) {
-  const fallback = ['昃', '格', '聖甲', '核', '顯五', '承烈', '承勳', '賢東',
-    '炳吉', '炳旭', '炳烈', '炳直', '權頭', '權龜壽', '李集', '金免傑', '尹兢秀'];
+  // 정답이 없으면 정확도·커버리지의 분모를 추정하지 않는다.
   final references = data['referencePersons'] as List?;
-  if (references == null || references.isEmpty) return fallback;
+  if (references == null || references.isEmpty) return const [];
   return _referenceNameCounts(references).keys.toList();
 }
