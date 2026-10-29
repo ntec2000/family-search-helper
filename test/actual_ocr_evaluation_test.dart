@@ -144,6 +144,19 @@ void main() {
     expect(_unresolvedReason('昃', 1, 1), isNull);
   });
 
+  test('필드별 일치율은 실제 비교 항목이 없으면 null이다', () {
+    expect(_fieldMatchRate({'checked': 0, 'matched': 0}), isNull);
+    expect(_fieldMatchRate({'checked': 4, 'matched': 3}), 0.75);
+  });
+
+  test('동명이인은 정답과 분석 결과 양쪽의 중복을 구분한다', () {
+    final duplicates = _ambiguousReferenceNames(
+      {'昃': 2, '格': 1, '核': 1},
+      {'昃': 1, '格': 2, '核': 1},
+    );
+    expect(duplicates, ['昃', '格']);
+  });
+
   test('OCR 평가 입력의 잘못된 열과 정답 필드 형식을 거부한다', () {
     expect(
       () => _validateOcrEvaluationInput({'results': '잘못된 자료'}),
@@ -245,6 +258,8 @@ void main() {
       final unresolved = <String>[];
       final unresolvedDetails = <Map<String, String>>[];
       final referenceNameCounts = _referenceNameCounts(referencePersons);
+      final parsedNameCounts = byName.map((name, matches) => MapEntry(name, matches.length));
+      final ambiguousNames = _ambiguousReferenceNames(referenceNameCounts, parsedNameCounts);
       for (final field in fields.keys) {
         fieldScores[field] = {'checked': 0, 'matched': 0, 'mismatched': 0};
       }
@@ -288,6 +303,9 @@ void main() {
       final extraParsedNames = parsedNames.difference(referenceNames).toList()..sort();
       report['referenceFieldEvaluation'] = {
         'fieldScores': fieldScores,
+        'fieldMatchRates': fieldScores.map((field, score) => MapEntry(field, _fieldMatchRate(score))),
+        'ambiguousNames': ambiguousNames,
+        'ambiguousNameCount': ambiguousNames.length,
         'fieldMatchRates': fieldScores.map((field, score) =>
             MapEntry(field, _fieldMatchRate(score))),
         'fieldMismatches': fieldMismatches,
@@ -427,4 +445,20 @@ String? _unresolvedReason(String name, int referenceCount, int parsedCount) {
   if (parsedCount == 0) return 'parsed_name_not_found';
   if (parsedCount != 1) return 'duplicate_parsed_name';
   return null;
+}
+
+double? _fieldMatchRate(Map<String, int> score) {
+  final checked = score['checked'] ?? 0;
+  if (checked == 0) return null;
+  return (score['matched'] ?? 0) / checked;
+}
+
+List<String> _ambiguousReferenceNames(
+  Map<String, int> referenceCounts,
+  Map<String, int> parsedCounts,
+) {
+  final names = referenceCounts.keys.where((name) =>
+      referenceCounts[name]! > 1 || (parsedCounts[name] ?? 0) > 1).toList();
+  names.sort();
+  return names;
 }
