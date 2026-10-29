@@ -333,6 +333,25 @@ class _ResultScreenState extends State<ResultScreen> {
     }
     try {
       await DbService.instance.upsertPersonsAtomically(_persons, sourceOcrText: widget.rawText);
+    } on StateError catch (error) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('저장 전 인물·가족관계 확인 필요'),
+          content: SingleChildScrollView(
+            child: Text('저장하지 않았습니다. 아래 내용을 확인하고 수정한 뒤 다시 저장하세요.\\n\\n${error.message}'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('검토 화면으로 돌아가기'),
+            ),
+          ],
+        ),
+      );
+      return;
     } catch (_) {
       if (!mounted) return;
       setState(() => _saving = false);
