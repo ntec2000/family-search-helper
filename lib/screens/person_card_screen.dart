@@ -5,6 +5,7 @@ import '../services/db_service.dart';
 import '../services/hanja_dict.dart';
 import '../services/romanizer.dart';
 import '../services/genealogy.dart';
+import '../services/unknown_spouse_name.dart';
 import '../theme/traditional_theme.dart';
 
 class PersonCardScreen extends StatefulWidget {
@@ -238,6 +239,25 @@ class _PersonCardScreenState extends State<PersonCardScreen> {
                 _row(_marriage, '결혼일'),
                 _row(_marriagePlace, '결혼 장소'),
                 _row(_spouse, '배우자 (한자)', annotate: true),
+                if (_gender == 'M')
+                  Builder(builder: (context) {
+                    final preview = Person(
+                      id: _p!.id,
+                      gender: _gender,
+                      nameHangul: _hangul.text,
+                      surnameHangul: _surnameHangul.text,
+                      spouseHanja: _spouse.text,
+                      // 편집 중에는 변경된 한자 원문을 우선해 재계산한다.
+                    );
+                    final display = UnknownSpouseName.wifeDisplayName(preview);
+                    return Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
+                      child: Text(
+                        '아내 표시명: ${display ?? '확인 필요'} (실제 개인 이름 미상 · 저장 이름 아님)',
+                        style: const TextStyle(color: HanjiColors.mukSoft),
+                      ),
+                    );
+                  }),
                 _row(_spouseFather, '장인 (배우자 부친)', annotate: true),
                 _row(_spouseMother, '장모 (배우자 모친 / "○○○의 부인")'),
                 _row(_children, '자녀 (子女)', annotate: true),
