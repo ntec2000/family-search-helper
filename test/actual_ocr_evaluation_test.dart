@@ -8,6 +8,23 @@ import 'package:family_search_helper/services/ocr_column_text.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   const path = String.fromEnvironment('OCR_RESULTS');
+  test('기준 이름 발견·누락 계산은 실제 OCR 파일 없이도 검증한다', () {
+    const reference = ['昃', '格', '核'];
+    const raw = '子昃字良甫子核丁酉生';
+    const parsed = <String>{'昃', '核', '誤'};
+    final rawPresent = reference.where(raw.contains).toList();
+    final rawMissing = reference.where((name) => !raw.contains(name)).toList();
+    final parsedCorrect = reference.where(parsed.contains).toList();
+    final parsedMissing = reference.where((name) => !parsed.contains(name)).toList();
+    final extraCandidates = parsed.where((name) => !reference.contains(name)).toList();
+    expect(rawPresent, ['昃', '核']);
+    expect(rawMissing, ['格']);
+    expect(parsedCorrect, ['昃', '核']);
+    expect(parsedMissing, ['格']);
+    expect(extraCandidates, ['誤']);
+    expect(rawPresent.length / reference.length, closeTo(2 / 3, 0.000001));
+    expect(parsedCorrect.length / reference.length, closeTo(2 / 3, 0.000001));
+  });
   if (path.isEmpty) return;
   test('실제 OCR과 정답 전사의 인식·파싱 결과를 따로 기록한다', () async {
     await HanjaDict.instance.load();
