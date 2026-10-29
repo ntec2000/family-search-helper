@@ -200,14 +200,13 @@ class _ResultScreenState extends State<ResultScreen> {
     final knownIds = _persons.map((person) => person.id).toSet();
     final involved = <String>{};
     for (final issue in issues) {
-      // Validation messages contain IDs after a colon or arrow.
-      // Compare whole tokens so IDs such as "p1" and "p10" do not overlap.
-      final details = issue.contains(':')
-          ? issue.substring(issue.indexOf(':') + 1)
-          : issue;
-      for (final token in details.split(RegExp(r'\s*→\s*|\s+'))) {
-        final id = token.trim();
-        if (knownIds.contains(id)) involved.add(id);
+      // 검증 메시지는 ': ' 뒤에 ID 또는 '부모 ID → 자녀 ID'가 온다.
+      // ID에 공백이 있어도 화살표 양쪽을 독립된 전체 ID로 취급한다.
+      final colon = issue.indexOf(':');
+      if (colon < 0) continue;
+      final details = issue.substring(colon + 1).trim();
+      for (final id in details.split(RegExp(r'\\s*→\\s*'))) {
+        if (knownIds.contains(id.trim())) involved.add(id.trim());
       }
     }
     return involved;
