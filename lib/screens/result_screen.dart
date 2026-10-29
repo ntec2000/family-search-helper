@@ -548,6 +548,15 @@ class _ResultScreenState extends State<ResultScreen> {
       ),
     );
     if (confirmed != true || !mounted || _saved || _saving) return;
+    // 선택 당시와 현재의 인물 구성이 일치하지 않으면 적용하지 않는다.
+    final selectedPeople = _persons.where((p) => selectedIds.contains(p.id)).toList();
+    if (selectedPeople.length != selectedIds.length ||
+        selectedPeople.any((p) => p.gender != 'M')) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('인물 정보가 변경되었습니다. 다시 선택해 주세요.'),
+      ));
+      return;
+    }
     var applied = 0;
     setState(() {
       for (final p in _persons) {
