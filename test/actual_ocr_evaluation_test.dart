@@ -1,18 +1,3 @@
-String _fieldColumn(String field) {
-  const columns = <String, String>{
-    'nameHanja': 'name_hanja',
-    'ja': 'ja',
-    'ho': 'ho',
-    'spouseHanja': 'spouse_hanja',
-    'spouseFather': 'spouse_father',
-    'birthDateLunar': 'birth_date_lunar',
-    'deathDateLunar': 'death_date_lunar',
-    'spouseBirth': 'spouse_birth',
-    'spouseDeath': 'spouse_death',
-  };
-  return columns[field]!;
-}
-
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
@@ -153,3 +138,19 @@ void main() {
     expect(people.every((p) => p.fatherId == null && p.motherId == null), isTrue);
   });
 }
+
+String _fieldColumn(String field) {
+  const columns = <String, String>{
+    'nameHanja': 'name_hanja',
+    'ja': 'ja',
+    'ho': 'ho',
+    'spouseHanja': 'spouse_hanja',
+    'spouseFather': 'spouse_father',
+    'birthDateLunar': 'birth_date_lunar',
+    'deathDateLunar': 'death_date_lunar',
+    'spouseBirth': 'spouse_birth',
+    'spouseDeath': 'spouse_death',
+  };
+  return columns[field]!;
+}
+
