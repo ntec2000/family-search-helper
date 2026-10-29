@@ -7,6 +7,7 @@ import '../services/hanja_dict.dart';
 import '../services/db_service.dart';
 import '../services/lunar_service.dart';
 import '../services/parent_child_review.dart';
+import '../services/surname_review.dart';
 import '../theme/traditional_theme.dart';
 import '../widgets/surname_input_dialog.dart';
 import 'person_card_screen.dart';
@@ -494,10 +495,9 @@ class _ResultScreenState extends State<ResultScreen> {
     final entered = await showSurnameInputDialog(context);
     if (entered == null || !mounted || _saved || _saving) return;
     final sHanja = entered.$1, sHangul = entered.$2;
-    final candidates = _persons.where((p) =>
-        p.gender == 'M' &&
-        (((p.surnameHanja ?? '').trim().isEmpty && sHanja.isNotEmpty) ||
-         ((p.surnameHangul ?? '').trim().isEmpty && sHangul.isNotEmpty))).toList();
+    final candidates = _persons.where(
+      (p) => SurnameReview.eligible(p, sHanja, sHangul),
+    ).toList();
     if (candidates.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('성씨를 보완할 남성 인물이 없습니다.')),
@@ -548,35 +548,20 @@ class _ResultScreenState extends State<ResultScreen> {
       ),
     );
     if (confirmed != true || !mounted || _saved || _saving) return;
-    // 선택 당시와 현재의 인물 구성이 일치하지 않으면 적용하지 않는다.
-    final selectedPeople = _persons.where((p) => selectedIds.contains(p.id)).toList();
-    if (selectedPeople.length != selectedIds.length ||
-        selectedPeople.any((p) => p.gender != 'M')) {
+    int applied;
+    try {
+      applied = SurnameReview.applySelected(
+        _persons, selectedIds, hanja: sHanja, hangul: sHangul,
+      );
+    } on StateError {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text('인물 정보가 변경되었습니다. 다시 선택해 주세요.'),
       ));
       return;
     }
-    var applied = 0;
-    setState(() {
-      for (final p in _persons) {
-        if (!selectedIds.contains(p.id) || p.gender != 'M') continue;
-        var changed = false;
-        if ((p.surnameHanja ?? '').trim().isEmpty && sHanja.isNotEmpty) {
-          p.surnameHanja = sHanja;
-          changed = true;
-        }
-        if ((p.surnameHangul ?? '').trim().isEmpty && sHangul.isNotEmpty) {
-          p.surnameHangul = sHangul;
-          changed = true;
-        }
-        if (changed) {
-          p.updatedAt = DateTime.now();
-          applied++;
-        }
-      }
-      if (applied > 0) _relationshipsReviewed = false;
-    });
+    if (applied > 0) {
+      setState(() => _relationshipsReviewed = false);
+    }
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text('선택한 인물 ${applied}명의 누락된 성씨를 보완했습니다.'),
     ));
