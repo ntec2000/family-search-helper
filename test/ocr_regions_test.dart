@@ -38,6 +38,29 @@ void main() {
     expect(entries[2], startsWith('子核'));
   });
 
+  test('빈 표제 뒤의 생몰·배우자 기록을 앞 인물에 섞지 않는다', () {
+    final entries = assembleOcrEntries([
+      '子昃', '丁未生庚申卒', '配原州邊氏', '父國聖',
+      '', '壬辰生甲子卒', '配豊壤趙氏', '父永復',
+      '子核', '丁酉生戊戌卒', '配坡平尹氏', '父光岳',
+    ], headings: [
+      true, false, false, false,
+      true, false, false, false,
+      true, false, false, false,
+    ]);
+    expect(entries, hasLength(3));
+    expect(entries[0], contains('丁未生庚申卒'));
+    expect(entries[0], contains('父國聖'));
+    expect(entries[0], isNot(contains('壬辰生')));
+    expect(entries[0], isNot(contains('豊壤趙氏')));
+    expect(entries[1], contains('壬辰生甲子卒'));
+    expect(entries[1], contains('豊壤趙氏'));
+    expect(entries[1], isNot(contains('坡平尹氏')));
+    expect(entries[2], startsWith('子核'));
+    expect(entries[2], contains('丁酉生戊戌卒'));
+    expect(entries[2], contains('父光岳'));
+  });
+
   test('224쪽 세대별 인물과 처가 기록을 열 단위로 격리한다', () {
     final entries = assembleOcrEntries([
       '子昃', '字良甫丁未生庚申八月三日卒',
