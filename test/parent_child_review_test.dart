@@ -192,4 +192,36 @@ void main() {
     expect(ParentChildReview.validateReviewedBatch([father, mother, child]), isNotEmpty);
   });
 
+  test('동명이인도 고유 ID 기준으로 부모를 연결한다', () {
+    final first = Person(id: 'p1', nameHanja: '格', gender: 'M', sega: 20);
+    final second = Person(id: 'p10', nameHanja: '格', gender: 'M', sega: 20);
+    final child = Person(id: 'child', gender: 'M', sega: 21);
+    ParentChildReview.applyReviewedLink(second, child);
+    expect(child.fatherId, 'p10');
+    expect(second.childrenIds, ['child']);
+    expect(first.childrenIds, isEmpty);
+    expect(ParentChildReview.validateReviewedBatch([first, second, child]), isEmpty);
+  });
+
+  test('성별 미확인과 세대 불일치 후보는 부모로 허용하지 않는다', () {
+    final child = Person(id: 'child', gender: 'M', sega: 21);
+    final unknown = Person(id: 'unknown', gender: 'U', sega: 20);
+    final wrongGeneration = Person(id: 'wrong', gender: 'M', sega: 18);
+    expect(ParentChildReview.conflict(unknown, child), isNotNull);
+    expect(ParentChildReview.conflict(wrongGeneration, child), isNotNull);
+    expect(child.fatherId, isNull);
+    expect(child.motherId, isNull);
+  });
+
+  test('기존 부친과 충돌하는 다른 후보를 거부하고 관계를 보존한다', () {
+    final father = Person(id: 'father', gender: 'M', sega: 20);
+    final other = Person(id: 'other', gender: 'M', sega: 20);
+    final child = Person(id: 'child', gender: 'M', sega: 21);
+    ParentChildReview.applyReviewedLink(father, child);
+    expect(ParentChildReview.conflict(other, child), isNotNull);
+    expect(child.fatherId, 'father');
+    expect(father.childrenIds, ['child']);
+    expect(other.childrenIds, isEmpty);
+  });
+
 }
