@@ -176,6 +176,25 @@ class _ResultScreenState extends State<ResultScreen> {
     });
   }
 
+  /// 관계 오류의 인물 ID를 정확한 토큰으로만 치환한다.
+  /// p1을 치환할 때 p10의 일부를 잘못 바꾸지 않는다.
+  String _describeRelationshipIssue(String issue) {
+    final byId = {for (final person in _persons) person.id: person};
+    final orderedIds = byId.keys.toList()
+      ..sort((a, b) => b.length.compareTo(a.length));
+    if (orderedIds.isEmpty) return issue;
+    final pattern = RegExp(
+      '(?<![A-Za-z0-9_])(?:${orderedIds.map(RegExp.escape).join('|')})(?![A-Za-z0-9_])',
+    );
+    return issue.replaceAllMapped(pattern, (match) {
+      final id = match.group(0)!;
+      final person = byId[id]!;
+      final name = person.nameHanja.isNotEmpty
+          ? person.nameHanja : person.nameHangul;
+      return name.isEmpty ? id : '$name ($id)';
+    });
+  }
+
   Set<String> _relationshipIssueIds() {
     final issues = ParentChildReview.validateReviewedBatch(_persons);
     final knownIds = _persons.map((person) => person.id).toSet();
@@ -292,13 +311,7 @@ class _ResultScreenState extends State<ResultScreen> {
                 ...issues.map((issue) => Padding(
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Text(
-                    _persons.fold<String>(issue, (message, person) {
-                      final name = person.nameHanja.isNotEmpty
-                          ? person.nameHanja : person.nameHangul;
-                      return name.isEmpty
-                          ? message
-                          : message.replaceAll(person.id, '$name (${person.id})');
-                    }),
+                    _describeRelationshipIssue(issue),
                   ),
                 )),
               ],
@@ -602,17 +615,7 @@ class _ResultScreenState extends State<ResultScreen> {
                                 ...ParentChildReview.validateReviewedBatch(_persons)
                                     .map((issue) => Padding(
                                           padding: const EdgeInsets.only(bottom: 6),
-                                          child: Text(_persons.fold<String>(
-                                            issue,
-                                            (message, person) {
-                                              final name = person.nameHanja.isNotEmpty
-                                                  ? person.nameHanja
-                                                  : person.nameHangul;
-                                              return name.isEmpty
-                                                  ? message
-                                                  : message.replaceAll(
-                                                      person.id, '$name (${person.id})');
-                                            },
+                                          child: Text(_describeRelationshipIssue(issue),
                                           )),
                                         )),
                                 const Text('해당 인물의 부모 연결을 원본과 대조해 수정하세요.'),
