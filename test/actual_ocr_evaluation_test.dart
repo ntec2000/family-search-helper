@@ -32,12 +32,22 @@ void main() {
     }).join().replaceAll(RegExp(r'\s+'), '');
     final names = people.expand((p) => [p.nameHanja,
       if (p.gender == 'F') p.spouseHanja ?? '']).where((n) => n.isNotEmpty).toSet();
+    final rawNamesPresent = reference.where(raw.contains).toList();
+    final rawNamesMissing = reference.where((name) => !raw.contains(name)).toList();
+    final parsedNamesCorrect = reference.where(names.contains).toList();
+    final parsedNamesMissing = reference.where((name) => !names.contains(name)).toList();
+    final parsedOtherCandidates = names.where((name) => !reference.contains(name)).toList();
     final report = {
       'metric': 'Exact reference-name strings present; not overall OCR accuracy',
       'referenceNameCount': reference.length,
-      'rawNamesPresent': reference.where(raw.contains).toList(),
-      'parsedNamesCorrect': names.where(reference.contains).toList(),
-      'parsedOtherCandidates': names.where((n) => !reference.contains(n)).toList(),
+      'rawNamesPresent': rawNamesPresent,
+      'rawNamesMissing': rawNamesMissing,
+      'parsedNamesCorrect': parsedNamesCorrect,
+      'parsedNamesMissing': parsedNamesMissing,
+      'parsedOtherCandidates': parsedOtherCandidates,
+      'rawReferenceNameCoverage': rawNamesPresent.length / reference.length,
+      'parsedReferenceNameCoverage': parsedNamesCorrect.length / reference.length,
+      'note': 'Name-string coverage only; missing and extra candidates require manual review.',
       'persons': people.map((p) => p.toMap()).toList(),
       'regionsAssembled': regions,
     };
