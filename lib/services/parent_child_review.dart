@@ -96,6 +96,8 @@ class ParentChildReview {
         issues.add('자기 자신을 부모로 지정함: ${child.id}');
       }
     }
+    // Reject a parent reference to a known person with the wrong generation,
+    // even if the reverse children list is missing.
     for (final child in entries) {
       for (final parentId in [child.fatherId, child.motherId]) {
         if (parentId == null) continue;
@@ -118,6 +120,16 @@ class ParentChildReview {
             : parent.gender == 'F' && child.motherId == parent.id;
         if (!linked) {
           issues.add('자녀-부모 역방향 연결 확인 필요: ${parent.id} → $childId');
+        }
+      }
+    }
+    for (final parent in entries) {
+      for (final childId in parent.childrenIds) {
+        final child = byId[childId];
+        if (child == null) continue;
+        if (parent.sega != null && child.sega != null &&
+            child.sega != parent.sega! + 1) {
+          issues.add('자녀 세대 불일치: ${parent.id} → $childId');
         }
       }
     }
