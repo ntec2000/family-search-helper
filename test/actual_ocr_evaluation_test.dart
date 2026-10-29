@@ -306,8 +306,6 @@ void main() {
         'fieldMatchRates': fieldScores.map((field, score) => MapEntry(field, _fieldMatchRate(score))),
         'ambiguousNames': ambiguousNames,
         'ambiguousNameCount': ambiguousNames.length,
-        'fieldMatchRates': fieldScores.map((field, score) =>
-            MapEntry(field, _fieldMatchRate(score))),
         'fieldMismatches': fieldMismatches,
         'missingReferenceNames': missingReferenceNames,
         'extraParsedNames': extraParsedNames,
@@ -445,12 +443,6 @@ String? _unresolvedReason(String name, int referenceCount, int parsedCount) {
   if (parsedCount == 0) return 'parsed_name_not_found';
   if (parsedCount != 1) return 'duplicate_parsed_name';
   return null;
-}
-
-double? _fieldMatchRate(Map<String, int> score) {
-  final checked = score['checked'] ?? 0;
-  if (checked == 0) return null;
-  return (score['matched'] ?? 0) / checked;
 }
 
 List<String> _ambiguousReferenceNames(
