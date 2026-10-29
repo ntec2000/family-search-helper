@@ -259,6 +259,15 @@ class _ResultScreenState extends State<ResultScreen> {
     }
   }
 
+  /// 성씨가 이미 '씨'로 끝나면 중복으로 붙이지 않는다.
+  /// 실제 이름을 만들어 저장하지 않는 화면 표시 전용 값이다.
+  String _unknownWomanLabel(Person person) {
+    final surname = (person.surnameHangul ?? person.surnameHanja ?? '').trim();
+    if (surname.isEmpty) return '성씨 미상';
+    return surname.endsWith('씨') || surname.endsWith('氏')
+        ? surname : '$surname씨';
+  }
+
   Future<void> _saveReviewedPersons() async {
     if (_saved || _saving) return;
     if (_persons.isEmpty || _persons.any((p) => p.gender != 'F' &&
@@ -392,7 +401,7 @@ class _ResultScreenState extends State<ResultScreen> {
                   final p = verified[index];
                   final displayName = p.gender == 'F' &&
                           p.nameHanja.isEmpty && p.nameHangul.isEmpty
-                      ? '${p.surnameHangul ?? p.surnameHanja ?? "성씨 미상"}씨'
+                      ? _unknownWomanLabel(p)
                       : '${p.surnameHangul ?? ""}${p.nameHangul.isNotEmpty ? p.nameHangul : p.nameHanja}';
                   return ListTile(
                     dense: true,
