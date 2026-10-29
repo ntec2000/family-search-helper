@@ -29,9 +29,12 @@ void main() {
     await tester.enterText(field('세대(世)'), '21');
     await tester.ensureVisible(field('배우자 부친'));
     await tester.enterText(field('배우자 부친'), '光岳');
+    await tester.ensureVisible(field('배우자 모친'));
+    await tester.enterText(field('배우자 모친'), '윤광악의 부인');
     await tester.tap(find.text('내용 적용'));
     await tester.pumpAndSettle();
     expect(edited!.spouseFather, '光岳');
+    expect(edited!.spouseMother, '윤광악의 부인');
     expect(edited!.sega, 21);
     expect(edited!.fatherId, 'father');
     expect(edited!.childrenIds, ['child']);

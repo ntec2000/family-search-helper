@@ -122,7 +122,8 @@ class GedcomExport {
       for (final entry in <String, String?>{
         '배우자': p.spouseHanja, '배우자 본관': p.spouseBongwan,
         '배우자 출생': p.spouseBirth, '배우자 사망': p.spouseDeath,
-        '배우자 부친': p.spouseFather, '배우자 조부': p.spouseGrandfather,
+        '배우자 부친': p.spouseFather, '배우자 모친': p.spouseMother,
+        '배우자 조부': p.spouseGrandfather,
         '배우자 증조부': p.spouseGreatGrandfather,
         '배우자 외조부': p.spouseMaternalGrandfather,
         '특이사항': p.note, '근거': p.reasonStatement,

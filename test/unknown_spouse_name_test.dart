@@ -100,4 +100,15 @@ void main() {
     expect(RegExp(r' INDI$', multiLine: true).allMatches(gedcom).length, 1);
   });
 
+  test('검토한 배우자 모친 정보는 내보내기 메모에 보존된다', () {
+    final person = Person(id: 'p', gender: 'M', nameHangul: '이격',
+        spouseMother: '조영복의 부인', rawText: '원문');
+    final record = FamilySearchRecord.person(person);
+    final notes = (record['notes'] as List).first['text'] as String;
+    expect(notes, contains('배우자 모친: 조영복의 부인'));
+    expect(GedcomExport.toGedcom([person]),
+        contains('1 NOTE 배우자 모친: 조영복의 부인'));
+    expect(person.rawText, '원문');
+  });
+
 }
