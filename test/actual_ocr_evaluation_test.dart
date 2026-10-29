@@ -118,6 +118,19 @@ void main() {
     expect(_referenceCoverage(1, 2), 0.5);
   });
 
+  test('정답 유무에 따라 OCR 평가 상태와 사유를 명시한다', () {
+    expect(_referenceEvaluationStatus(const []), {
+      'evaluationStatus': 'unavailable',
+      'evaluationReason': 'No reference persons supplied',
+      'verifiedReferenceNameCount': 0,
+    });
+    expect(_referenceEvaluationStatus(['昃', '格']), {
+      'evaluationStatus': 'available',
+      'evaluationReason': null,
+      'verifiedReferenceNameCount': 2,
+    });
+  });
+
   test('OCR 평가 입력의 잘못된 열과 정답 필드 형식을 거부한다', () {
     expect(
       () => _validateOcrEvaluationInput({'results': '잘못된 자료'}),
@@ -182,6 +195,7 @@ void main() {
     final report = {
       'metric': 'Exact reference-name strings present; not overall OCR accuracy',
       'referenceNameCount': reference.length,
+      ..._referenceEvaluationStatus(reference),
       'rawNamesPresent': rawNamesPresent,
       'rawNamesMissing': rawNamesMissing,
       'parsedNamesCorrect': parsedNamesCorrect,
@@ -369,4 +383,12 @@ List<String> _evaluationReferenceNames(Map<String, dynamic> data) {
 double? _referenceCoverage(int matched, int total) {
   if (total == 0) return null;
   return matched / total;
+}
+
+Map<String, dynamic> _referenceEvaluationStatus(List<String> reference) {
+  return {
+    'evaluationStatus': reference.isEmpty ? 'unavailable' : 'available',
+    'evaluationReason': reference.isEmpty ? 'No reference persons supplied' : null,
+    'verifiedReferenceNameCount': reference.length,
+  };
 }
