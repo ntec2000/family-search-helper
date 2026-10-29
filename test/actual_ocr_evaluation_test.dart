@@ -22,7 +22,14 @@ void main() {
     final people = JokboParser.parseRegions(regions);
     const reference = ['昃','格','聖甲','核','顯五','承烈','承勳','賢東',
       '炳吉','炳旭','炳烈','炳直','權頭','權龜壽','李集','金免傑','尹兢秀'];
-    final raw = (data['results'] as List).map((r) => r['text']).join().replaceAll(RegExp(r'\s+'), '');
+    // 열 단위 OCR에는 text 필드가 없을 수 있다. 실제 인식된 열만 모아 비교한다.
+    final raw = (data['results'] as List).expand<String>((result) {
+      final columns = result['columns'] as List?;
+      if (columns != null) {
+        return columns.map((column) => column['text'] as String);
+      }
+      return [result['text'] as String];
+    }).join().replaceAll(RegExp(r'\s+'), '');
     final names = people.expand((p) => [p.nameHanja,
       if (p.gender == 'F') p.spouseHanja ?? '']).where((n) => n.isNotEmpty).toSet();
     final report = {
