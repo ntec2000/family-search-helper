@@ -17,7 +17,7 @@ class UnknownSpouseName {
     if (hanja.endsWith('氏') && hanja.length >= 2) {
       final character = hanja.substring(hanja.length - 2, hanja.length - 1);
       final reading = surnames[character];
-      if (reading != null) return '${reading}씨';
+      if (reading != null) return '$reading씨';
       return hanja;
     }
     final name = husband.nameHangul.trim();
