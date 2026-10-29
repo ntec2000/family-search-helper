@@ -488,36 +488,55 @@ class _ResultScreenState extends State<ResultScreen> {
     });
   }
 
-  /// v2.6(#7) — 성을 알 수 없는 인물에 성씨(한글+한자)를 수동 적용한다.
-  /// 입력한 성씨를 족보의 기본 성으로 삼아, 성이 없는 모든 인물(자녀 포함)에
-  /// 적용하고 DB 에 저장한다. 화면의 이름 표기는 \"성+이름\" 으로 갱신된다.
+  /// 원문에 없는 성씨를 일괄 추정하지 않는다.
+  /// 성별이 확인된 남성 후보에만, 사용자의 별도 확인 후 누락된 성씨를 입력한다.
   Future<void> _applySurname() async {
     if (_saved || _saving) return;
     final entered = await showSurnameInputDialog(context);
     if (entered == null || !mounted || _saved || _saving) return;
     final sHanja = entered.$1, sHangul = entered.$2;
-    var applied = 0;
-    for (final p in _persons) {
-      final noHanja = (p.surnameHanja ?? '').isEmpty;
-      final noHangul = (p.surnameHangul ?? '').isEmpty;
-      if (noHanja || noHangul) {
-        if (noHanja && sHanja.isNotEmpty) p.surnameHanja = sHanja;
-        if (noHangul && sHangul.isNotEmpty) p.surnameHangul = sHangul;
-        p.updatedAt = DateTime.now();
-        // 검토 전 후보는 데이터베이스에 저장하지 않습니다.
-        applied++;
-      }
+    final candidates = _persons.where((p) =>
+        p.gender == 'M' &&
+        ((p.surnameHanja ?? '').trim().isEmpty && sHanja.isNotEmpty ||
+         (p.surnameHangul ?? '').trim().isEmpty && sHangul.isNotEmpty)).toList();
+    if (candidates.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('성씨를 보완할 남성 인물이 없습니다.')),
+      );
+      return;
     }
-    if (!mounted) return;
-    setState(() {
-      if (applied > 0) _relationshipsReviewed = false;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-          content: Text(applied == 0
-              ? '성씨를 적용할 인물이 없습니다.'
-              : '성씨 $sHangul${sHanja.isNotEmpty ? '($sHanja)' : ''} 을(를) $applied명에 적용했습니다.')),
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('성씨 일괄 적용 확인'),
+        content: Text('남성 인물 ${candidates.length}명의 누락된 성씨에 '
+            '${sHangul.isNotEmpty ? sHangul : sHanja}을(를) 적용하시겠습니까?\\n'
+            '여성·성별 미확인 인물은 변경하지 않습니다. '
+            '원문에 근거가 없는 경우 취소하고 개별 수정하세요.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('취소')),
+          TextButton(onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('확인 후 적용')),
+        ],
+      ),
     );
+    if (confirmed != true || !mounted || _saved || _saving) return;
+    setState(() {
+      for (final p in candidates) {
+        if ((p.surnameHanja ?? '').trim().isEmpty && sHanja.isNotEmpty) {
+          p.surnameHanja = sHanja;
+        }
+        if ((p.surnameHangul ?? '').trim().isEmpty && sHangul.isNotEmpty) {
+          p.surnameHangul = sHangul;
+        }
+        p.updatedAt = DateTime.now();
+      }
+      _relationshipsReviewed = false;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('확인한 남성 인물 ${candidates.length}명의 누락된 성씨를 보완했습니다.'),
+    ));
   }
 
   @override
