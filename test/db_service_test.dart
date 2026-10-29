@@ -84,7 +84,7 @@ void main() {
   });
 
   test('일괄 저장은 가족관계와 OCR 원문을 함께 보존한다', () async {
-    final parent = Person(id: 'parent', childrenIds: ['child'], rawText: '원본 父');
+    final parent = Person(id: 'parent', gender: 'M', childrenIds: ['child'], rawText: '원본 父');
     final child = Person(id: 'child', fatherId: parent.id, rawText: '원본 子');
 
     await service.upsertPersonsAtomically([parent, child]);
@@ -169,4 +169,39 @@ void main() {
       await service.db.execute('DROP TRIGGER fail_person');
     }
   });
+  test('순환 가족관계 오류는 기존 인물과 OCR 원문을 보존한다', () async {
+    await service.upsertPerson(Person(id: 'existing', rawText: '기존 족보 원문'));
+    final a = Person(id: 'cycle-a', gender: 'M', childrenIds: ['cycle-b']);
+    final b = Person(id: 'cycle-b', gender: 'M', childrenIds: ['cycle-a']);
+    await expectLater(
+      service.upsertPersonsAtomically([
+        Person(id: 'existing', rawText: '잘못된 덮어쓰기'),
+        a, b,
+      ], sourceOcrText: '저장 금지 OCR'),
+      throwsA(isA<StateError>()),
+    );
+    expect((await service.getPerson('existing'))!.rawText, '기존 족보 원문');
+    expect(await service.getPerson('cycle-a'), isNull);
+    expect(await service.getPerson('cycle-b'), isNull);
+    expect(await service.getConfig('ocr_source:existing'), isNull);
+  });
+
+  test('세대 불일치 저장 실패 시 기존 기록과 신규 기록을 보존한다', () async {
+    await service.upsertPerson(Person(id: 'original', rawText: '원본 보존'));
+    final parent = Person(id: 'p20', gender: 'M', sega: 20,
+        childrenIds: ['p22']);
+    final child = Person(id: 'p22', gender: 'M', sega: 22,
+        fatherId: parent.id);
+    await expectLater(
+      service.upsertPersonsAtomically([
+        Person(id: 'original', rawText: '변경 시도'), parent, child,
+      ], sourceOcrText: '잘못된 OCR'),
+      throwsA(isA<StateError>()),
+    );
+    expect((await service.getPerson('original'))!.rawText, '원본 보존');
+    expect(await service.getPerson('p20'), isNull);
+    expect(await service.getPerson('p22'), isNull);
+    expect(await service.getConfig('ocr_source:original'), isNull);
+  });
+
 }
