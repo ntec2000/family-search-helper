@@ -488,8 +488,7 @@ class _ResultScreenState extends State<ResultScreen> {
     });
   }
 
-  /// 원문에 없는 성씨를 일괄 추정하지 않는다.
-  /// 성별이 확인된 남성 후보에만, 사용자의 별도 확인 후 누락된 성씨를 입력한다.
+  /// 일괄 추정 대신 사용자가 검토한 개별 인물에만 성씨를 적용한다.
   Future<void> _applySurname() async {
     if (_saved || _saving) return;
     final entered = await showSurnameInputDialog(context);
@@ -497,45 +496,80 @@ class _ResultScreenState extends State<ResultScreen> {
     final sHanja = entered.$1, sHangul = entered.$2;
     final candidates = _persons.where((p) =>
         p.gender == 'M' &&
-        ((p.surnameHanja ?? '').trim().isEmpty && sHanja.isNotEmpty ||
-         (p.surnameHangul ?? '').trim().isEmpty && sHangul.isNotEmpty)).toList();
+        (((p.surnameHanja ?? '').trim().isEmpty && sHanja.isNotEmpty) ||
+         ((p.surnameHangul ?? '').trim().isEmpty && sHangul.isNotEmpty))).toList();
     if (candidates.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('성씨를 보완할 남성 인물이 없습니다.')),
       );
       return;
     }
+
+    final selectedIds = <String>{};
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('성씨 일괄 적용 확인'),
-        content: Text('남성 인물 ${candidates.length}명의 누락된 성씨에 '
-            '${sHangul.isNotEmpty ? sHangul : sHanja}을(를) 적용하시겠습니까?\\n'
-            '여성·성별 미확인 인물은 변경하지 않습니다. '
-            '원문에 근거가 없는 경우 취소하고 개별 수정하세요.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('취소')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('확인 후 적용')),
-        ],
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, refresh) => AlertDialog(
+          title: const Text('성씨 적용 인물 개별 선택'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView(
+              shrinkWrap: true,
+              children: [
+                const Text('원문을 확인한 인물만 선택하세요. '
+                    '여성·성별 미확인 인물과 기존 성씨는 변경하지 않습니다.'),
+                ...candidates.map((p) => CheckboxListTile(
+                  value: selectedIds.contains(p.id),
+                  onChanged: (checked) => refresh(() {
+                    if (checked == true) {
+                      selectedIds.add(p.id);
+                    } else {
+                      selectedIds.remove(p.id);
+                    }
+                  }),
+                  title: Text('${p.nameHanja} ${p.nameHangul} (ID: ${p.id})'),
+                  subtitle: Text('세대: ${p.sega?.toString() ?? "미상"}'
+                      '${p.rawText?.trim().isNotEmpty == true ? " · 원문: ${p.rawText!.trim()}" : ""}',
+                      maxLines: 3, overflow: TextOverflow.ellipsis),
+                )),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('취소')),
+            TextButton(
+              onPressed: selectedIds.isEmpty
+                  ? null : () => Navigator.pop(ctx, true),
+              child: Text('선택한 ${selectedIds.length}명에 적용'),
+            ),
+          ],
+        ),
       ),
     );
     if (confirmed != true || !mounted || _saved || _saving) return;
+    var applied = 0;
     setState(() {
-      for (final p in candidates) {
+      for (final p in _persons) {
+        if (!selectedIds.contains(p.id) || p.gender != 'M') continue;
+        var changed = false;
         if ((p.surnameHanja ?? '').trim().isEmpty && sHanja.isNotEmpty) {
           p.surnameHanja = sHanja;
+          changed = true;
         }
         if ((p.surnameHangul ?? '').trim().isEmpty && sHangul.isNotEmpty) {
           p.surnameHangul = sHangul;
+          changed = true;
         }
-        p.updatedAt = DateTime.now();
+        if (changed) {
+          p.updatedAt = DateTime.now();
+          applied++;
+        }
       }
-      _relationshipsReviewed = false;
+      if (applied > 0) _relationshipsReviewed = false;
     });
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('확인한 남성 인물 ${candidates.length}명의 누락된 성씨를 보완했습니다.'),
+      content: Text('선택한 인물 ${applied}명의 누락된 성씨를 보완했습니다.'),
     ));
   }
 
