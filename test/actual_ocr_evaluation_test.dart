@@ -35,6 +35,32 @@ void main() {
     expect(rawPresent.length / reference.length, closeTo(2 / 3, 0.000001));
     expect(parsedCorrect.length / reference.length, closeTo(2 / 3, 0.000001));
   });
+  test('필드 불일치는 인물·항목·정답·실제 값을 기록한다', () {
+    final mismatches = <Map<String, String>>[];
+    _recordFieldMismatch(
+      mismatches,
+      name: '昃',
+      field: 'ja',
+      expected: '良甫',
+      actual: '良浦',
+    );
+    _recordFieldMismatch(
+      mismatches,
+      name: '昃',
+      field: 'ho',
+      expected: '竹軒',
+      actual: '竹軒',
+    );
+    expect(mismatches, [
+      {
+        'nameHanja': '昃',
+        'field': 'ja',
+        'expected': '良甫',
+        'actual': '良浦',
+      },
+    ]);
+  });
+
   test('정답에 없는 인물 후보와 누락 인물은 별도 집합으로 분리한다', () {
     const reference = {'昃', '格', '核'};
     const parsed = {'昃', '核', '誤'};
@@ -158,14 +184,13 @@ void main() {
           score['checked'] = score['checked']! + 1;
           final key = target == found ? 'matched' : 'mismatched';
           score[key] = score[key]! + 1;
-          if (target != found) {
-            fieldMismatches.add({
-              'nameHanja': name,
-              'field': field,
-              'expected': target,
-              'actual': found,
-            });
-          }
+          _recordFieldMismatch(
+            fieldMismatches,
+            name: name,
+            field: field,
+            expected: target,
+            actual: found,
+          );
         }
       }
       // 정답 이름의 누락과 추가 인식 후보를 별도로 보고한다.
@@ -214,4 +239,20 @@ Map<String, int> _referenceNameCounts(List<dynamic> referencePersons) {
     if (name.isNotEmpty) counts[name] = (counts[name] ?? 0) + 1;
   }
   return counts;
+}
+
+void _recordFieldMismatch(
+  List<Map<String, String>> mismatches, {
+  required String name,
+  required String field,
+  required String expected,
+  required String actual,
+}) {
+  if (expected == actual) return;
+  mismatches.add({
+    'nameHanja': name,
+    'field': field,
+    'expected': expected,
+    'actual': actual,
+  });
 }
