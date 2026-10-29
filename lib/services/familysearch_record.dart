@@ -1,4 +1,5 @@
 import '../models/person.dart';
+import 'unknown_spouse_name.dart';
 
 /// 전송과 파일 내보내기에서 같은 성/이름·원문 날짜 필드를 사용한다.
 class FamilySearchRecord {
@@ -26,6 +27,8 @@ class FamilySearchRecord {
     ];
     final notes = <String>[
       if (!givenKnown) '개인 이름 미상. 성씨만 기록됨.',
+      if (person.gender == 'M' && (person.spouseHanja?.isNotEmpty == true || person.spouseHangul?.isNotEmpty == true))
+        '아내 표시명(실제 개인 이름 아님): ${UnknownSpouseName.wifeDisplayName(person) ?? '미상'}',
       for (final entry in <String, String?>{
         '로마자 표기': person.nameRoman, '字': person.ja, '號': person.ho, '본관': person.bongwan,
         '배우자': person.spouseHanja, '배우자 본관': person.spouseBongwan,
