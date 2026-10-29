@@ -138,8 +138,20 @@ class _ResultScreenState extends State<ResultScreen> {
 
   Future<void> _chooseParent(Person child) async {
     if (_saved || _saving) return;
-    final options = _persons.where((p) => p.id != child.id).toList();
-    if (options.isEmpty) return;
+    // 성별 미확인·세대 불일치·기존 부모와 충돌하는 후보는 제외한다.
+    // 후보를 자동 연결하지 않으며 최종 선택은 사용자가 원문을 대조한다.
+    final options = _persons.where((p) =>
+        p.id != child.id &&
+        ParentChildReview.conflict(p, child) == null &&
+        ParentChildReview.cycleConflict(p, child, _persons) == null).toList();
+    if (options.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('연결 가능한 부모 후보가 없습니다. 성별·세대·기존 관계를 먼저 확인하세요.'),
+        ));
+      }
+      return;
+    }
     final parent = await showDialog<Person>(
       context: context,
       builder: (ctx) => SimpleDialog(
