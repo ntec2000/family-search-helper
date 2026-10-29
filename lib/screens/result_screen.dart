@@ -98,10 +98,12 @@ class _ResultScreenState extends State<ResultScreen> {
         }
         final parent = parents.first;
         final child = children.first;
-        if (ParentChildReview.conflict(parent, child) == null) {
+        final error = ParentChildReview.conflict(parent, child) ??
+            ParentChildReview.cycleConflict(parent, child, _persons);
+        if (error == null) {
           ParentChildReview.restoreReviewedLink(parent, child);
         } else {
-          failedLinkIds.add('$parentId → $childId (관계 충돌)');
+          failedLinkIds.add('$parentId → $childId ($error)');
           skippedLinks++;
         }
       }
