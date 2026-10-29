@@ -229,7 +229,7 @@ class _ResultScreenState extends State<ResultScreen> {
       final colon = issue.indexOf(':');
       if (colon < 0) continue;
       final details = issue.substring(colon + 1).trim();
-      for (final id in details.split(RegExp(r'\\s*→\\s*'))) {
+      for (final id in details.split(RegExp(r'\s*→\s*'))) {
         if (knownIds.contains(id.trim())) involved.add(id.trim());
       }
     }
