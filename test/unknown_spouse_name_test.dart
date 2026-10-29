@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:family_search_helper/models/person.dart';
 import 'package:family_search_helper/services/unknown_spouse_name.dart';
+import 'package:family_search_helper/services/familysearch_record.dart';
+import 'package:family_search_helper/services/gedcom_export.dart';
 
 void main() {
   test('남편 홍길동, 아내 이름 미상 -> 홍길동의 부인', () {
@@ -42,6 +44,25 @@ void main() {
         nameHangul: '홍길동', spouseHanja: '原州邊氏')), '변씨');
     expect(UnknownSpouseName.wifeDisplayName(Person(id: 'k', gender: 'M',
         nameHangul: '홍길동', spouseHanja: '金氏')), '김씨');
+  });
+
+  test('FamilySearch: 성씨 표시명은 메모로만 내보낸다', () {
+    final husband = Person(id: 'h', gender: 'M', nameHangul: '홍길동',
+        spouseHanja: '坡平尹氏', spouseBongwan: '坡平');
+    final record = FamilySearchRecord.person(husband);
+    final notes = (record['notes'] as List).first['text'] as String;
+    expect(notes, contains('아내 표시명(실제 개인 이름 아님): 윤씨'));
+    expect(notes, contains('배우자: 坡平尹氏'));
+    expect(record['names'].toString(), isNot(contains('윤씨')));
+  });
+
+  test('GEDCOM: 아내 표시명은 NOTE이고 새 인물로 만들지 않는다', () {
+    final husband = Person(id: 'h', gender: 'M', nameHangul: '홍길동',
+        spouseHanja: '坡平尹氏');
+    final gedcom = GedcomExport.toGedcom([husband]);
+    expect(gedcom, contains('1 NOTE 아내 표시명(실제 개인 이름 아님): 윤씨'));
+    expect(gedcom, isNot(contains('1 NAME 윤씨')));
+    expect(RegExp(r' INDI$' , multiLine: true).allMatches(gedcom).length, 1);
   });
 
 }
