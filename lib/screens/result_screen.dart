@@ -574,7 +574,7 @@ class _ResultScreenState extends State<ResultScreen> {
       setState(() => _relationshipsReviewed = false);
     }
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text('선택한 인물 ${applied}명의 누락된 성씨를 보완했습니다.'),
+      content: Text('선택한 인물 $applied명의 누락된 성씨를 보완했습니다.'),
     ));
   }
 
