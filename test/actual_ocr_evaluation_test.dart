@@ -131,6 +131,19 @@ void main() {
     });
   });
 
+  test('필드 일치율은 실제 비교한 항목만 분모로 사용한다', () {
+    expect(_fieldMatchRate({'checked': 4, 'matched': 3, 'mismatched': 1}), 0.75);
+    expect(_fieldMatchRate({'checked': 0, 'matched': 0, 'mismatched': 0}), isNull);
+  });
+
+  test('동명이인과 누락 인물의 평가 제외 사유를 구분한다', () {
+    expect(_unresolvedReason('', 0, 0), 'missing_reference_name');
+    expect(_unresolvedReason('昃', 2, 1), 'duplicate_reference_name');
+    expect(_unresolvedReason('昃', 1, 2), 'duplicate_parsed_name');
+    expect(_unresolvedReason('昃', 1, 0), 'parsed_name_not_found');
+    expect(_unresolvedReason('昃', 1, 1), isNull);
+  });
+
   test('OCR 평가 입력의 잘못된 열과 정답 필드 형식을 거부한다', () {
     expect(
       () => _validateOcrEvaluationInput({'results': '잘못된 자료'}),
@@ -230,6 +243,7 @@ void main() {
       final fieldScores = <String, Map<String, int>>{};
       final fieldMismatches = <Map<String, String>>[];
       final unresolved = <String>[];
+      final unresolvedDetails = <Map<String, String>>[];
       final referenceNameCounts = _referenceNameCounts(referencePersons);
       for (final field in fields.keys) {
         fieldScores[field] = {'checked': 0, 'matched': 0, 'mismatched': 0};
@@ -238,10 +252,14 @@ void main() {
         final expected = Map<String, dynamic>.from(item as Map);
         final name = expected['nameHanja']?.toString().trim() ?? '';
         final matches = byName[name] ?? const [];
-        if (name.isEmpty || matches.length != 1 ||
-            referenceNameCounts[name] != 1) {
+        final reason = _unresolvedReason(
+          name, referenceNameCounts[name] ?? 0, matches.length);
+        if (reason != null) {
           final label = name.isEmpty ? '(정답 이름 없음)' : name;
-          if (!unresolved.contains(label)) unresolved.add(label);
+          if (!unresolved.contains(label)) {
+            unresolved.add(label);
+            unresolvedDetails.add({'nameHanja': label, 'reason': reason});
+          }
           continue;
         }
         final actual = matches.single.toMap();
@@ -270,10 +288,14 @@ void main() {
       final extraParsedNames = parsedNames.difference(referenceNames).toList()..sort();
       report['referenceFieldEvaluation'] = {
         'fieldScores': fieldScores,
+        'fieldMatchRates': fieldScores.map((field, score) =>
+            MapEntry(field, _fieldMatchRate(score))),
         'fieldMismatches': fieldMismatches,
         'missingReferenceNames': missingReferenceNames,
         'extraParsedNames': extraParsedNames,
         'unresolvedNames': unresolved,
+        'unresolvedCount': unresolved.length,
+        'unresolvedDetails': unresolvedDetails,
         'note': 'Only explicitly supplied ground truth is evaluated. '
             'Duplicate or missing names are excluded from field comparisons.',
       };
@@ -391,4 +413,18 @@ Map<String, dynamic> _referenceEvaluationStatus(List<String> reference) {
     'evaluationReason': reference.isEmpty ? 'No reference persons supplied' : null,
     'verifiedReferenceNameCount': reference.length,
   };
+}
+
+double? _fieldMatchRate(Map<String, int> score) {
+  final checked = score['checked'] ?? 0;
+  if (checked == 0) return null;
+  return (score['matched'] ?? 0) / checked;
+}
+
+String? _unresolvedReason(String name, int referenceCount, int parsedCount) {
+  if (name.isEmpty) return 'missing_reference_name';
+  if (referenceCount != 1) return 'duplicate_reference_name';
+  if (parsedCount == 0) return 'parsed_name_not_found';
+  if (parsedCount != 1) return 'duplicate_parsed_name';
+  return null;
 }
