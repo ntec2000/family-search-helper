@@ -1,4 +1,5 @@
 import '../models/person.dart';
+import 'unknown_spouse_name.dart';
 
 /// GEDCOM 5.5.1 내보내기 (FamilySearch 호환)
 class GedcomExport {
@@ -112,6 +113,12 @@ class GedcomExport {
       if (p.ho != null) buf.writeln('1 NICK 號 ${p.ho}');
       if (p.bongwan != null) buf.writeln('1 NOTE 本貫: ${p.bongwan}');
       if (p.pa != null) buf.writeln('1 NOTE 派: ${p.pa}');
+      if (p.gender == 'M' && (p.spouseHanja?.isNotEmpty == true || p.spouseHangul?.isNotEmpty == true)) {
+        final label = UnknownSpouseName.wifeDisplayName(p);
+        if (label != null) {
+          buf.writeln('1 NOTE 아내 표시명(실제 개인 이름 아님): $label');
+        }
+      }
       for (final entry in <String, String?>{
         '배우자': p.spouseHanja, '배우자 본관': p.spouseBongwan,
         '배우자 출생': p.spouseBirth, '배우자 사망': p.spouseDeath,
