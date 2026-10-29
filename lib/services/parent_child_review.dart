@@ -30,7 +30,16 @@ class ParentChildReview {
     if (parent.id == child.id) {
       return '동일 인물은 자신의 부모가 될 수 없습니다.';
     }
-    final byId = {for (final person in persons) person.id: person};
+    final entries = persons.toList(growable: false);
+    final byId = {for (final person in entries) person.id: person};
+    // Index reverse links once rather than scanning the entire genealogy
+    // for every ancestor visited in a large family tree.
+    final parentsByChild = <String, List<String>>{};
+    for (final candidate in entries) {
+      for (final childId in candidate.childrenIds) {
+        parentsByChild.putIfAbsent(childId, () => <String>[]).add(candidate.id);
+      }
+    }
     final visited = <String>{};
     final pending = <String>[parent.id];
     while (pending.isNotEmpty) {
@@ -48,9 +57,7 @@ class ParentChildReview {
       }
       // A recorded parent-to-child link also proves ancestry, even when
       // the reciprocal parent ID has not yet been filled in.
-      for (final candidate in persons) {
-        if (candidate.childrenIds.contains(id)) pending.add(candidate.id);
-      }
+      pending.addAll(parentsByChild[id] ?? const <String>[]);
     }
     return null;
   }
