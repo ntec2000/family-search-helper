@@ -108,6 +108,16 @@ void main() {
     ]}), isEmpty);
   });
 
+  test('정답이 없는 OCR 평가는 커버리지를 산출하지 않는다', () {
+    final reference = _evaluationReferenceNames({'results': [
+      {'text': '子昃字良甫'},
+    ]});
+    expect(reference, isEmpty);
+    expect(_referenceCoverage(0, reference.length), isNull);
+    expect(_referenceCoverage(1, reference.length), isNull);
+    expect(_referenceCoverage(1, 2), 0.5);
+  });
+
   test('OCR 평가 입력의 잘못된 열과 정답 필드 형식을 거부한다', () {
     expect(
       () => _validateOcrEvaluationInput({'results': '잘못된 자료'}),
@@ -177,8 +187,8 @@ void main() {
       'parsedNamesCorrect': parsedNamesCorrect,
       'parsedNamesMissing': parsedNamesMissing,
       'parsedOtherCandidates': parsedOtherCandidates,
-      'rawReferenceNameCoverage': reference.isEmpty ? null : rawNamesPresent.length / reference.length,
-      'parsedReferenceNameCoverage': reference.isEmpty ? null : parsedNamesCorrect.length / reference.length,
+      'rawReferenceNameCoverage': _referenceCoverage(rawNamesPresent.length, reference.length),
+      'parsedReferenceNameCoverage': reference.isEmpty ? null : _referenceCoverage(parsedNamesCorrect.length, reference.length),
       'note': 'Name-string coverage only; missing and extra candidates require manual review.',
       'persons': people.map((p) => p.toMap()).toList(),
       'regionsAssembled': regions,
@@ -353,4 +363,10 @@ List<String> _evaluationReferenceNames(Map<String, dynamic> data) {
   final references = data['referencePersons'] as List?;
   if (references == null || references.isEmpty) return const [];
   return _referenceNameCounts(references).keys.toList();
+}
+
+// 정답이 없는 경우에는 정확도처럼 보이는 숫자를 만들지 않는다.
+double? _referenceCoverage(int matched, int total) {
+  if (total == 0) return null;
+  return matched / total;
 }
