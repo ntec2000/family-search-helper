@@ -282,8 +282,15 @@ class _CaptureScreenState extends State<CaptureScreen> {
 
       if (!mounted) return;
       setState(() => _status = '족보 정보 분석 중...');
+      final regions = ocr.regionTexts.isEmpty ? [ocr.text] : ocr.regionTexts;
+      final unparsedRegions = <String>[];
+      for (final region in regions) {
+        if (region.trim().isNotEmpty && JokboParser.parse(region).isEmpty) {
+          unparsedRegions.add(region);
+        }
+      }
       final persons = JokboParser.parseRegions(
-        ocr.regionTexts.isEmpty ? [ocr.text] : ocr.regionTexts,
+        regions,
         // OCR 전처리본은 인식용이고, 결과가 가리키는 출처는 사용자의 원본이다.
         sourceImagePath: _sourcePath ?? path,
         clanHanjaOverride: widget.surnameHanja,
@@ -305,7 +312,8 @@ class _CaptureScreenState extends State<CaptureScreen> {
           builder: (_) => ResultScreen(
               rawText: [ocr.text, ...ocr.alternatives.map((text) =>
                   '\n[OCR 비교 원문 · 전체/세로 열]\n$text')].join('\n'),
-              persons: persons, imagePath: _sourcePath ?? path,
+              persons: persons, unparsedRegions: unparsedRegions,
+              imagePath: _sourcePath ?? path,
               sourceDocumentPath: _sourceDocumentPath,
               sourcePageNumber: _sourcePageNumber),
         ),

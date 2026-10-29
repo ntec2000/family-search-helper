@@ -84,4 +84,21 @@ void main() {
     expect(find.text('인식 결과 (2명)'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+  testWidgets('인물로 분류하지 못한 구획을 원문 검토 목록으로 표시한다', (tester) async {
+    tester.view.physicalSize = const Size(1200, 1100);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(MaterialApp(home: ResultScreen(
+      rawText: 'm炳直', persons: [], imagePath: 'missing-test-image',
+      unparsedRegions: const ['m炳直'],
+    )));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('인물 미분류 구획'));
+    await tester.pumpAndSettle();
+    expect(find.text('인물 미분류 구획 (1건)'), findsOneWidget);
+    expect(find.text('m炳直'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
 }

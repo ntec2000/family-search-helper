@@ -17,12 +17,14 @@ class ResultScreen extends StatefulWidget {
   final String rawText;
   final List<Person> persons;
   final String imagePath;
+  final List<String> unparsedRegions;
   final String? sourceDocumentPath;
   final int? sourcePageNumber;
   const ResultScreen(
       {super.key,
       required this.rawText,
       required this.persons,
+      this.unparsedRegions = const [],
       this.sourceDocumentPath,
       this.sourcePageNumber,
       required this.imagePath});
@@ -603,6 +605,25 @@ class _ResultScreenState extends State<ResultScreen> {
     ));
   }
 
+  void _showUnparsedRegions() {
+    showDialog<void>(context: context, builder: (ctx) => AlertDialog(
+      title: Text('인물 미분류 구획 (${widget.unparsedRegions.length}건)'),
+      content: SizedBox(width: double.maxFinite, child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text('이 구획들은 인물이 아닐 수도 있습니다. 원본 이미지와 대조하고 '
+              '인물이 누락됐다면 인물 추가에서 직접 입력하세요.'),
+          const SizedBox(height: 8),
+          Flexible(child: ListView.builder(shrinkWrap: true,
+            itemCount: widget.unparsedRegions.length, itemBuilder: (_, index) =>
+              ListTile(title: Text('구획 ${index + 1}'),
+                subtitle: SelectableText(widget.unparsedRegions[index])))),
+        ],
+      )),
+      actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('닫기'))],
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     final hangulText = HanjaDict.instance.toHangul(widget.rawText);
@@ -610,6 +631,9 @@ class _ResultScreenState extends State<ResultScreen> {
       appBar: AppBar(
         title: Text('인식 결과 (${_persons.length}명)'),
         actions: [
+          if (widget.unparsedRegions.isNotEmpty)
+            IconButton(icon: const Icon(Icons.find_in_page_outlined),
+              tooltip: '인물 미분류 구획', onPressed: _showUnparsedRegions),
           IconButton(icon: const Icon(Icons.people_outline),
             tooltip: '가족 이름 후보 목록', onPressed: _showFamilyCandidates),
           IconButton(
