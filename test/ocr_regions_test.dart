@@ -61,6 +61,31 @@ void main() {
     expect(entries[2], contains('父光岳'));
   });
 
+  test('이름이 누락된 중간 인물의 배우자 기록을 앞뒤 인물에 배정하지 않는다', () {
+    final entries = assembleOcrEntries([
+      '子昃', '字良甫丁未生', '配原州邊氏', '父國聖',
+      '', '壬辰生甲子卒', '配豊壤趙氏', '父永復',
+      '子核', '字君實丁酉生', '配坡平尹氏', '父光岳',
+    ], headings: [
+      true, false, false, false,
+      true, false, false, false,
+      true, false, false, false,
+    ]);
+    expect(entries, hasLength(3));
+    // 이름을 모르는 중간 인물은 원문 검토 대상으로 남기되,
+    // 주변 인물의 생몰·배우자 기록에 합치지 않는다.
+    expect(entries[1], contains('豊壤趙氏'));
+    final people = JokboParser.parseRegions(entries,
+        clanHanjaOverride: '李', clanHangulOverride: '이');
+    expect(people.map((p) => p.nameHanja).toList(), ['昃', '核']);
+    expect(people[0].spouseHanja, '邊氏');
+    expect(people[0].spouseFather, '國聖');
+    expect(people[0].rawText, isNot(contains('豊壤趙氏')));
+    expect(people[1].spouseHanja, '坡平尹氏');
+    expect(people[1].spouseFather, '光岳');
+    expect(people[1].rawText, isNot(contains('豊壤趙氏')));
+  });
+
   test('연속된 빈 표제는 생몰 및 배우자 기록을 인접 인물에 혼입하지 않는다', () {
     final entries = assembleOcrEntries([
       '子昃', '丁未生', '配原州邊氏',
