@@ -38,6 +38,31 @@ void main() {
     expect(tester.takeException(), isNull);
   });
   }
+  testWidgets('순환 관계가 있는 제외 후보 복원은 연결을 차단하고 경고한다', (tester) async {
+    tester.view.physicalSize = const Size(1200, 1100);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final first = Person(id: 'first', nameHanja: '甲', gender: 'M',
+        fatherId: 'second', childrenIds: ['second']);
+    final second = Person(id: 'second', nameHanja: '乙', gender: 'M',
+        fatherId: 'first', childrenIds: ['first']);
+    await tester.pumpWidget(MaterialApp(home: ResultScreen(
+        rawText: '甲乙', persons: [first, second], imagePath: 'missing-test-image')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('인물 아님 · 후보 제외').first);
+    await tester.pumpAndSettle();
+    expect(find.text('인식 결과 (1명)'), findsOneWidget);
+    await tester.tap(find.byTooltip('제외 복원'));
+    await tester.pumpAndSettle();
+    expect(find.text('인식 결과 (2명)'), findsOneWidget);
+    expect(find.textContaining('복원 실패'), findsOneWidget);
+    expect(find.textContaining('순환 가족관계'), findsOneWidget);
+    expect(first.fatherId, 'second');
+    expect(second.fatherId, 'first');
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('노출된 인물 아님 버튼으로 제외·복원하고 원래 후보는 보존한다', (tester) async {
     tester.view.physicalSize = const Size(1200, 1100);
     tester.view.devicePixelRatio = 1;
