@@ -8,6 +8,16 @@ import 'package:family_search_helper/services/ocr_column_text.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   const path = String.fromEnvironment('OCR_RESULTS');
+  test('서로 다른 OCR 열의 끝과 시작을 하나의 이름으로 오인하지 않는다', () {
+    const reference = '聖甲';
+    final rawColumns = ['子聖', '甲子生'];
+    final normalizedColumns = rawColumns
+        .map((column) => column.replaceAll(RegExp(r'\\s+'), ''))
+        .toList();
+    expect(normalizedColumns.any((column) => column.contains(reference)), isFalse);
+    expect(normalizedColumns.join().contains(reference), isTrue);
+  });
+
   test('기준 이름 발견·누락 계산은 실제 OCR 파일 없이도 검증한다', () {
     const reference = ['昃', '格', '核'];
     const raw = '子昃字良甫子核丁酉生';
@@ -40,17 +50,20 @@ void main() {
     const reference = ['昃','格','聖甲','核','顯五','承烈','承勳','賢東',
       '炳吉','炳旭','炳烈','炳直','權頭','權龜壽','李集','金免傑','尹兢秀'];
     // 열 단위 OCR에는 text 필드가 없을 수 있다. 실제 인식된 열만 모아 비교한다.
-    final raw = (data['results'] as List).expand<String>((result) {
+    final rawColumns = (data['results'] as List).expand<String>((result) {
       final columns = result['columns'] as List?;
       if (columns != null) {
         return columns.map((column) => column['text'] as String);
       }
       return [result['text'] as String];
-    }).join().replaceAll(RegExp(r'\s+'), '');
+    }).map((column) => column.replaceAll(RegExp(r'\s+'), '')).toList();
     final names = people.expand((p) => [p.nameHanja,
       if (p.gender == 'F') p.spouseHanja ?? '']).where((n) => n.isNotEmpty).toSet();
-    final rawNamesPresent = reference.where(raw.contains).toList();
-    final rawNamesMissing = reference.where((name) => !raw.contains(name)).toList();
+    // 열 경계에서 서로 다른 문자열이 합쳐져 가짜 이름이 생기지 않도록 한다.
+    final rawNamesPresent = reference
+        .where((name) => rawColumns.any((column) => column.contains(name))).toList();
+    final rawNamesMissing = reference
+        .where((name) => !rawColumns.any((column) => column.contains(name))).toList();
     final parsedNamesCorrect = reference.where(names.contains).toList();
     final parsedNamesMissing = reference.where((name) => !names.contains(name)).toList();
     final parsedOtherCandidates = names.where((name) => !reference.contains(name)).toList();
