@@ -143,6 +143,17 @@ class ParentChildReview {
         issues.add('중복 자녀 연결: ${parent.id}');
       }
     }
+    // Detect cycles recorded only in childrenIds, even when fatherId and
+    // motherId are missing or the source OCR has incomplete reverse links.
+    for (final parent in entries) {
+      for (final childId in parent.childrenIds.toSet()) {
+        final child = byId[childId];
+        if (child == null) continue;
+        if (cycleConflict(parent, child, entries) != null) {
+          issues.add('순환 자녀 관계 확인 필요: ${parent.id} → $childId');
+        }
+      }
+    }
     // Detect parent cycles even when generation numbers are unavailable.
     for (final person in entries) {
       final visited = <String>{};
