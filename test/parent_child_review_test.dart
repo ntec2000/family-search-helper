@@ -6,6 +6,20 @@ void main() {
   Person person(String id, int generation, {String gender = 'M'}) =>
       Person(id: id, nameHanja: id, gender: gender, sega: generation);
 
+  test('checks long ancestor chains with one-way child references', () {
+    final people = List.generate(150, (i) =>
+        Person(id: 'person-$i', gender: 'M'));
+    for (var i = 0; i < people.length - 1; i++) {
+      people[i].childrenIds.add(people[i + 1].id);
+    }
+    expect(ParentChildReview.cycleConflict(
+        people.last, people.first, people), contains('순환'));
+    expect(ParentChildReview.cycleConflict(
+        people.first, people.last, people), isNull);
+    expect(people.first.fatherId, isNull);
+    expect(people.last.childrenIds, isEmpty);
+  });
+
   test('blocks a two-person cycle before changing either relationship', () {
     final first = Person(id: 'first', gender: 'M');
     final second = Person(id: 'second', gender: 'M');
