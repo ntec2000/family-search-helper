@@ -488,10 +488,11 @@ class _ResultScreenState extends State<ResultScreen> {
     }
   }
 
-  Future<void> _addPerson() async {
+  Future<void> _addPerson({String? sourceRegion}) async {
     if (_saved || _saving) return;
     final candidate = Person(id: 'manual_${DateTime.now().microsecondsSinceEpoch}',
         sourceImagePath: widget.imagePath,
+        rawText: sourceRegion,
         sourceDocumentPath: widget.sourceDocumentPath,
         sourcePageNumber: widget.sourcePageNumber);
     final person = await showDialog<Person>(context: context,
@@ -612,12 +613,19 @@ class _ResultScreenState extends State<ResultScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           const Text('이 구획들은 인물이 아닐 수도 있습니다. 원본 이미지와 대조하고 '
-              '인물이 누락됐다면 인물 추가에서 직접 입력하세요.'),
+              '인물이 누락됐다면 해당 구획의 인물 추가를 선택하세요.'),
           const SizedBox(height: 8),
           Flexible(child: ListView.builder(shrinkWrap: true,
             itemCount: widget.unparsedRegions.length, itemBuilder: (_, index) =>
               ListTile(title: Text('구획 ${index + 1}'),
-                subtitle: SelectableText(widget.unparsedRegions[index])))),
+                subtitle: SelectableText(widget.unparsedRegions[index]),
+                trailing: TextButton(
+                  onPressed: _saved || _saving ? null : () {
+                    Navigator.pop(ctx);
+                    _addPerson(sourceRegion: widget.unparsedRegions[index]);
+                  },
+                  child: const Text('인물 추가'),
+                )))),
         ],
       )),
       actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('닫기'))],
