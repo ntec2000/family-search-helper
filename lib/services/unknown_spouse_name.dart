@@ -9,6 +9,15 @@ class UnknownSpouseName {
     if (husband.gender != 'M') return null;
     final korean = (husband.spouseHangul ?? '').trim();
     if (RegExp(r'^[가-힣]{1,2}씨$').hasMatch(korean)) return korean;
+    // 본관은 별도 필드 또는 공백으로 명확히 구분된 경우에만 제외한다.
+    final bongwan = (husband.spouseBongwan ?? '').trim();
+    if (bongwan.isNotEmpty && korean.startsWith(bongwan)) {
+      final surname = korean.substring(bongwan.length).trim();
+      if (RegExp(r'^[가-힣]{1,2}씨$').hasMatch(surname)) return surname;
+    }
+    final separated = RegExp(r'^[가-힣]+\s+([가-힣]{1,2}씨)$')
+        .firstMatch(korean);
+    if (separated != null) return separated.group(1);
     final hanja = (husband.spouseHanja ?? '').trim();
     const surnames = <String, String>{
       '尹': '윤', '邊': '변', '金': '김', '李': '이',
