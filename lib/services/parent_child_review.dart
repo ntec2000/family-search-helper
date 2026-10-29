@@ -82,6 +82,10 @@ class ParentChildReview {
     final byId = <String, Person>{};
     final issues = <String>[];
     for (final person in entries) {
+      if (person.id.trim().isEmpty) {
+        issues.add('빈 인물 ID가 있습니다.');
+        continue;
+      }
       if (byId.containsKey(person.id)) {
         issues.add('중복 인물 ID: ${person.id}');
       } else {
