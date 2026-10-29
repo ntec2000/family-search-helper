@@ -4,6 +4,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import '../models/person.dart';
 import 'person_relation_validator.dart';
+import 'parent_child_review.dart';
 import 'web_database_stub.dart'
     if (dart.library.js_interop) 'web_database.dart';
 
@@ -137,6 +138,8 @@ class DbService {
     if (ids.any((id) => id.trim().isEmpty) || ids.toSet().length != ids.length) {
       throw StateError('저장 대상에 빈 인물 ID 또는 중복 ID가 있습니다.');
     }
+    final issues = ParentChildReview.validateReviewedBatch(pending);
+    if (issues.isNotEmpty) throw StateError(issues.join('; '));
     await db.transaction((txn) async {
       final rows = await txn.query('persons', columns: ['id']);
       final knownIds = <String>{
@@ -170,6 +173,8 @@ class DbService {
     if (ids.any((id) => id.trim().isEmpty) || ids.toSet().length != ids.length) {
       throw StateError('저장 대상에 빈 인물 ID 또는 중복 ID가 있습니다.');
     }
+    final issues = ParentChildReview.validateReviewedBatch(pending);
+    if (issues.isNotEmpty) throw StateError(issues.join('; '));
     await db.transaction((txn) async {
       final rows = await txn.query('persons', columns: ['id']);
       final knownIds = <String>{
