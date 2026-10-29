@@ -35,6 +35,13 @@ void main() {
     expect(rawPresent.length / reference.length, closeTo(2 / 3, 0.000001));
     expect(parsedCorrect.length / reference.length, closeTo(2 / 3, 0.000001));
   });
+  test('정답에 없는 인물 후보와 누락 인물은 별도 집합으로 분리한다', () {
+    const reference = {'昃', '格', '核'};
+    const parsed = {'昃', '核', '誤'};
+    expect(reference.difference(parsed), {'格'});
+    expect(parsed.difference(reference), {'誤'});
+  });
+
   test('OCR 정답의 이름 앞뒤 공백은 같은 인물로 비교한다', () {
     final names = _referenceNameCounts([
       {'nameHanja': ' 昃 '},
@@ -152,8 +159,16 @@ void main() {
           score[key] = score[key]! + 1;
         }
       }
+      // 정답 이름의 누락과 추가 인식 후보를 별도로 보고한다.
+      // 문자열 기반 후보이므로 잘못 읽힌 이름의 실제 대응 인물은 추정하지 않는다.
+      final referenceNames = referenceNameCounts.keys.toSet();
+      final parsedNames = byName.keys.where((name) => name.isNotEmpty).toSet();
+      final missingReferenceNames = referenceNames.difference(parsedNames).toList()..sort();
+      final extraParsedNames = parsedNames.difference(referenceNames).toList()..sort();
       report['referenceFieldEvaluation'] = {
         'fieldScores': fieldScores,
+        'missingReferenceNames': missingReferenceNames,
+        'extraParsedNames': extraParsedNames,
         'unresolvedNames': unresolved,
         'note': 'Only explicitly supplied ground truth is evaluated. '
             'Duplicate or missing names are excluded from field comparisons.',
