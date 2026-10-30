@@ -617,12 +617,12 @@ class _ResultScreenState extends State<ResultScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           const Text('원문 확인 전 후보입니다. 미상 표시는 실제 이름이 아니며 '
-              '동일 인물이 중복될 수 있습니다. 이 목록은 별도로 저장되지 않습니다.'),
+              '동일 인물이 중복될 수 있습니다. 괄호의 한글은 사전 음이므로 확인하세요. 이 목록은 별도로 저장되지 않습니다.'),
           const SizedBox(height: 8),
           Flexible(child: ListView.builder(shrinkWrap: true, itemCount: rows.length,
             itemBuilder: (_, index) {
               final row = rows[index];
-              return ListTile(title: Text('${index + 1}. ${row.display}'),
+              return ListTile(title: Text('${index + 1}. ${HanjaDict.instance.annotate(row.display)}'),
                 subtitle: Text('${row.role}${row.placeholder ? ' · 표시명' : ''} · 원본 인물 ID: ${row.sourcePersonId}'));
             })),
         ],

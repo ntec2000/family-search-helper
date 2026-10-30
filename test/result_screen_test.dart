@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:family_search_helper/models/person.dart';
 import 'package:family_search_helper/screens/result_screen.dart';
+import 'package:family_search_helper/services/hanja_dict.dart';
 import 'package:family_search_helper/theme/traditional_theme.dart';
 
 void main() {
@@ -176,6 +177,25 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.textContaining('사망 서기 about 1910'), findsOneWidget);
     expect(person.deathDateSolar, isNull);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('배우자 부친 후보의 한자와 사전 한글 음을 함께 표시한다', (tester) async {
+    tester.view.physicalSize = const Size(1200, 1100);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await HanjaDict.instance.load();
+    final p = Person(id: 'p', gender: 'M', nameHanja: '格',
+      spouseHanja: '豊壤趙氏', spouseFather: '永復');
+    await tester.pumpWidget(MaterialApp(home: ResultScreen(
+      rawText: '원문', persons: [p], imagePath: 'missing-test-image')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('가족 이름 후보 목록'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('趙永復(조영복)'), findsWidgets);
+    expect(find.textContaining('성씨 추정'), findsOneWidget);
+    expect(p.spouseFather, '永復');
     expect(tester.takeException(), isNull);
   });
 
