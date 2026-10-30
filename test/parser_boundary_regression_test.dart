@@ -196,4 +196,14 @@ void main() {
     expect(JokboParser.unparsedRegions([raw]), [raw]);
   });
 
+  test('첫 인물 앞의 미분류 OCR 원문을 잃지 않는다', () {
+    const raw = 'm炳直\n配原州邊氏\n子格 字君平';
+    final unresolved = JokboParser.unparsedRegions([raw]);
+    expect(unresolved, ['m炳直\n配原州邊氏\n']);
+    final people = JokboParser.parseRegions([raw]);
+    expect(people, hasLength(1));
+    expect(people.single.nameHanja, '格');
+    expect(people.single.spouseHanja, isNull);
+  });
+
 }

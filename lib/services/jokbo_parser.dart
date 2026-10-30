@@ -66,6 +66,11 @@ class JokboParser {
         result.add(region);
         continue;
       }
+      final firstBoundary = _personBoundary.firstMatch(region);
+      if (firstBoundary != null && firstBoundary.start > 0) {
+        final prefix = region.substring(0, firstBoundary.start);
+        if (prefix.trim().isNotEmpty) result.add(prefix);
+      }
       final originals = _splitByPerson(region);
       for (var i = 0; i < blocks.length; i++) {
         if (_parsePersonBlock(blocks[i]) != null) continue;
@@ -143,14 +148,15 @@ class JokboParser {
     return s;
   }
 
+  static final _personBoundary = RegExp(r'(?<!\S)(?=[子女男](?!坐|向|孫|女|男)\s*[一-鿿])');
+
   static List<String> _splitByPerson(String text) {
     // 子 가 干支(甲子·壬子 등)의 일부일 때는 분리하지 않는다(앞 글자가 天干이면 제외)
     // 子·男=아들, 女=딸. (일부 족보는 아들을 男으로 표기)
     // 인물 시작 표지는 독립 토큰일 때만 인정한다.
     // 子坐午向의 子, 본문 속 女/男 및 간지의 子를 인물로 오인하지 않는다.
     // OCR가 공백 없이 붙여 놓은 애매한 후보는 자동 분리하지 않고 원문에 남긴다.
-    final pattern = RegExp(r'(?<!\S)(?=[子女男](?!坐|向|孫|女|男)\s*[一-鿿])');
-    final parts = text.split(pattern).where((s) => s.trim().isNotEmpty).toList();
+    final parts = text.split(_personBoundary).where((s) => s.trim().isNotEmpty).toList();
     return parts.where((p) {
       final t = p.trim();
       return t.startsWith('子') || t.startsWith('女') || t.startsWith('男');
