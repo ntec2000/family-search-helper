@@ -123,7 +123,7 @@ class _State extends State<ExportScreen> {
           buf.writeln('  사위      : ${dict.toHangul(p.spouseHanja!)} ${p.spouseHanja}'
               '${(p.spouseBongwan ?? '').isNotEmpty ? '   [본관: ${p.spouseBongwan}]' : ''}');
         } else if ((p.spouseBongwan ?? '').isNotEmpty) {
-          buf.writeln('  사위      : ${femaleName}의 남편 (이름 미상)   [지역: ${p.spouseBongwan}人]');
+          buf.writeln('  사위      : $femaleName의 남편 (이름 미상)   [지역: ${p.spouseBongwan}人]');
         }
         if ((p.note ?? '').isNotEmpty) buf.writeln('  특이사항  : ${p.note}');
         buf.writeln();
