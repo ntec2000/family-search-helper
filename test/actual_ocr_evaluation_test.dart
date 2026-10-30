@@ -9,6 +9,21 @@ import 'package:family_search_helper/services/ocr_column_text.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   const path = String.fromEnvironment('OCR_RESULTS');
+  test('기존 OCR 평가 보고서는 덮어쓰지 않는다', () {
+    final directory = Directory.systemTemp.createTempSync('ocr-evaluation-');
+    try {
+      final output = File('${directory.path}/report.json');
+      _writeNewEvaluation(output, {'result': 'original'});
+      expect(
+        () => _writeNewEvaluation(output, {'result': 'replacement'}),
+        throwsA(isA<FileSystemException>()),
+      );
+      expect(jsonDecode(output.readAsStringSync()), {'result': 'original'});
+    } finally {
+      directory.deleteSync(recursive: true);
+    }
+  });
+
   test('딸의 남편 이름은 별도 인물로 분석되지 않으면 인물 이름에 포함하지 않는다', () {
     final people = [
       Person(id: 'daughter', gender: 'F', spouseHanja: '權龜壽'),
@@ -329,9 +344,15 @@ void main() {
             'Duplicate or missing names are excluded from field comparisons.',
       };
     }
-    File('$path.evaluation.json').writeAsStringSync(const JsonEncoder.withIndent('  ').convert(report));
+    _writeNewEvaluation(File('$path.evaluation.json'), report);
     expect(people.every((p) => p.fatherId == null && p.motherId == null), isTrue);
   });
+}
+
+void _writeNewEvaluation(File output, Map<String, dynamic> report) {
+  // 이미 존재하는 보고서는 보존하고, 명시적으로 새 파일만 만든다.
+  output.createSync(exclusive: true);
+  output.writeAsStringSync(const JsonEncoder.withIndent('  ').convert(report));
 }
 
 Set<String> _parsedPersonNames(List<Person> people) => people

@@ -52,7 +52,7 @@ flutter test test/actual_ocr_evaluation_test.dart --dart-define=OCR_RESULTS=loca
 
 ## 결과 확인
 
-입력 파일 옆에 `local_ocr_results.json.evaluation.json` 보고서가 생성됩니다.
+입력 파일 옆에 `local_ocr_results.json.evaluation.json` 보고서가 생성됩니다. 같은 이름의 보고서가 이미 있으면 덮어쓰지 않고 오류로 중단합니다. 재평가할 때는 기존 보고서를 보관한 뒤 입력 파일을 다른 이름으로 복사해 실행하세요.
 
 - `rawReferenceNameCoverage`: 각 OCR 열 내부에 정답 이름 문자열이 있는 비율입니다. 전체 OCR 글자 정확도가 아닙니다.
 - `parsedReferenceNameCoverage`: 서로 다른 기준 이름 중 별도 인물로 파싱된 이름의 비율입니다. 같은 이름이 여러 번 등장해도 하나의 문자열로 계산하므로 인물 수 기준 인식률은 아닙니다.
