@@ -42,6 +42,18 @@
 
 ## 실행
 
+### Tesseract 전처리 비교 (선택)
+
+`tools/compare_tesseract.py`는 로컬 Tesseract, Pillow 및 지정한 세로쓰기 모델을 이용해 원본, 2배 확대, 선택적인 수동 가로 구획의 문자열 검출을 비교한다. JSON 이름 목록과 선택적 `[위, 아래]` 픽셀 좌표 목록은 개인 데이터이므로 로컬에만 둔다. 예:
+
+```bash
+python3 tools/compare_tesseract.py /path/to/image.jpg \
+  --tessdata web/ocr-models --names /path/to/reference-names.json \
+  --bands /path/to/manual-bands.json
+```
+
+`--bands`는 생략할 수 있다. 발견 수는 같은 OCR 줄의 정확한 문자열 출현 수이며 인물·관계 인식률이 아니다. 수동 구획은 자동 구획 성능을 증명하지 않는다. 원본·정답과 비교 결과를 공개 저장소에 올리지 않는다. 실제 앱은 플랫폼별 엔진 및 다른 처리 경로를 쓰므로 이 결과를 앱의 성능으로 표시하지 않는다.
+
 Flutter/Dart 개발 환경에서 저장소 루트로 이동해 실행합니다.
 
 ```bash
