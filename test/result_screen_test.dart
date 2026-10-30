@@ -95,7 +95,8 @@ void main() {
       unparsedRegions: ['m炳直'],
     )));
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('인물 미분류 구획'));
+    expect(find.text('미분류 구획 1건 확인'), findsOneWidget);
+    await tester.tap(find.text('미분류 구획 1건 확인'));
     await tester.pumpAndSettle();
     expect(find.text('인물 미분류 구획 (1건)'), findsOneWidget);
     expect(find.text('m炳直'), findsOneWidget);

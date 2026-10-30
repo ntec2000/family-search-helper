@@ -725,6 +725,12 @@ class _ResultScreenState extends State<ResultScreen> {
                     const Text('1단계 · 인물 정보 수정 → 2단계 · 가족관계 검토 → 3단계 · 저장',
                         style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
                             color: HanjiColors.muk)),
+                    if (widget.unparsedRegions.isNotEmpty)
+                      TextButton.icon(
+                        onPressed: _showUnparsedRegions,
+                        icon: const Icon(Icons.find_in_page_outlined),
+                        label: Text('미분류 구획 ${widget.unparsedRegions.length}건 확인'),
+                      ),
                     Row(children: [
                       Expanded(child: OutlinedButton(
                         onPressed: _saving || _saved ? null : () => setState(() {
