@@ -15,6 +15,7 @@ import '../services/genealogy.dart';
 import '../services/romanizer.dart';
 import '../services/familysearch_service.dart';
 import '../theme/traditional_theme.dart';
+import '../widgets/couple_export_dialog.dart';
 import 'familysearch_login_screen.dart';
 
 class ExportScreen extends StatefulWidget {
@@ -30,8 +31,15 @@ class _State extends State<ExportScreen> {
   Future<void> _exportFamilySearchJson() async {
     try {
       final people = await DbService.instance.listPersons();
+      if (people.map((p) => p.id).toSet().length != people.length) {
+        throw StateError('중복 인물 ID');
+      }
+      if (!mounted) return;
+      final couples = await showDialog<List<(String, String)>>(
+        context: context, builder: (_) => CoupleExportDialog(people: people));
+      if (couples == null || !mounted) return;
       final json = const JsonEncoder.withIndent('  ').convert(
-          FamilySearchRecord.document(people));
+          FamilySearchRecord.document(people, reviewedCouples: couples));
       const filename = 'familysearch-records.json';
       await Share.shareXFiles([XFile.fromData(
           Uint8List.fromList(utf8.encode(json)),
