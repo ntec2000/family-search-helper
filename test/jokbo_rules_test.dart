@@ -176,11 +176,11 @@ void main() {
 
   test('초명 등 다른 이름은 본명과 구분하고 원문을 보존한다', () {
     for (final marker in ['初名', '一名', '兒名', '異名']) {
-      final raw = '子格${marker}元吉 配坡平尹氏';
+      final raw = '子格$marker元吉 配坡平尹氏';
       final person = JokboParser.parse(raw).single;
       expect(person.nameHanja, '格', reason: marker);
       expect(person.note, contains('$marker 元吉'), reason: marker);
-      expect(person.rawText, contains('${marker}元吉'));
+      expect(person.rawText, contains('$marker元吉'));
     }
     final person = JokboParser.parse('子格 配坡平尹氏 初名元吉').single;
     expect(person.note ?? '', isNot(contains('初名 元吉')));
