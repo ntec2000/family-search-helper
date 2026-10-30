@@ -61,7 +61,9 @@ class LunarService {
     if (nearestDistance > maxDistance) return null;
     // 동일하게 가까운 연도가 둘이면 어느 쪽인지 알 수 없다.
     if (candidates.length > 1 &&
-        (candidates[1] - referenceYear).abs() == nearestDistance) return null;
+        (candidates[1] - referenceYear).abs() == nearestDistance) {
+      return null;
+    }
     return 'about ${candidates.first}';
   }
 
