@@ -186,6 +186,16 @@ void main() {
     expect(person.note ?? '', isNot(contains('初名 元吉')));
   });
 
+  test('본명이나 별도 이름이 없으면 표지와 생부를 이름으로 만들지 않는다', () {
+    for (final marker in ['初名', '初諱', '一名', '兒名', '異名']) {
+      expect(JokboParser.parse('子$marker 字君平'), isEmpty, reason: marker);
+      final raw = '子格 $marker 生父鈴';
+      final person = JokboParser.parse(raw).single;
+      expect(person.note ?? '', isNot(contains('$marker 生父鈴')), reason: marker);
+      expect(person.rawText, contains(raw));
+    }
+  });
+
   test('이름만 있는 본손도 성과 이름을 분리하여 내보낸다', () {
     final person = JokboParser.parse('固城李氏 子顯五 庚午生').single;
     expect(GedcomExport.toGedcom([person]), contains('1 NAME 현오 /이/'));

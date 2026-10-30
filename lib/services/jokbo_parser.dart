@@ -232,6 +232,11 @@ class JokboParser {
     // 원문을 미분류 구획에 남겨 대상 딸과의 관계를 검토한다.
     if (RegExp(r'^女\s*夫').hasMatch(t)) return null;
 
+    // 본명 없이 별명 표지만 있는 표제는 인물 이름으로 확정하지 않는다.
+    if (RegExp(r'^([子男]|[系繼]\s*子)\s*(?:[一二三四五六七八九十]+\s+)?(?:初名|初諱|一名|兒名|異名)(?=\s|$)').hasMatch(t)) {
+      return null;
+    }
+
     // 성별 + (차례) + 이름: 子/女 [차례한자] 이름(한자 1~3자)
     // 子/男=아들, 女=딸 + (차례) + 이름(한자 1~3자)
     final nameMatch =
@@ -359,6 +364,9 @@ class JokboParser {
         .allMatches(personPart)) {
       final marker = match.group(1)!;
       final alternate = match.group(2)!;
+      if (RegExp(r'^(?:生父|曾祖|外祖|父|祖|字|號|配|墓|忌|卒|生)').hasMatch(alternate)) {
+        continue;
+      }
       addNote('$marker $alternate — 별도 이름 후보, 원문 확인 필요');
     }
 
