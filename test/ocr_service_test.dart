@@ -4,6 +4,11 @@ import 'package:family_search_helper/services/ocr_service.dart';
 void main() {
   OcrResult result(String text) => OcrResult(text: text, rawBlocks: []);
 
+  test('빈 세로열만 있으면 세대 구획을 다시 인식한다', () {
+    expect(OcrService.hasReadableText(['', ' \n ']), isFalse);
+    expect(OcrService.hasReadableText(['', '子格']), isTrue);
+  });
+
   test('구획 인식이 모두 비면 전체 페이지 OCR을 보존한다', () {
     final whole = result('子格 字君平');
     expect(OcrService.useSegmentedOrWhole(whole, ['', '  \n'], []), same(whole));

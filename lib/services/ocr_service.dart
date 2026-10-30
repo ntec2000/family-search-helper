@@ -89,9 +89,14 @@ class OcrService {
             columnTexts.add((await recognize(await storeImageBytes(columns[j], extension: 'png'),
                 singleColumn: true)).text);
           }
-          final headings = await compute(genealogyOcrColumnHeadings, columns);
-          texts.addAll(assembleOcrEntries(columnTexts, headings: headings));
           rawColumns.add(columnTexts.join('\n'));
+          if (!hasReadableText(columnTexts)) {
+            // 열 단위 인식이 모두 실패해도 해당 세대 전체를 한번 더 읽는다.
+            texts.add((await recognize(await storeImageBytes(regions[i]))).text);
+          } else {
+            final headings = await compute(genealogyOcrColumnHeadings, columns);
+            texts.addAll(assembleOcrEntries(columnTexts, headings: headings));
+          }
         }
       } catch (_) {
         // 구획 하나가 실패하면 일부 누락된 결과로 전체 원문을 대체하지 않는다.
@@ -102,9 +107,12 @@ class OcrService {
   }
 
   /// 구획 결과가 전부 비었다면 읽힌 전체 페이지 결과를 잃지 않는다.
+  static bool hasReadableText(List<String> texts) =>
+      texts.any((text) => text.trim().isNotEmpty);
+
   static OcrResult useSegmentedOrWhole(OcrResult wholePage,
       List<String> regions, List<String> rawColumns) {
-    if (!regions.any((text) => text.trim().isNotEmpty)) return wholePage;
+    if (!hasReadableText(regions)) return wholePage;
     // 구획과 전체 인식은 원문 탭에서 함께 보존한다. 파싱은 구획 결과를 사용한다.
     return OcrResult(text: regions.join('\n'), rawBlocks: wholePage.rawBlocks,
         alternatives: [wholePage.text, ...rawColumns], regionTexts: regions);
