@@ -21,4 +21,14 @@ void main() {
     expect(note, contains('사망 원문(간지·음력): 庚申八月三日卒'));
     expect(p.birthDateSolar, 'about 1847');
   });
+  test('배우자 생몰 간지와 기일 원문을 구분하여 보존한다', () {
+    final p = Person(id: 'p', gender: 'F', spouseBirth: '乙巳年 生',
+      spouseDeath: '忌三月五日');
+    final note = ((FamilySearchRecord.person(p)['notes'] as List).first['text']) as String;
+    expect(note, contains('배우자 출생 간지 한글: 을사년'));
+    expect(note, contains('배우자 출생: 乙巳年 生'));
+    expect(note, contains('배우자 사망: 忌三月五日'));
+    expect(note, isNot(contains('배우자 사망 간지 한글:')));
+  });
+
 }

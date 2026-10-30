@@ -32,6 +32,10 @@ class FamilySearchRecord {
         '출생 간지 한글: $label',
       if (GanzhiYearLabel.fromDate(person.deathDateLunar) case final label?)
         '사망 간지 한글: $label',
+      if (GanzhiYearLabel.fromDate(person.spouseBirth) case final label?)
+        '배우자 출생 간지 한글: $label',
+      if (GanzhiYearLabel.fromDate(person.spouseDeath) case final label?)
+        '배우자 사망 간지 한글: $label',
       if (person.gender == 'M' && (person.spouseHanja?.isNotEmpty == true || person.spouseHangul?.isNotEmpty == true))
         '아내 표시명(실제 개인 이름 아님): ${UnknownSpouseName.wifeDisplayName(person) ?? '미상'}',
       for (final entry in <String, String?>{

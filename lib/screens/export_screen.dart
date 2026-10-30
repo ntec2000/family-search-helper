@@ -96,6 +96,24 @@ class _State extends State<ExportScreen> {
         buf.writeln('  성(姓)    : ${np.surnameHangul} ${np.surnameHanja}');
         buf.writeln('  이름      : (이름 없음 → ${np.singleHangul})');
         buf.writeln('  성별      : 여');
+        if ((p.birthDateSolar ?? p.birthDateLunar ?? '').isNotEmpty) {
+          buf.writeln('  출생      : ${p.birthDateSolar ?? p.birthDateLunar}');
+        }
+        final birthGanzhi = GanzhiYearLabel.fromDate(p.birthDateLunar);
+        if (birthGanzhi != null) buf.writeln('  출생 참고 : ${p.birthDateLunar} ($birthGanzhi)');
+        if ((p.deathDateSolar ?? p.deathDateLunar ?? '').isNotEmpty) {
+          buf.writeln('  사망      : ${p.deathDateSolar ?? p.deathDateLunar}');
+        }
+        final deathGanzhi = GanzhiYearLabel.fromDate(p.deathDateLunar);
+        if (deathGanzhi != null) buf.writeln('  사망 참고 : ${p.deathDateLunar} ($deathGanzhi)');
+        if ((p.spouseBirth ?? '').isNotEmpty) {
+          final label = GanzhiYearLabel.fromDate(p.spouseBirth);
+          buf.writeln('  남편 출생 : ${p.spouseBirth}${label == null ? '' : ' ($label)'}');
+        }
+        if ((p.spouseDeath ?? '').isNotEmpty) {
+          final label = GanzhiYearLabel.fromDate(p.spouseDeath);
+          buf.writeln('  남편 사망 : ${p.spouseDeath}${label == null ? '' : ' ($label)'}');
+        }
         if ((p.spouseHanja ?? '').isNotEmpty) {
           buf.writeln('  사위      : ${dict.toHangul(p.spouseHanja!)} ${p.spouseHanja}'
               '${(p.spouseBongwan ?? '').isNotEmpty ? '   [본관: ${p.spouseBongwan}]' : ''}');
@@ -150,8 +168,14 @@ class _State extends State<ExportScreen> {
       if ((p.spouseHanja ?? '').isNotEmpty) {
         buf.writeln('  배우자    : ${_kh(p.spouseHanja)}'
             '${(p.spouseBongwan ?? '').isNotEmpty ? '   [본관: ${p.spouseBongwan}]' : ''}');
-        if ((p.spouseBirth ?? '').isNotEmpty) buf.writeln('  배우자 생 : ${p.spouseBirth}');
-        if ((p.spouseDeath ?? '').isNotEmpty) buf.writeln('  배우자 졸 : ${p.spouseDeath}');
+      }
+      if ((p.spouseBirth ?? '').isNotEmpty) {
+        final label = GanzhiYearLabel.fromDate(p.spouseBirth);
+        buf.writeln('  배우자 생 : ${p.spouseBirth}${label == null ? '' : ' ($label)'}');
+      }
+      if ((p.spouseDeath ?? '').isNotEmpty) {
+        final label = GanzhiYearLabel.fromDate(p.spouseDeath);
+        buf.writeln('  배우자 졸 : ${p.spouseDeath}${label == null ? '' : ' ($label)'}');
       }
       if (p.marriageDate != null) buf.writeln('  결혼      : ${p.marriageDate}');
       // ── 처가(장인) 계열 — 아내 성씨를 붙여 표기 ──
