@@ -252,7 +252,7 @@ class _ResultScreenState extends State<ResultScreen> {
     }
     final controller = TextEditingController();
     try {
-      final approved = await showDialog<String>(
+      final route = DialogRoute<String>(
         context: context,
         builder: (ctx) => StatefulBuilder(builder: (ctx, refresh) {
           final reference = int.tryParse(controller.text.trim());
@@ -292,6 +292,10 @@ class _ResultScreenState extends State<ResultScreen> {
           );
         }),
       );
+      final approved = await Navigator.of(context).push(route);
+      // pop의 결과는 닫힘 애니메이션보다 먼저 반환될 수 있다.
+      // 입력 필드가 제거된 뒤 컨트롤러를 해제해야 한다.
+      await route.completed;
       if (approved == null || !mounted || _saved || _saving) return;
       setState(() {
         if (death) {
