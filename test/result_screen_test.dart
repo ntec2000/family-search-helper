@@ -12,12 +12,15 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     final p = Person(id: 'woman', gender: 'F', surnameHangul: '윤', nameHangul: '영희');
+    final daughter = Person(id: 'daughter', gender: 'F', surnameHangul: '이',
+        relation: '순서 미상딸');
     await tester.pumpWidget(MaterialApp(home: ResultScreen(
-      rawText: '', persons: [p], imagePath: 'missing-test-image',
+      rawText: '', persons: [p, daughter], imagePath: 'missing-test-image',
     )));
     await tester.pumpAndSettle();
     expect(find.text('여성 (이름: 윤영희)'), findsOneWidget);
     expect(find.text('딸 (이름: 영희)'), findsNothing);
+    expect(find.text('순서 미상딸 (이름: 이씨 (개인 이름 미상))'), findsOneWidget);
   });
 
   for (final size in [const Size(360, 740), const Size(740, 360)]) {
