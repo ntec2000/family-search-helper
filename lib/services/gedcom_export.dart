@@ -31,8 +31,8 @@ class GedcomExport {
     }
 
     // Only link relationships backed by stored person IDs. Never infer family ties.
-    final families = <String, ({String? father, String? mother, List<String> children})>{};
-    final childFamily = <String, String>{};
+    final families = <(String?, String?), ({String? father, String? mother, List<String> children})>{};
+    final childFamily = <String, (String?, String?)>{};
     for (final child in persons) {
       final father = child.fatherId != child.id && ids.containsKey(child.fatherId)
           ? child.fatherId
@@ -41,7 +41,7 @@ class GedcomExport {
           ? child.motherId
           : null;
       if (father == null && mother == null) continue;
-      final key = '${father ?? ''}|${mother ?? ''}';
+      final key = (father, mother);
       final family = families[key];
       if (family == null) {
         families[key] = (father: father, mother: mother, children: <String>[child.id]);
@@ -66,10 +66,10 @@ class GedcomExport {
       final father = first.gender == 'M' ? a : b;
       final mother = first.gender == 'F' ? a : b;
       if (!reviewed.add((father, mother))) throw StateError('중복 부부 관계');
-      final key = '$father|$mother';
+      final key = (father, mother);
       families.putIfAbsent(key, () => (father: father, mother: mother, children: <String>[]));
     }
-    final familyIds = <String, String>{};
+    final familyIds = <(String?, String?), String>{};
     var familyIndex = 0;
     for (final key in families.keys) {
       familyIds[key] = 'F${++familyIndex}';

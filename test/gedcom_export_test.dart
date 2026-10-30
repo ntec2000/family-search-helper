@@ -92,4 +92,22 @@ void main() {
         throwsStateError);
   });
 
+  test('구분자가 포함된 부모 ID도 서로 다른 가족으로 유지한다', () {
+    final ged = GedcomExport.toGedcom([
+      Person(id: 'a|b', gender: 'M'), Person(id: 'c', gender: 'F'),
+      Person(id: 'a', gender: 'M'), Person(id: 'b|c', gender: 'F'),
+      Person(id: 'x', fatherId: 'a|b', motherId: 'c'),
+      Person(id: 'y', fatherId: 'a', motherId: 'b|c'),
+    ], reviewedCouples: [('a|b', 'c'), ('a', 'b|c')]);
+    final families = RegExp(r'0 @F\d+@ FAM\n(?:1 [^\n]*\n)*')
+        .allMatches(ged).map((match) => match.group(0)!).toList();
+    expect(families, hasLength(2));
+    expect(families[0], contains('1 HUSB @Ia_b@'));
+    expect(families[0], contains('1 WIFE @Ic@'));
+    expect(families[0], contains('1 CHIL @Ix@'));
+    expect(families[1], contains('1 HUSB @Ia@'));
+    expect(families[1], contains('1 WIFE @Ib_c@'));
+    expect(families[1], contains('1 CHIL @Iy@'));
+  });
+
 }
