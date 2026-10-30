@@ -133,7 +133,7 @@ class GedcomExport {
       if (p.ho != null) buf.writeln('1 NICK 號 ${p.ho}');
       if (p.bongwan != null) buf.writeln('1 NOTE 本貫: ${p.bongwan}');
       if (p.pa != null) buf.writeln('1 NOTE 派: ${p.pa}');
-      if (p.gender == 'M' && (p.spouseHanja?.isNotEmpty == true || p.spouseHangul?.isNotEmpty == true) && !UnknownSpouseName.hasPersonalNameCandidate(p)) {
+      if (p.gender == 'M' && UnknownSpouseName.hasSpouseEvidence(p) && !UnknownSpouseName.hasPersonalNameCandidate(p)) {
         final label = UnknownSpouseName.wifeDisplayName(p);
         if (label != null) {
           buf.writeln('1 NOTE 아내 표시명(실제 개인 이름 아님): $label');

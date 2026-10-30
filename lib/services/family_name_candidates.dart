@@ -26,9 +26,6 @@ class FamilyNameCandidates {
         placeholder: name.isEmpty && hanja.isEmpty));
     final spouse = value(person.spouseHangul).isNotEmpty
         ? value(person.spouseHangul) : value(person.spouseHanja);
-    final hasSpouseEvidence = [person.spouseBongwan, person.spouseFather,
-      person.spouseMother, person.spouseBirth, person.spouseDeath]
-        .any((field) => value(field).isNotEmpty);
     if (spouse.isNotEmpty) {
       final surnameOnly = spouse.endsWith('씨') || spouse.endsWith('氏');
       final usePlaceholder = person.gender == 'M' && surnameOnly;
@@ -36,7 +33,7 @@ class FamilyNameCandidates {
           ? (UnknownSpouseName.wifeDisplayName(person) ?? spouse) : spouse;
       result.add(FamilyNameCandidate(person.gender == 'F' ? '남편 후보' : '배우자 후보',
           display, person.id, placeholder: usePlaceholder));
-    } else if (person.gender == 'M' && hasSpouseEvidence) {
+    } else if (person.gender == 'M' && UnknownSpouseName.hasSpouseEvidence(person)) {
       final display = UnknownSpouseName.wifeDisplayName(person) ?? '이름 미상';
       result.add(FamilyNameCandidate('배우자 후보', display, person.id,
           placeholder: true));

@@ -123,6 +123,21 @@ void main() {
     expect(person.rawText, '원문');
   });
 
+  test('배우자 이름은 없어도 배우자 기록이 있으면 내보내기 메모에 표시한다', () {
+    final husband = Person(id: 'h', gender: 'M', nameHangul: '홍길동',
+        spouseFather: '光岳');
+    final before = husband.toMap();
+    final notes = (FamilySearchRecord.person(husband)['notes'] as List).first['text'] as String;
+    expect(notes, contains('아내 표시명(실제 개인 이름 아님): 홍길동의 부인'));
+    final gedcom = GedcomExport.toGedcom([husband]);
+    expect(gedcom, contains('1 NOTE 아내 표시명(실제 개인 이름 아님): 홍길동의 부인'));
+    expect(RegExp(r' INDI$', multiLine: true).allMatches(gedcom).length, 1);
+    expect(husband.toMap(), before);
+    final noEvidence = Person(id: 'n', gender: 'M', nameHangul: '홍길동');
+    expect(GedcomExport.toGedcom([noEvidence]), isNot(contains('홍길동의 부인')));
+    expect(FamilySearchRecord.person(noEvidence).toString(), isNot(contains('홍길동의 부인')));
+  });
+
   test('한글 배우자 이름은 JSON과 GEDCOM의 메모에 보존한다', () {
     final p = Person(id: 'p', gender: 'F', surnameHangul: '이',
       spouseHangul: '권구수');
