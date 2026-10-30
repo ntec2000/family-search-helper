@@ -68,6 +68,19 @@ void main() {
     expect(person.sega, 21);
   });
 
+  test('세손과 대손은 세대 수로 자동 확정하지 않는다', () {
+    for (final notation in ['二十一世孫', '21世 孫', '二十一代孫', '二十一世祖']) {
+      final raw = '子格 $notation';
+      final person = JokboParser.parse(raw).single;
+      expect(person.sega, isNull, reason: notation);
+      expect(person.note, contains(notation), reason: notation);
+      expect(person.rawText, contains(notation));
+    }
+    final explicit = JokboParser.parse('子格 二十一世孫 二十二世').single;
+    expect(explicit.sega, 22);
+    expect(explicit.note, contains('二十一世孫'));
+  });
+
   test('聖甲과 성중 불일치는 원문과 메모에 보존한다', () {
     final person = JokboParser.parse('固城李氏 子聖甲 성중 二十二世 甲子生').single;
     expect(person.nameHangul, '성갑');

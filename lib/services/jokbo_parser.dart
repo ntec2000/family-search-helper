@@ -274,8 +274,14 @@ class JokboParser {
     final paeIdx = t.indexOf('配');
     final personPart = paeIdx >= 0 ? t.substring(0, paeIdx) : t;
     final spousePart = paeIdx >= 0 ? t.substring(paeIdx) : '';
-    final segaMatch = RegExp(r'([0-9]+|[一二三四五六七八九十百]+)\s*世').firstMatch(personPart);
+    // 世孫·世祖는 기준 인물과 문중의 셈법이 필요하므로 世로 확정하지 않는다.
+    final segaMatch = RegExp(r'([0-9]+|[一二三四五六七八九十百]+)\s*世(?!\s*[孫祖])')
+        .firstMatch(personPart);
     if (segaMatch != null) person.sega = _segaToInt(segaMatch[1]!);
+    for (final match in RegExp(r'([0-9]+|[一二三四五六七八九十百]+)\s*(?:世|代)\s*[孫祖]')
+        .allMatches(personPart)) {
+      addNote('${match.group(0)} — 기준 인물과 셈법 확인 필요');
+    }
 
     // ── 딸(女): 표기된 한자는 남편(사위) 이름, 딸 본인은 이름이 없으므로
     //    아버지(가문) 성을 따라 "○씨" 로 표기한다. 사위 본관(○○人)도 추출.
