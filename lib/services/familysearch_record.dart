@@ -77,12 +77,27 @@ class FamilySearchRecord {
     };
   }
 
-  static Map<String, dynamic> document(List<Person> persons) {
+  /// 부부 관계는 검토자가 확인한 ID 쌍만 전달한다. OCR 메모에서 추정하지 않는다.
+  static Map<String, dynamic> document(List<Person> persons,
+      {List<(String, String)> reviewedCouples = const []}) {
     final ids = persons.map((p) => p.id).toSet();
     if (ids.length != persons.length) throw StateError('중복 인물 ID');
+    final uniqueCouples = <(String, String)>{};
+    for (final (first, second) in reviewedCouples) {
+      if (first.isEmpty || second.isEmpty || first == second ||
+          !ids.contains(first) || !ids.contains(second)) {
+        throw StateError('부부 관계의 인물 ID를 확인하세요.');
+      }
+      final key = first.compareTo(second) < 0 ? (first, second) : (second, first);
+      if (!uniqueCouples.add(key)) throw StateError('중복 부부 관계');
+    }
     return {
       'persons': persons.map(person).toList(),
       'relationships': [
+        for (final (first, second) in reviewedCouples)
+          {'type': 'http://gedcomx.org/Couple',
+            'person1': {'resource': '#$first'},
+            'person2': {'resource': '#$second'}},
         for (final child in persons)
           for (final parent in [child.fatherId, child.motherId])
             if (parent != null && parent != child.id && ids.contains(parent))
