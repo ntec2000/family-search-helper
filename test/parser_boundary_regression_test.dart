@@ -218,4 +218,14 @@ void main() {
     expect(people.single.surnameHanja, isNull);
   });
 
+  test('첫 표제가 빠진 같은 구획의 배우자 성씨를 다음 인물에 상속하지 않는다', () {
+    const raw = '字君平 壬辰生 坡平尹氏 子核 丁酉生';
+    final people = JokboParser.parse(raw);
+    expect(people, hasLength(1));
+    expect(people.single.nameHanja, '核');
+    expect(people.single.surnameHanja, isNull);
+    expect(people.single.surnameHangul, isNull);
+    expect(JokboParser.unparsedRegions([raw]).single, contains('坡平尹氏'));
+  });
+
 }

@@ -48,13 +48,7 @@ class JokboParser {
   static List<Person> parseRegions(List<String> regions, {String? sourceImagePath,
       String? clanHanjaOverride, String? clanHangulOverride}) {
     if (regions.isEmpty) return [];
-    final first = _normalize(regions.first);
-    final firstPerson = _personBoundary.firstMatch(first);
-    final prefix = (firstPerson == null ? first : first.substring(0, firstPerson.start))
-        .split('配').first;
-    // 표제가 누락된 개인 주석에서 배우자 성씨를 가문 성씨로 삼지 않는다.
-    final clan = RegExp(r'[字號生卒墓忌]').hasMatch(prefix)
-        ? null : Genealogy.detectClanSurname(prefix);
+    final clan = _detectClanFromHeader(_normalize(regions.first));
     return [for (final region in regions) ...parse(region,
       sourceImagePath: sourceImagePath,
       clanHanjaOverride: clanHanjaOverride ?? clan?.$1,
@@ -89,16 +83,23 @@ class JokboParser {
     return result;
   }
 
+  /// 표제 이전에 개인 주석이 있으면 씨 표기를 가문 성씨로 추정하지 않는다.
+  static (String, String)? _detectClanFromHeader(String text) {
+    final firstPerson = _personBoundary.firstMatch(text);
+    final prefix = (firstPerson == null ? text : text.substring(0, firstPerson.start))
+        .split('配').first;
+    if (RegExp(r'[字號生卒墓忌]').hasMatch(prefix)) return null;
+    return Genealogy.detectClanSurname(prefix);
+  }
+
   /// OCR 인식 텍스트(세로쓰기 → 정렬된 평문)를 받아 인물 카드 목록 추출
   static List<Person> parse(String rawText,
       {String? sourceImagePath,
       String? clanHanjaOverride,
       String? clanHangulOverride}) {
     final normalized = _normalize(rawText);
-    // 문서 전체에서 가문(본관) 성씨 자동 감지 — 예: "固城李氏…" → 李/이
-    final firstPerson = RegExp(r'(?<!\S)[子女男]\s*[一-鿿]').firstMatch(normalized);
-    final detected = Genealogy.detectClanSurname(firstPerson == null
-        ? normalized : normalized.substring(0, firstPerson.start));
+    // 문서 표제에서만 가문 성씨를 감지한다.
+    final detected = _detectClanFromHeader(normalized);
     // v2.7 — [족보작성]에서 미리 입력받은 성씨가 있으면 자동 감지보다 우선 적용한다.
     final clanHanja = (clanHanjaOverride != null && clanHanjaOverride.isNotEmpty)
         ? clanHanjaOverride
