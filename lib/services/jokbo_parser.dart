@@ -365,7 +365,7 @@ class JokboParser {
     // ── 配 (배우자/처가 계열) ──
     if (spousePart.isNotEmpty) {
       final pae = RegExp(
-              r'配\s*([一-鿿]{1,4}[郡州府])?\s*([一-鿿]{1,3}氏)')
+              r'配\s*([一-鿿]{1,4}[郡州府])?\s*([一-鿿]{1,8}氏)')
           .firstMatch(spousePart);
       if (pae != null) {
         // 본관이 郡/州/府로 끝나지 않더라도 확인된 조합은 분리한다.

@@ -27,6 +27,8 @@ void main() {
     }
     final ambiguous = JokboParser.parse('子核 配未知南宮氏').single;
     expect(ambiguous.spouseBongwan, isNull);
+    expect(ambiguous.spouseHanja, '未知南宮氏');
+    expect(ambiguous.rawText, contains('配未知南宮氏'));
   });
 
   test('성씨 미상 이름의 첫 글자를 FamilySearch 성씨로 추정하지 않는다', () {
