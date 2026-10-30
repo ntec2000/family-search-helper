@@ -60,4 +60,11 @@ void main() {
     expect(record.containsKey('living'), isFalse);
   });
 
+  test('FamilySearch 자료에 묘 좌향을 보존하고 빈 묘지 사건은 생략한다', () {
+    final record = FamilySearchRecord.person(Person(id: 'p', burialPlace: ' ',
+        burialOrientation: '壬坐'));
+    expect(record['facts'], isEmpty);
+    expect((record['notes'] as List).first['text'], contains('묘 좌향: 壬坐'));
+  });
+
 }

@@ -124,12 +124,14 @@ class GedcomExport {
         if (hasValue(p.deathDateLunar)) buf.writeln('2 NOTE 음력: ${p.deathDateLunar}');
       }
 
-      if (p.burialPlace != null) {
+      if (hasValue(p.burialPlace)) {
         buf.writeln('1 BURI');
         buf.writeln('2 PLAC ${p.burialPlace}');
-        if (p.burialOrientation != null) {
+        if (hasValue(p.burialOrientation)) {
           buf.writeln('2 NOTE 좌향: ${p.burialOrientation}');
         }
+      } else if (hasValue(p.burialOrientation)) {
+        buf.writeln('1 NOTE 묘 좌향: ${p.burialOrientation}');
       }
 
       if (p.ja != null) buf.writeln('1 NICK 字 ${p.ja}');

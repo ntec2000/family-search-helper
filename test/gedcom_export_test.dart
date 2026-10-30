@@ -90,6 +90,18 @@ void main() {
     expect(original, isNot(contains('2 DATE ')));
   });
 
+  test('묘지 미상이어도 기록된 좌향은 메모에 보존한다', () {
+    final output = GedcomExport.toGedcom([
+      Person(id: 'p', burialPlace: ' ', burialOrientation: '壬坐'),
+    ]);
+    expect(output, contains('1 NOTE 묘 좌향: 壬坐'));
+    expect(output, isNot(contains('1 BURI')));
+    final withPlace = GedcomExport.toGedcom([
+      Person(id: 'q', burialPlace: '謹峴', burialOrientation: '壬坐'),
+    ]);
+    expect(withPlace, contains('1 BURI\n2 PLAC 謹峴\n2 NOTE 좌향: 壬坐'));
+  });
+
   test('duplicate person IDs are rejected', () {
     expect(
       () => GedcomExport.toGedcom(<Person>[
