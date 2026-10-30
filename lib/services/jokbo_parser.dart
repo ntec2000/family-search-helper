@@ -368,7 +368,7 @@ class JokboParser {
     }
     // 忌(기일) — 연도 미상, 월·일만
     final gi = RegExp(
-            r'忌\s*([零一二三四五六七八九十百○]{1,3}月[零一二三四五六七八九十○]{1,3}日)')
+            r'忌\s*([正冬臘閏零一二三四五六七八九十百○0-9]{1,4}月\s*[初廿卅零一二三四五六七八九十○0-9]{1,4}日)')
         .firstMatch(personPart);
     if (gi != null && person.deathDateLunar == null) {
       person.deathDateLunar = '忌 ${gi.group(1)} (연도 미상)';

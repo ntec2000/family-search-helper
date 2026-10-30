@@ -63,6 +63,17 @@ void main() {
     expect(person.birthDateSolar, isNull);
   });
 
+  test('본인 기일은 정월과 윤달 원문을 보존하고 사망 연도를 만들지 않는다', () {
+    for (final date in ['正月初十日', '閏四月初五日', '冬月廿三日']) {
+      final person = JokboParser.parse('子核 忌$date').single;
+      expect(person.deathDateLunar, '忌 $date (연도 미상)', reason: date);
+      expect(person.deathDateSolar, isNull);
+      expect(person.rawText, contains('忌$date'));
+    }
+    final person = JokboParser.parse('子核 庚午年卒 忌正月初十日').single;
+    expect(person.deathDateLunar, contains('庚午'));
+  });
+
   test('배우자 세대 표기를 본인 세대로 가져오지 않는다', () {
     final person = JokboParser.parse('子格 二十一世 配豊壤趙氏 二十二世').single;
     expect(person.sega, 21);
