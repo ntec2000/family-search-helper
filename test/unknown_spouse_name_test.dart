@@ -46,6 +46,18 @@ void main() {
         nameHangul: '홍길동', spouseHanja: '金氏')), '김씨');
   });
 
+  test('기존 성씨 사전을 사용하고 불명확한 복성은 추측하지 않는다', () {
+    final wife = Person(id: 'h', gender: 'M', spouseHanja: '交河盧氏',
+        spouseHangul: '교하노씨', spouseBongwan: '交河');
+    expect(UnknownSpouseName.wifeDisplayName(wife), '노씨');
+    expect(UnknownSpouseName.wifeDisplayName(Person(id: 'm', gender: 'M',
+        spouseHanja: '原州元氏')), '원씨');
+    expect(UnknownSpouseName.wifeDisplayName(Person(id: 'c', gender: 'M',
+        spouseHanja: '未知南宮氏')), '未知南宮氏');
+    expect(UnknownSpouseName.wifeDisplayName(Person(id: 'd', gender: 'M',
+        spouseHanja: '咸悅南宮氏', spouseBongwan: '咸悅')), '남궁씨');
+  });
+
   test('FamilySearch: 성씨 표시명은 메모로만 내보낸다', () {
     final husband = Person(id: 'h', gender: 'M', nameHangul: '홍길동',
         spouseHanja: '坡平尹氏', spouseBongwan: '坡平');
