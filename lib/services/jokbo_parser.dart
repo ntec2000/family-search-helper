@@ -55,6 +55,29 @@ class JokboParser {
       clanHangulOverride: clanHangulOverride ?? clan?.$2)];
   }
 
+  /// 구획에서 인물로 분류되지 않은 부분을 검토용으로 남긴다.
+  /// 이름이 판독된 인물과 미분류 표제가 같은 구획에 있어도 누락하지 않는다.
+  static List<String> unparsedRegions(List<String> regions) {
+    final result = <String>[];
+    for (final region in regions) {
+      if (region.trim().isEmpty) continue;
+      final blocks = _splitByPerson(_normalize(region));
+      if (blocks.isEmpty) {
+        result.add(region);
+        continue;
+      }
+      final originals = _splitByPerson(region);
+      for (var i = 0; i < blocks.length; i++) {
+        if (_parsePersonBlock(blocks[i]) != null) continue;
+        final original = originals.length == blocks.length &&
+            _normalize(originals[i]).trim() == blocks[i].trim()
+            ? originals[i] : blocks[i];
+        result.add(original);
+      }
+    }
+    return result;
+  }
+
   /// OCR 인식 텍스트(세로쓰기 → 정렬된 평문)를 받아 인물 카드 목록 추출
   static List<Person> parse(String rawText,
       {String? sourceImagePath,

@@ -182,4 +182,18 @@ void main() {
     expect(people[1].rawText, second);
   });
 
+  test('인식된 인물과 미분류 표제가 같은 구획에 있어도 검토 대상으로 남긴다', () {
+    const region = '子格 字君平\n子甲子生\n子核 字君實';
+    final people = JokboParser.parseRegions([region]);
+    final unresolved = JokboParser.unparsedRegions([region]);
+    expect(people.map((p) => p.nameHanja), ['格', '核']);
+    expect(unresolved, hasLength(1));
+    expect(unresolved.single, contains('子甲子生'));
+    expect(unresolved.single, isNot(contains('君實')));
+  });
+  test('인물 표제가 전혀 없는 구획도 그대로 검토 대상으로 남긴다', () {
+    const raw = 'm炳直\n 出系';
+    expect(JokboParser.unparsedRegions([raw]), [raw]);
+  });
+
 }

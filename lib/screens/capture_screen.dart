@@ -283,12 +283,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
       if (!mounted) return;
       setState(() => _status = '족보 정보 분석 중...');
       final regions = ocr.regionTexts.isEmpty ? [ocr.text] : ocr.regionTexts;
-      final unparsedRegions = <String>[];
-      for (final region in regions) {
-        if (region.trim().isNotEmpty && JokboParser.parse(region).isEmpty) {
-          unparsedRegions.add(region);
-        }
-      }
+      final unparsedRegions = JokboParser.unparsedRegions(regions);
       final persons = JokboParser.parseRegions(
         regions,
         // OCR 전처리본은 인식용이고, 결과가 가리키는 출처는 사용자의 원본이다.
