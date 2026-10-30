@@ -83,15 +83,14 @@ class OcrService {
         if (columns.isEmpty) {
           texts.add((await recognize(await storeImageBytes(regions[i]))).text);
         } else {
-          final columnTexts = <String>[];
-          for (var j = 0; j < columns.length; j++) {
+          final columnTexts = await readColumnsOrNull(columns.length, (j) async {
             onProgress?.call('구획 ${i + 1}/${regions.length} · 세로 열 ${j + 1}/${columns.length} 인식 중...');
-            columnTexts.add((await recognize(await storeImageBytes(columns[j], extension: 'png'),
-                singleColumn: true)).text);
-          }
-          rawColumns.add(columnTexts.join('\n'));
-          if (!hasReadableText(columnTexts)) {
-            // 열 단위 인식이 모두 실패해도 해당 세대 전체를 한번 더 읽는다.
+            return (await recognize(await storeImageBytes(columns[j], extension: 'png'),
+                singleColumn: true)).text;
+          });
+          if (columnTexts != null) rawColumns.add(columnTexts.join('\n'));
+          if (columnTexts == null || !hasReadableText(columnTexts)) {
+            // 열 인식 실패 시 부분 결과를 버리고 해당 세대 전체를 다시 읽는다.
             texts.add((await recognize(await storeImageBytes(regions[i]))).text);
           } else {
             final headings = await compute(genealogyOcrColumnHeadings, columns);
@@ -109,6 +108,20 @@ class OcrService {
   /// 구획 결과가 전부 비었다면 읽힌 전체 페이지 결과를 잃지 않는다.
   static bool hasReadableText(List<String> texts) =>
       texts.any((text) => text.trim().isNotEmpty);
+
+  /// 일부 열의 예외는 부분 결과를 사용하지 않고 구획 재인식을 요청한다.
+  static Future<List<String>?> readColumnsOrNull(
+      int count, Future<String> Function(int) readColumn) async {
+    final texts = <String>[];
+    try {
+      for (var i = 0; i < count; i++) {
+        texts.add(await readColumn(i));
+      }
+      return texts;
+    } catch (_) {
+      return null;
+    }
+  }
 
   /// 선택하지 않은 전체 페이지 OCR도 사용자가 원문 비교에 활용할 수 있다.
   static OcrResult retainWholePageAlternatives(OcrResult processed, OcrResult original) {

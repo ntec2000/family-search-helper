@@ -9,6 +9,17 @@ void main() {
     expect(OcrService.hasReadableText(['', '子格']), isTrue);
   });
 
+  test('세로열 하나가 실패하면 부분 OCR을 구획 결과로 사용하지 않는다', () async {
+    final failed = await OcrService.readColumnsOrNull(3, (index) async {
+      if (index == 1) throw StateError('OCR 실패');
+      return '子格';
+    });
+    expect(failed, isNull);
+    final success = await OcrService.readColumnsOrNull(2,
+        (index) async => ['子格', '字君平'][index]);
+    expect(success, ['子格', '字君平']);
+  });
+
   test('구획 인식이 모두 비면 전체 페이지 OCR을 보존한다', () {
     final whole = result('子格 字君平');
     expect(OcrService.useSegmentedOrWhole(whole, ['', '  \n'], []), same(whole));
