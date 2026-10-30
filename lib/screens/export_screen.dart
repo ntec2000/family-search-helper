@@ -7,6 +7,7 @@ import '../services/db_service.dart';
 import '../services/gedcom_export.dart';
 import '../services/ganzhi_year_label.dart';
 import '../services/female_name_display.dart';
+import '../services/spouse_parent_text.dart';
 import '../services/familysearch_record.dart';
 import '../services/hanja_dict.dart';
 import '../services/genealogy.dart';
@@ -124,6 +125,9 @@ class _State extends State<ExportScreen> {
               '${(p.spouseBongwan ?? '').isNotEmpty ? '   [본관: ${p.spouseBongwan}]' : ''}');
         } else if ((p.spouseBongwan ?? '').isNotEmpty) {
           buf.writeln('  사위      : $femaleName의 남편 (이름 미상)   [지역: ${p.spouseBongwan}人]');
+        }
+        for (final parent in SpouseParentText.lines(p)) {
+          buf.writeln('  $parent');
         }
         if ((p.note ?? '').isNotEmpty) buf.writeln('  특이사항  : ${p.note}');
         buf.writeln();
