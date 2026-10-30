@@ -13,6 +13,22 @@ void main() {
     expect(person.surnameHanja, isNull);
   });
 
+  test('확인된 배우자 본관을 원문에서 분리하고 인물별 기록을 보존한다', () {
+    final cases = <String, String>{
+      '坡平尹氏': '坡平', '豊壤趙氏': '豊壤', '豐壤趙氏': '豐壤',
+      '交河盧氏': '交河', '務安朴氏': '務安',
+    };
+    for (final entry in cases.entries) {
+      final raw = '子核 配${entry.key} 父光岳';
+      final person = JokboParser.parse(raw).single;
+      expect(person.spouseBongwan, entry.value, reason: raw);
+      expect(person.spouseHanja, entry.key, reason: raw);
+      expect(person.rawText, contains(entry.key));
+    }
+    final ambiguous = JokboParser.parse('子核 配未知南宮氏').single;
+    expect(ambiguous.spouseBongwan, isNull);
+  });
+
   test('성씨 미상 이름의 첫 글자를 FamilySearch 성씨로 추정하지 않는다', () {
     final person = JokboParser.parse('子金秀').single;
     final record = FamilySearchRecord.person(person);

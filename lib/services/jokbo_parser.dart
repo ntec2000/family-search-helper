@@ -368,7 +368,16 @@ class JokboParser {
               r'配\s*([一-鿿]{1,4}[郡州府])?\s*([一-鿿]{1,3}氏)')
           .firstMatch(spousePart);
       if (pae != null) {
-        person.spouseBongwan = pae.group(1);
+        // 본관이 郡/州/府로 끝나지 않더라도 확인된 조합은 분리한다.
+        // 그 밖의 붙여 쓴 표기는 임의로 마지막 글자를 성씨로 확정하지 않는다.
+        const verifiedClans = <String, String>{
+          '坡平尹氏': '坡平',
+          '豊壤趙氏': '豊壤',
+          '豐壤趙氏': '豐壤',
+          '交河盧氏': '交河',
+          '務安朴氏': '務安',
+        };
+        person.spouseBongwan = pae.group(1) ?? verifiedClans[pae.group(2)];
         person.spouseHanja = pae.group(2);
         person.spouseHangul = dict.toHangul(pae.group(2)!);
         // 아내는 이름을 거의 기록하지 않으므로 본관+성씨를 메모에 보존
