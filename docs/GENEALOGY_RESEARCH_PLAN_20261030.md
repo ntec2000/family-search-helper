@@ -4,8 +4,8 @@
 
 - [한국고문헌종합목록 상세검색](https://www.nl.go.kr/korcis/search/advanced.do): 표제, 저자, 발행연도, 판종, 제어번호와 원문 여부로 검색할 수 있다. 본관·성씨와 족보 이름의 한글·한자 표기를 각각 검색하고 서명, 권차, 판본, 소장기관, 청구기호, 페이지를 기록한다. 실제 원문 접근 조건은 각 자료에서 확인한다.
 - [성균관대학교 한국족보자료시스템](https://jokbo.skku.edu/intro/jokbo_story.jsp): 범례와 서·발문, 분파도, 자손록 및 별도 이름, 배우자, 입양의 기록 방식을 대조한다. 판본별 범례가 우선이며 같은 용어도 문맥이 다를 수 있다.
-- [FamilySearch 중국 조사 안내](https://www.familysearch.org/en/help/helpcenter/chinese-research)와 [중국 족보 검색 안내](https://www.familysearch.org/en/help/helpcenter/article/find-chinese-jiapu): 족보 검색에 성씨, 지역, 시조, 사당, 항렬시를 활용한다. 일부 중국 기록은 접근이 일시 중지되었다는 기관 안내가 있으므로 결과별 접근 가능 여부를 확인한다.
-- [싱가포르 국립도서관의 중국 족보 해설](https://biblioasia.nlb.gov.sg/all-sections/vol-9-issue-4-jan-march-2014-jiapu-chinese-family-lineage/): 족보에는 서문, 범례, 계보, 묘지와 이주 등의 내용이 포함될 수 있다. 책의 구조를 확인한 뒤 인물 부분을 분석한다.
+- 사용자가 제공한 부천 족보도서관 저장본은 계자, 출계, 생부, 무후 등의 용어를 설명한다. 저장본의 현재 운영 상태와 원문 주소는 추가 확인이 필요하다.
+- [FamilySearch 한국 가족 역사 자료](https://www.familysearch.org/ko/korea/training): 한국 족보의 구성과 읽기, 직계 조상 찾기 교육자료를 제공한다.
 - [FamilySearch GEDCOM 안내](https://www.familysearch.org/en/help/helpcenter/article/how-do-i-copy-information-from-my-gedcom-file-into-family-tree): GEDCOM 가져오기 후 중복 가능성이 있으므로 사용자가 비교하고 확인해야 한다. 파일 내보내기가 FamilySearch 자동 동기화를 의미하지는 않는다.
 
 ## 구현 우선순위
@@ -13,12 +13,18 @@
 1. 인물·관계·날짜의 오인식 방지: OCR 원문과 수정값을 분리하고, 본문·배우자·사위 문맥과 책의 범례를 함께 검토한다. 판독 불가 항목은 미확정으로 남긴다.
 2. 자료 근거: 책 제목, 판본, 권·쪽, 소장처, URL과 이미지 영역을 인물 및 각 주장에 연결하는 데이터 모델을 설계한다. 기존 데이터의 호환성과 이관 방식을 검토한 뒤 구현한다.
 3. 도서관 검색: 직접 검색 링크와 검색어 도움말을 우선 제공한다. 기관별 API 제공 여부, 인증, 사용 조건 및 검색 결과의 재사용 허용 범위를 확인하기 전에는 자동 수집이나 통합 검색을 약속하지 않는다.
-4. 중국 자료: 번체·간체·이체자 및 지역별 이름과 세로쓰기 형식을 별도로 평가한다. 항렬시는 탐색 단서로만 제공하고 성씨나 항렬만으로 같은 사람 또는 친족이라고 확정하지 않는다. 중국 자료용 정답셋과 저작권 확인 자료가 필요하다.
+4. 국내 족보 판독: 족보도서관 용어와 각 족보의 범례를 대조하고 無后 등 관계 해석이 필요한 표기를 원문과 함께 검토한다. 중국 자료 적용은 이번 단계의 범위에서 제외한다.
 5. 중복 검토: 이름, 가족, 시대, 지역과 근거를 나란히 보여 주되 사용자가 판단한다. 자동 병합하거나 확정 관계를 덮어쓰지 않는다.
 6. 사용성: 큰 글자와 충분한 터치 영역, 원문 확대, 검토 대기 수, 근거 표시, 수정 취소와 저장 결과 안내를 우선한다. 실제 모바일·PC 환경과 접근성 검사로 확인한다.
 
 ## 검증 기준
 
 - 실제 원본과 사람이 검토한 정답을 페이지별로 나누고 인물 검출의 정밀도·재현율, 필드별 정확도, 관계 오류를 별도 측정한다. 한자 문자열 검출률을 인물 인식률로 보고하지 않는다.
-- 한국·중국 자료와 서로 다른 판형을 별도로 평가하고 이름 미상, 양자, 다른 이름, 간지 날짜, 인접 인물 혼입을 회귀 검증한다.
+- 국내 족보의 서로 다른 판형을 별도로 평가하고 이름 미상, 양자, 다른 이름, 간지 날짜, 인접 인물 혼입을 회귀 검증한다.
 - Android, iOS, 웹에서 입력·검토·저장·복원·내보내기를 실제로 점검한다. 기기나 빌드 환경이 없으면 미검증으로 표시한다.
+
+## FamilySearch 연동 확인
+
+- 기존 앱에는 GEDCOM 내보내기와 신규 인물 등록 코드가 있으나 실제 운영 API 접속이나 서비스 인증 완료는 확인되지 않았다. 운영 API에는 [FamilySearch 앱 승인 및 호환 절차](https://developers.familysearch.org/main/docs/getting-started)가 필요하다.
+- 기존 공유 트리로 GEDCOM 자료를 옮기는 경로에서는 [출처·메모·미디어가 함께 이전되지 않는다고 안내](https://www.familysearch.org/en/help/helpcenter/article/what-happens-to-information-uploaded-from-a-gedcom-file)한다. 별도 원문과 근거를 보관하고 개별 기록에서 확인한다.
+- FamilySearch는 [새 GEDCOM 업로드 방식](https://www.familysearch.org/en/help/helpcenter/article/the-new-gedcom-upload-experience)을 도입 중이다. 표시되는 실제 절차와 기존 안내의 차이를 확인하고 특정 방식이 모든 계정에 적용된다고 가정하지 않는다.

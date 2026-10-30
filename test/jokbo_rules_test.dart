@@ -196,6 +196,18 @@ void main() {
     }
   });
 
+  test('무후 표기는 본인 기록에서만 검토 메모로 보존한다', () {
+    for (final marker in ['無后', '无后', '無後']) {
+      final raw = '子格 $marker';
+      final person = JokboParser.parse(raw).single;
+      expect(person.note, contains(marker), reason: marker);
+      expect(person.rawText, contains(raw));
+      expect(person.childrenIds, isEmpty);
+    }
+    final person = JokboParser.parse('子格 配坡平尹氏 無后').single;
+    expect(person.note ?? '', isNot(contains('無后')));
+  });
+
   test('이름만 있는 본손도 성과 이름을 분리하여 내보낸다', () {
     final person = JokboParser.parse('固城李氏 子顯五 庚午生').single;
     expect(GedcomExport.toGedcom([person]), contains('1 NAME 현오 /이/'));

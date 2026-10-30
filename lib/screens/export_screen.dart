@@ -456,10 +456,16 @@ class _State extends State<ExportScreen> {
               child: ListTile(
                 leading: const Icon(Icons.account_tree, color: HanjiColors.muk),
                 title: const Text('GEDCOM 5.5.1 (.ged)'),
-                subtitle: const Text('FamilySearch · Ancestry · MyHeritage 호환'),
+                subtitle: const Text('가계도 파일 · 서비스별 가져오기와 자료 전달 범위 확인'),
                 trailing: const Icon(Icons.download),
                 onTap: _exportGedcom,
               ),
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: Text('FamilySearch에서 GEDCOM을 올린 뒤 기존 인물과 비교해 주세요. '
+                  '공유 패밀리 트리로 옮길 때 출처·메모·사진은 자동 이전되지 않을 수 있으므로 '
+                  '원문을 보관하고 해당 기록에서 직접 확인하세요.'),
             ),
             const SizedBox(height: 8),
             Card(

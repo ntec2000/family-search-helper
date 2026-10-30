@@ -358,6 +358,12 @@ class JokboParser {
       addNote('生父 표기 — 생부 이름과 관계 원문 확인 필요');
     }
 
+    // 무후는 후사에 관한 기록으로, 자녀의 존재 여부를 확정하지 않는다.
+    final noHeir = RegExp(r'[無无]\s*[後后]').firstMatch(personPart);
+    if (noHeir != null) {
+      addNote('${noHeir.group(0)} 표기 — 후사 관련 원문 확인 필요');
+    }
+
     // 별도 이름은 본명과 구별하여 후보 메모로만 남긴다.
     for (final match in RegExp(
         r'(初名|初諱|一名|兒名|異名)\s*([一-鿿]{1,3}?)(?=\s|$|[、。:：;；,，.!?！？]|[字號配生卒墓忌])')
