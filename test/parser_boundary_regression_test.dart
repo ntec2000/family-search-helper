@@ -228,4 +228,14 @@ void main() {
     expect(JokboParser.unparsedRegions([raw]).single, contains('坡平尹氏'));
   });
 
+  test('女夫 사위 표기는 임의의 딸이나 남편 이름으로 확정하지 않는다', () {
+    for (final label in ['女夫李集', '女 夫李集']) {
+      final raw = '子格 字君平\n$label\n子核 字君實';
+      final people = JokboParser.parseRegions([raw]);
+      expect(people.map((p) => p.nameHanja), ['格', '核'], reason: label);
+      expect(people.every((p) => p.spouseHanja == null), isTrue);
+      expect(JokboParser.unparsedRegions([raw]).any((region) => region.contains(label)), isTrue);
+    }
+  });
+
 }

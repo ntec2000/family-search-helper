@@ -220,6 +220,10 @@ class JokboParser {
           (person.note == null || person.note!.isEmpty) ? v : '${person.note} / $v';
     }
 
+    // 女夫는 일부 옛 족보의 사위 표기다. 女 다음 이름으로 확정하지 않고
+    // 원문을 미분류 구획에 남겨 대상 딸과의 관계를 검토한다.
+    if (RegExp(r'^女\s*夫').hasMatch(t)) return null;
+
     // 성별 + (차례) + 이름: 子/女 [차례한자] 이름(한자 1~3자)
     // 子/男=아들, 女=딸 + (차례) + 이름(한자 1~3자)
     final nameMatch =
