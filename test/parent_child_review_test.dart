@@ -109,6 +109,16 @@ void main() {
     expect(child.fatherId, '顯五');
   });
 
+  test('출계 표기 변형은 부모를 바꾸지 않고 검토 대상으로 표시한다', () {
+    for (final marker in ['出系', '出后', '出繼', '出 系']) {
+      final child = person('承勳', 23);
+      child.note = marker;
+      child.fatherId = '顯五';
+      expect(ParentChildReview.hasAdoptionAnnotation(child), isTrue);
+      expect(child.fatherId, '顯五');
+    }
+  });
+
   test('unlink and restore preserves confirmed relationship', () {
     final father = person('核', 21);
     final child = person('顯五', 22);

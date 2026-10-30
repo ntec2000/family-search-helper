@@ -96,6 +96,19 @@ void main() {
     expect(json.containsKey('living'), isFalse);
   });
 
+  test('출계 표기 변형은 원문과 후보로 보존하고 배우자 기록과 구분한다', () {
+    for (final marker in ['出系', '出后', '出繼', '出 系']) {
+      final person = JokboParser.parse('子承勳 $marker').single;
+      expect(person.note, contains(marker.replaceAll(' ', '')));
+      expect(person.rawText, contains(marker));
+      expect(person.fatherId, isNull);
+      expect(person.motherId, isNull);
+    }
+    final person = JokboParser.parse('子承勳 配坡平尹氏 出后').single;
+    expect(person.note ?? '', isNot(contains('出后')));
+    expect(person.rawText, contains('出后'));
+  });
+
   test('이름만 있는 본손도 성과 이름을 분리하여 내보낸다', () {
     final person = JokboParser.parse('固城李氏 子顯五 庚午生').single;
     expect(GedcomExport.toGedcom([person]), contains('1 NAME 현오 /이/'));

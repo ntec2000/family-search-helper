@@ -308,11 +308,19 @@ class JokboParser {
     person.nameHanja = headName;
     person.nameHangul = dict.toHangul(headName);
 
-    // 出系(출계, 양자로 나감): "出系 ○○后" → 특이사항 메모
-    final chulgye = RegExp(r'出\s*系\s*([一-鿿]{2,4})\s*后').firstMatch(t);
+    // 출계·출후·출계(繼) 표기는 본인 기록에서만 찾는다.
+    // 대상이 없거나 불분명해도 표지를 보존하고 관계는 자동 생성하지 않는다.
+    final chulgye = RegExp(r'出\s*([系后繼])').firstMatch(personPart);
     if (chulgye != null) {
-      final who = chulgye.group(1)!;
-      addNote('出系 $who后 — ${dict.toHangul(who)}의 후사(後嗣)로 출계(양자)');
+      final marker = '出${chulgye.group(1)}';
+      final afterMarker = personPart.substring(chulgye.end);
+      final target = RegExp(r'^\s*([一-鿿]{2,4})\s*后').firstMatch(afterMarker);
+      if (target != null) {
+        final who = target.group(1)!;
+        addNote('$marker $who后 — ${dict.toHangul(who)}의 후사(後嗣)로 출계(양자)');
+      } else {
+        addNote('$marker — 출계 표기, 대상 원문 확인 필요');
+      }
     }
 
     // 字 / 號 / 諡號 (본인부에서만). 字는 본명이 아닌 관례명이므로 메모에도 기록.

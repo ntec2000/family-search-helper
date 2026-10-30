@@ -12,12 +12,12 @@ class GenealogyCandidate {
 class GenealogyNameClassifier {
   static const annotations = <String>{
     '子', '配', '父', '祖', '曾祖', '外祖', '字', '號',
-    '生', '卒', '忌', '墓', '出系', '世', '同知', '判官',
+    '生', '卒', '忌', '墓', '出系', '出后', '出繼', '世', '同知', '判官',
   };
 
   static GenealogyCandidate classify(String input, {String? fatherSurname}) {
     final value = input.trim();
-    if (annotations.contains(value) || value.startsWith('出系') ||
+    if (annotations.contains(value) || RegExp(r'^出\s*[系后繼]').hasMatch(value) ||
         value.startsWith('墓') || value.startsWith('字')) {
       return GenealogyCandidate(value, value, GenealogyCandidateType.annotation,
           '족보 기록 표지이며 사람 이름이 아닙니다.');
