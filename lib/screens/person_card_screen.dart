@@ -5,6 +5,7 @@ import '../services/db_service.dart';
 import '../services/hanja_dict.dart';
 import '../services/romanizer.dart';
 import '../services/genealogy.dart';
+import '../services/place_display.dart';
 import '../services/unknown_spouse_name.dart';
 import '../theme/traditional_theme.dart';
 
@@ -150,8 +151,8 @@ class _PersonCardScreenState extends State<PersonCardScreen> {
     if (_p == null) return;
     final d = HanjaDict.instance;
     final p = _p!;
-    final birthPlace = p.birthPlace ?? Genealogy.defaultPlace;
-    final deathPlace = p.deathPlace ?? Genealogy.defaultPlace;
+    final birthPlace = placeDisplay(p.birthPlace);
+    final deathPlace = placeDisplay(p.deathPlace);
     final txt = StringBuffer()
       ..writeln('━━ 가족역사기록서 입력용 ━━')
       ..writeln('이름: ${p.nameHangul} ${p.nameHanja} ${p.nameRoman}')
@@ -231,9 +232,9 @@ class _PersonCardScreenState extends State<PersonCardScreen> {
                 ]),
                 _section('출생·사망 정보'),
                 _row(_birth, '출생일 (추정 시 "대략 ○○○○")'),
-                _row(_birthPlace, '출생지 (미상 시 ${Genealogy.defaultPlace})'),
+                _row(_birthPlace, '출생지 (모르면 비워두기)'),
                 _row(_death, '사망일 (추정 가능 시 "대략 ○○○○")'),
-                _row(_deathPlace, '사망지 (미상 시 ${Genealogy.defaultPlace})'),
+                _row(_deathPlace, '사망지 (모르면 비워두기)'),
                 _row(_burial, '매장지 (墓)', annotate: true),
                 _section('가족 정보'),
                 _row(_marriage, '결혼일'),
