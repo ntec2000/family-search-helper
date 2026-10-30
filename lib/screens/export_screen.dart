@@ -6,6 +6,7 @@ import '../models/person.dart';
 import '../services/db_service.dart';
 import '../services/gedcom_export.dart';
 import '../services/ganzhi_year_label.dart';
+import '../services/female_name_display.dart';
 import '../services/familysearch_record.dart';
 import '../services/hanja_dict.dart';
 import '../services/genealogy.dart';
@@ -90,11 +91,15 @@ class _State extends State<ExportScreen> {
             hanja: '', hangul: '',
             surnameHanja: p.surnameHanja, surnameHangul: p.surnameHangul,
             isFemale: true);
-        final dauRel = (p.relation ?? '').isNotEmpty ? p.relation! : '딸';
+        final dauRel = (p.relation ?? '').isNotEmpty ? p.relation! : '여성';
+        final femaleName = FemaleNameDisplay.forPerson(p);
+        final hasPersonalName = p.nameHangul.trim().isNotEmpty || p.nameHanja.trim().isNotEmpty;
         buf.writeln(div);
-        buf.writeln('${i + 1}. $segaTag$dauRel (이름: ${np.singleHangul})');
+        buf.writeln('${i + 1}. $segaTag$dauRel (이름: $femaleName)');
         buf.writeln('  성(姓)    : ${np.surnameHangul} ${np.surnameHanja}');
-        buf.writeln('  이름      : (이름 없음 → ${np.singleHangul})');
+        buf.writeln(hasPersonalName
+            ? '  이름      : $femaleName${p.nameHangul.trim().isNotEmpty && p.nameHanja.trim().isNotEmpty ? ' ${p.nameHanja}' : ''}'
+            : '  이름      : (이름 없음 → $femaleName)');
         buf.writeln('  성별      : 여');
         if ((p.birthDateSolar ?? p.birthDateLunar ?? '').isNotEmpty) {
           buf.writeln('  출생      : ${p.birthDateSolar ?? p.birthDateLunar}');
@@ -118,7 +123,7 @@ class _State extends State<ExportScreen> {
           buf.writeln('  사위      : ${dict.toHangul(p.spouseHanja!)} ${p.spouseHanja}'
               '${(p.spouseBongwan ?? '').isNotEmpty ? '   [본관: ${p.spouseBongwan}]' : ''}');
         } else if ((p.spouseBongwan ?? '').isNotEmpty) {
-          buf.writeln('  사위      : ${np.singleHangul}의 남편 (이름 미상)   [지역: ${p.spouseBongwan}人]');
+          buf.writeln('  사위      : ${femaleName}의 남편 (이름 미상)   [지역: ${p.spouseBongwan}人]');
         }
         if ((p.note ?? '').isNotEmpty) buf.writeln('  특이사항  : ${p.note}');
         buf.writeln();
