@@ -42,4 +42,22 @@ void main() {
     expect(notes, contains('사망 원문(간지·음력): 庚申八月三日 卒'));
   });
 
+  test('빈 양력 날짜 대신 입력된 간지 원문을 유지한다', () {
+    final person = Person(id: 'p', birthDateSolar: ' ', birthDateLunar: '丁未生',
+        deathDateSolar: '', deathDateLunar: '庚申卒');
+    final record = FamilySearchRecord.person(person);
+    final facts = record['facts'] as List;
+    expect(facts[0]['date']['original'], '丁未生');
+    expect(facts[1]['date']['original'], '庚申卒');
+    expect(person.birthDateSolar, ' ');
+    expect(person.deathDateSolar, '');
+  });
+
+  test('빈 날짜와 장소만 있으면 빈 생몰 기록을 만들지 않는다', () {
+    final record = FamilySearchRecord.person(Person(id: 'p',
+        birthDateSolar: '', birthPlace: ' ', deathDateLunar: ' ', deathPlace: ''));
+    expect(record['facts'], isEmpty);
+    expect(record.containsKey('living'), isFalse);
+  });
+
 }

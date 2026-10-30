@@ -5,6 +5,13 @@ import 'ganzhi_year_label.dart';
 /// 전송과 파일 내보내기에서 같은 성/이름·원문 날짜 필드를 사용한다.
 class FamilySearchRecord {
   static Map<String, dynamic> person(Person person) {
+    String? firstNonBlank(String? first, String? second) {
+      if (first?.trim().isNotEmpty == true) return first;
+      if (second?.trim().isNotEmpty == true) return second;
+      return null;
+    }
+    final birthDate = firstNonBlank(person.birthDateSolar, person.birthDateLunar);
+    final deathDate = firstNonBlank(person.deathDateSolar, person.deathDateLunar);
     final surnameHangul = person.surnameHangul ?? '';
     final surnameHanja = person.surnameHanja ?? '';
     String given(String full, String surname) => surname.isNotEmpty &&
@@ -62,15 +69,14 @@ class FamilySearchRecord {
     };
     return {
       'id': person.id,
-      if (person.deathDateSolar?.isNotEmpty == true ||
-          person.deathDateLunar?.isNotEmpty == true) 'living': false,
+      if (deathDate != null) 'living': false,
       'gender': {'type': 'http://gedcomx.org/${person.gender == 'M' ? 'Male' : person.gender == 'F' ? 'Female' : 'Unknown'}'},
       if (forms.isNotEmpty) 'names': [{'type': 'http://gedcomx.org/BirthName', 'nameForms': forms}],
       'facts': [
-        if (person.birthDateSolar != null || person.birthDateLunar != null || person.birthPlace != null)
-          fact('Birth', person.birthDateSolar ?? person.birthDateLunar, person.birthPlace),
-        if (person.deathDateSolar != null || person.deathDateLunar != null || person.deathPlace != null)
-          fact('Death', person.deathDateSolar ?? person.deathDateLunar, person.deathPlace),
+        if (birthDate != null || person.birthPlace?.trim().isNotEmpty == true)
+          fact('Birth', birthDate, person.birthPlace),
+        if (deathDate != null || person.deathPlace?.trim().isNotEmpty == true)
+          fact('Death', deathDate, person.deathPlace),
         if (person.burialPlace != null) fact('Burial', null, person.burialPlace),
       ],
       if (notes.isNotEmpty) 'notes': [{'text': notes.join('\n')}],
