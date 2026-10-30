@@ -251,6 +251,9 @@ class _ResultScreenState extends State<ResultScreen> {
       return;
     }
     final controller = TextEditingController();
+    final ganzhi = RegExp(r'([甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥])')
+        .firstMatch(source ?? '')?.group(1);
+    final candidates = ganzhi == null ? <int>[] : LunarService.estimateYearsFromInput(ganzhi);
     try {
       final route = DialogRoute<String>(
         context: context,
@@ -266,6 +269,8 @@ class _ResultScreenState extends State<ResultScreen> {
               children: [
                 Text('족보 원문: ${source ?? "없음"}'),
                 Text('세대: ${person.sega?.toString() ?? "미상"}'),
+                if (candidates.isNotEmpty)
+                  Text('가능한 간지 연도 (1700~2100): ${candidates.join(', ')}'),
                 TextField(
                   controller: controller,
                   keyboardType: TextInputType.number,

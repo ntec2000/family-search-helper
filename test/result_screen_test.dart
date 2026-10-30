@@ -136,6 +136,8 @@ void main() {
     await tester.tap(find.text('만세력 사망 연도 추정'));
     await tester.pumpAndSettle();
     expect(find.text('사망 연도 추정 검토'), findsOneWidget);
+    expect(find.textContaining('가능한 간지 연도 (1700~2100):'), findsOneWidget);
+    expect(find.textContaining('1920'), findsOneWidget);
     await tester.enterText(find.byType(TextField).last, '1920');
     await tester.pumpAndSettle();
     expect(find.textContaining('about 1920'), findsOneWidget);
