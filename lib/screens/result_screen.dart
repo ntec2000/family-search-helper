@@ -253,13 +253,15 @@ class _ResultScreenState extends State<ResultScreen> {
     final controller = TextEditingController();
     final ganzhi = LunarService.explicitYearGanzhi(source ?? '');
     final candidates = ganzhi == null ? <int>[] : LunarService.estimateYearsFromInput(ganzhi);
+    int? selectedYear;
     try {
       final route = DialogRoute<String>(
         context: context,
         builder: (ctx) => StatefulBuilder(builder: (ctx, refresh) {
           final reference = int.tryParse(controller.text.trim());
-          final proposal = LunarService.approximateYear(
-              source ?? '', referenceYear: reference);
+          final proposal = reference == null ? null : selectedYear != null
+              ? 'about $selectedYear'
+              : LunarService.approximateYear(source ?? '', referenceYear: reference);
           return AlertDialog(
             title: Text('$label 연도 추정 검토'),
             content: SingleChildScrollView(child: Column(
@@ -279,6 +281,16 @@ class _ResultScreenState extends State<ResultScreen> {
                   ),
                   onChanged: (_) => refresh(() {}),
                 ),
+                if (candidates.isNotEmpty)
+                  DropdownButtonFormField<int>(
+                    initialValue: selectedYear,
+                    decoration: const InputDecoration(labelText: '연도 직접 선택 (선택 사항)'),
+                    hint: const Text('선택하지 않으면 가까운 연도 제안'),
+                    items: [for (final year in candidates)
+                      DropdownMenuItem(value: year, child: Text('$year'))],
+                    onChanged: reference == null ? null :
+                        (value) => refresh(() => selectedYear = value),
+                  ),
                 const SizedBox(height: 12),
                 Text('후보: ${proposal ?? "간지·기준 연도를 확인하세요"}'),
                 const Text('60갑자는 반복됩니다. 추정 연도는 확정값이 아닙니다. 같은 거리의 후보가 둘이면 연도를 제안하지 않습니다.'),
@@ -309,7 +321,7 @@ class _ResultScreenState extends State<ResultScreen> {
         }
         person.reasonStatement = [
           if (person.reasonStatement?.isNotEmpty == true) person.reasonStatement!,
-          '$label 간지 ${source ?? ""}, 검토자가 입력한 기준 연도 ${controller.text.trim()}년에서 추정: $approved',
+          '$label 간지 ${source ?? ""}, 검토자가 입력한 기준 연도 ${controller.text.trim()}년에서 ${selectedYear == null ? "추정" : "후보 직접 선택"}: $approved',
         ].join('\n');
         _relationshipsReviewed = false;
       });

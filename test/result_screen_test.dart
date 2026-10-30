@@ -150,4 +150,33 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('동일 거리의 두 간지 연도 중 검토자가 직접 선택할 수 있다', (tester) async {
+    tester.view.physicalSize = const Size(1200, 1100);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final person = Person(id: 'p', nameHanja: '甲順', gender: 'M',
+      deathDateLunar: '庚戌卒');
+    await tester.pumpWidget(MaterialApp(home: ResultScreen(
+      rawText: '원문', persons: [person], imagePath: 'missing-test-image')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('인물 작업 메뉴 · 인물 아님 제외').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('만세력 사망 연도 추정'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).last, '1880');
+    await tester.pumpAndSettle();
+    expect(find.textContaining('간지·기준 연도를 확인하세요'), findsOneWidget);
+    await tester.tap(find.text('선택하지 않으면 가까운 연도 제안'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('1910').last);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('후보: about 1910'), findsOneWidget);
+    await tester.tap(find.text('승인'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('사망 서기 about 1910'), findsOneWidget);
+    expect(person.deathDateSolar, isNull);
+    expect(tester.takeException(), isNull);
+  });
+
 }
