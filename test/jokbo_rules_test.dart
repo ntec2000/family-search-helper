@@ -138,6 +138,17 @@ void main() {
     expect(spouse.note ?? '', isNot(contains('입양 표기 후보')));
   });
 
+  test('생부 표기는 원문을 유지하고 부모 관계를 자동 연결하지 않는다', () {
+    final person = JokboParser.parse('子承勳 系子 生父鈴').single;
+    expect(person.note, contains('生父 표기'));
+    expect(person.rawText, contains('生父鈴'));
+    expect(person.fatherId, isNull);
+    expect(person.motherId, isNull);
+    final spouse = JokboParser.parse('子承勳 配坡平尹氏 生父光岳').single;
+    expect(spouse.note ?? '', isNot(contains('生父 표기')));
+    expect(spouse.rawText, contains('生父光岳'));
+  });
+
   test('이름만 있는 본손도 성과 이름을 분리하여 내보낸다', () {
     final person = JokboParser.parse('固城李氏 子顯五 庚午生').single;
     expect(GedcomExport.toGedcom([person]), contains('1 NAME 현오 /이/'));

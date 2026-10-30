@@ -340,6 +340,11 @@ class JokboParser {
       addNote('${adoptedIn.group(1)}子 — 입양 표기 후보, 관계 원문 확인 필요');
     }
 
+    // 生父는 양부와 구별이 필요하다. 이름과 관계는 원문 확인 전 확정하지 않는다.
+    if (RegExp(r'生\s*父').hasMatch(personPart)) {
+      addNote('生父 표기 — 생부 이름과 관계 원문 확인 필요');
+    }
+
     // 字 / 號 / 諡號 (본인부에서만). 字는 본명이 아닌 관례명이므로 메모에도 기록.
     final ja = RegExp(r'字\s*([一-鿿]{1,3}?)(?=\s|$|[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]|[配生卒墓忌號娶出系])').firstMatch(personPart);
     if (ja != null) {
