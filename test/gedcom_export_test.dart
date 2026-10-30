@@ -112,6 +112,12 @@ void main() {
     );
   });
 
+  test('한 사람을 아버지와 어머니에 중복 지정하면 내보내기를 차단한다', () {
+    final people = [Person(id: 'parent'),
+      Person(id: 'child', fatherId: 'parent', motherId: 'parent')];
+    expect(() => GedcomExport.toGedcom(people), throwsStateError);
+  });
+
   test('검토한 자녀 없는 부부도 하나의 가족으로 내보낸다', () {
     final people = [Person(id: 'a', gender: 'M'), Person(id: 'b', gender: 'F')];
     final ged = GedcomExport.toGedcom(people, reviewedCouples: [('b', 'a')]);

@@ -35,6 +35,10 @@ class GedcomExport {
     final families = <(String?, String?), ({String? father, String? mother, List<String> children})>{};
     final childFamily = <String, (String?, String?)>{};
     for (final child in persons) {
+      if (child.fatherId != null && child.fatherId == child.motherId &&
+          ids.containsKey(child.fatherId)) {
+        throw StateError('같은 인물이 아버지와 어머니로 지정되어 있습니다.');
+      }
       final father = child.fatherId != child.id && ids.containsKey(child.fatherId)
           ? child.fatherId
           : null;

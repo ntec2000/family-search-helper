@@ -45,6 +45,11 @@ class _State extends State<ExportScreen> {
           Uint8List.fromList(utf8.encode(json)),
           mimeType: 'application/json', name: filename)],
           fileNameOverrides: [filename]);
+    } on StateError catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('내보내기 전 확인: ${error.message}')));
+      }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -70,10 +75,10 @@ class _State extends State<ExportScreen> {
         XFile.fromData(Uint8List.fromList(utf8.encode(ged)),
             mimeType: 'text/plain', name: filename),
       ], fileNameOverrides: [filename], subject: '가족역사기록 GEDCOM');
-    } on StateError {
+    } on StateError catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('인물 ID 또는 부부 관계의 성별을 확인해 주세요.')),
+        SnackBar(content: Text('내보내기 전 확인: ${error.message}')),
       );
     } catch (_) {
       if (!mounted) return;

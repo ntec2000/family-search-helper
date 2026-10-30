@@ -20,6 +20,11 @@ void main() {
     final people = [Person(id: 'a', spouseHangul: '조씨'), Person(id: 'b')];
     expect(FamilySearchRecord.document(people)['relationships'], isEmpty);
   });
+  test('같은 인물이 양쪽 부모인 경우 중복 부모 관계를 내보내지 않는다', () {
+    final people = [Person(id: 'parent'),
+      Person(id: 'child', fatherId: 'parent', motherId: 'parent')];
+    expect(() => FamilySearchRecord.document(people), throwsStateError);
+  });
   test('자기 자신, 누락 ID, 역순 중복 관계를 거부한다', () {
     final people = [Person(id: 'a'), Person(id: 'b')];
     for (final couples in <List<(String, String)>>[

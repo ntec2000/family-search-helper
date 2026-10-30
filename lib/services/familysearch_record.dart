@@ -90,6 +90,12 @@ class FamilySearchRecord {
       {List<(String, String)> reviewedCouples = const []}) {
     final ids = persons.map((p) => p.id).toSet();
     if (ids.length != persons.length) throw StateError('중복 인물 ID');
+    for (final child in persons) {
+      if (child.fatherId != null && child.fatherId == child.motherId &&
+          ids.contains(child.fatherId)) {
+        throw StateError('같은 인물이 아버지와 어머니로 지정되어 있습니다.');
+      }
+    }
     final uniqueCouples = <(String, String)>{};
     for (final (first, second) in reviewedCouples) {
       if (first.isEmpty || second.isEmpty || first == second ||
