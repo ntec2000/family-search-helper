@@ -57,7 +57,11 @@ class LunarService {
       final db = (b - referenceYear).abs();
       return da != db ? da.compareTo(db) : a.compareTo(b);
     });
-    if ((candidates.first - referenceYear).abs() > maxDistance) return null;
+    final nearestDistance = (candidates.first - referenceYear).abs();
+    if (nearestDistance > maxDistance) return null;
+    // 동일하게 가까운 연도가 둘이면 어느 쪽인지 알 수 없다.
+    if (candidates.length > 1 &&
+        (candidates[1] - referenceYear).abs() == nearestDistance) return null;
     return 'about ${candidates.first}';
   }
 

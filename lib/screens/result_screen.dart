@@ -277,7 +277,7 @@ class _ResultScreenState extends State<ResultScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text('후보: ${proposal ?? "간지·기준 연도를 확인하세요"}'),
-                const Text('60갑자는 반복됩니다. 추정 연도는 확정값이 아닙니다.'),
+                const Text('60갑자는 반복됩니다. 추정 연도는 확정값이 아닙니다. 같은 거리의 후보가 둘이면 연도를 제안하지 않습니다.'),
               ],
             )),
             actions: [

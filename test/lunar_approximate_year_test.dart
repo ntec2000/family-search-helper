@@ -22,6 +22,12 @@ void main() {
           referenceYear: 1880, maxDistance: 10), isNull);
     });
 
+    test('기준 연도가 두 후보의 중간이면 어느 연도도 확정하지 않는다', () {
+      expect(LunarService.approximateYear('庚戌生', referenceYear: 1880), isNull);
+      expect(LunarService.approximateYear('庚戌生', referenceYear: 1879), 'about 1850');
+      expect(LunarService.approximateYear('庚戌生', referenceYear: 1881), 'about 1910');
+    });
+
     test('세대 차이로 about 연도 계산', () {
       expect(LunarService.approximateYearByGeneration(
           ancestorBirthYear: 950,
