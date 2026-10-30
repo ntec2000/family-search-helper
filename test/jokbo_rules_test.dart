@@ -149,6 +149,20 @@ void main() {
     expect(spouse.note ?? '', isNot(contains('입양 표기 후보')));
   });
 
+  test('독립 구획의 계자 이름을 후보로 읽고 원문과 입양 표기를 보존한다', () {
+    for (final marker in ['系子', '繼子', '系 子']) {
+      final raw = '$marker 承勳 生父鈴';
+      final person = JokboParser.parseRegions([raw]).single;
+      expect(person.nameHanja, '承勳', reason: marker);
+      expect(person.note, contains('입양 표기 후보'));
+      expect(person.note, contains('生父 표기'));
+      expect(person.rawText, raw);
+      expect(person.fatherId, isNull);
+    }
+    expect(JokboParser.parseRegions(['系子 生父鈴']), isEmpty);
+    expect(JokboParser.unparsedRegions(['系子 生父鈴']), isNotEmpty);
+  });
+
   test('생부 표기는 원문을 유지하고 부모 관계를 자동 연결하지 않는다', () {
     final person = JokboParser.parse('子承勳 系子 生父鈴').single;
     expect(person.note, contains('生父 표기'));

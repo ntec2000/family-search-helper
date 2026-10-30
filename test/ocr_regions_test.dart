@@ -26,6 +26,15 @@ void main() {
     }
   });
 
+  test('계자 이름 표제는 앞 인물의 주석과 합치지 않는다', () {
+    final entries = assembleOcrEntries(['子格', '字君平', '系子承勳', '生父鈴']);
+    expect(entries, ['子格 字君平', '系子承勳 生父鈴']);
+    final people = JokboParser.parseRegions(entries);
+    expect(people.map((p) => p.nameHanja), ['格', '承勳']);
+    expect(people.first.rawText, isNot(contains('生父')));
+    expect(people.last.note, contains('입양 표기 후보'));
+  });
+
   test('224쪽 표제가 누락된 열은 다른 인물의 배우자로 합치지 않는다', () {
     final entries = assembleOcrEntries([
       '子昃', '字良甫丁未生',

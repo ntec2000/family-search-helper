@@ -155,7 +155,8 @@ class JokboParser {
     return s;
   }
 
-  static final _personBoundary = RegExp(r'(?<!\S)(?=[子女男](?!坐|向|孫|女|男)\s*[一-鿿])');
+  static final _personBoundary = RegExp(
+      r'(?<!\S)(?=[子女男](?!坐|向|孫|女|男)\s*[一-鿿])|^(?=[系繼]\s*子\s*(?![生卒字配墓忌父祖])[一-鿿])');
 
   static List<String> _splitByPerson(String text) {
     // 子 가 干支(甲子·壬子 등)의 일부일 때는 분리하지 않는다(앞 글자가 天干이면 제외)
@@ -166,7 +167,8 @@ class JokboParser {
     final parts = text.split(_personBoundary).where((s) => s.trim().isNotEmpty).toList();
     return parts.where((p) {
       final t = p.trim();
-      return t.startsWith('子') || t.startsWith('女') || t.startsWith('男');
+      return t.startsWith('子') || t.startsWith('女') || t.startsWith('男') ||
+          RegExp(r'^[系繼]\s*子').hasMatch(t);
     }).toList();
   }
 
@@ -227,7 +229,7 @@ class JokboParser {
     // 성별 + (차례) + 이름: 子/女 [차례한자] 이름(한자 1~3자)
     // 子/男=아들, 女=딸 + (차례) + 이름(한자 1~3자)
     final nameMatch =
-        RegExp('^([子女男])\\s*([一二三四五六七八九十]+)?\\s*([一-鿿]{1,3}?)(?=\\s|\$|[、。:：;；,，.!?！？「」-]|[出字配生卒墓忌號娶贈系]|[$_gan][$_ji](?:年|[一二三四五六七八九十正閏0-9]|生|卒)|[一二三四五六七八九十百0-9]+世)')
+        RegExp('^([子女男]|[系繼]\\s*子)\\s*([一二三四五六七八九十]+)?\\s*([一-鿿]{1,3}?)(?=\\s|\$|[、。:：;；,，.!?！？「」-]|[出字配生卒墓忌號娶贈系]|[$_gan][$_ji](?:年|[一二三四五六七八九十正閏0-9]|生|卒)|[一二三四五六七八九十百0-9]+世)')
             .firstMatch(t);
     if (nameMatch == null) return null;
     final isFemale = nameMatch.group(1) == '女';
