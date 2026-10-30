@@ -323,6 +323,13 @@ class JokboParser {
       }
     }
 
+    // 입양되어 들어온 기록은 출계와 구분하며 부모 관계를 추측하지 않는다.
+    final adoptedIn = RegExp(r'(?<!出)([系繼])\s*子').firstMatch(personPart);
+    if (adoptedIn != null &&
+        !RegExp(r'出\s*$').hasMatch(personPart.substring(0, adoptedIn.start))) {
+      addNote('${adoptedIn.group(1)}子 — 입양 표기 후보, 관계 원문 확인 필요');
+    }
+
     // 字 / 號 / 諡號 (본인부에서만). 字는 본명이 아닌 관례명이므로 메모에도 기록.
     final ja = RegExp(r'字\s*([一-鿿]{1,3}?)(?=\s|$|[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]|[配生卒墓忌號娶出系])').firstMatch(personPart);
     if (ja != null) {

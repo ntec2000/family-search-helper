@@ -3,7 +3,7 @@ import 'package:family_search_helper/services/genealogy_name_classifier.dart';
 
 void main() {
   test('metadata is not a person', () {
-    for (final text in ['父', '祖', '墓', '出系 顯龍后', '出后', '出繼', '字君平']) {
+    for (final text in ['父', '祖', '墓', '出系 顯龍后', '出后', '出繼', '系子', '繼子', '字君平']) {
       expect(GenealogyNameClassifier.classify(text).type,
           GenealogyCandidateType.annotation);
     }

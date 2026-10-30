@@ -119,6 +119,16 @@ void main() {
     }
   });
 
+  test('계자 기록도 기존 부모를 변경하지 않고 검토 대상으로 표시한다', () {
+    for (final marker in ['系子', '繼子', '系 子']) {
+      final child = person('承勳', 23);
+      child.note = marker;
+      child.fatherId = '顯五';
+      expect(ParentChildReview.hasAdoptionAnnotation(child), isTrue);
+      expect(child.fatherId, '顯五');
+    }
+  });
+
   test('unlink and restore preserves confirmed relationship', () {
     final father = person('核', 21);
     final child = person('顯五', 22);

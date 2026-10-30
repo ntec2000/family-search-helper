@@ -178,7 +178,7 @@ class ParentChildReview {
   }
 
   static bool hasAdoptionAnnotation(Person person) =>
-      RegExp(r'出\s*[系后繼]').hasMatch(person.note ?? '');
+      RegExp(r'出\s*[系后繼]|(?<!出)[系繼]\s*子').hasMatch(person.note ?? '');
 
   static void restoreReviewedLink(Person parent, Person child) {
     if (parent.gender == 'M' && (child.fatherId == null || child.fatherId == parent.id)) {

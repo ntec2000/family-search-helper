@@ -109,6 +109,22 @@ void main() {
     expect(person.rawText, contains('出后'));
   });
 
+  test('계자 표기는 입양 후보로 기록하고 출계와 부모 관계를 혼동하지 않는다', () {
+    for (final marker in ['系子', '繼子', '系 子']) {
+      final person = JokboParser.parse('子承勳 $marker').single;
+      expect(person.note, contains(marker.replaceAll(' ', '')));
+      expect(person.note, contains('입양 표기 후보'));
+      expect(person.note ?? '', isNot(contains('출계 표기')));
+      expect(person.rawText, contains(marker));
+      expect(person.fatherId, isNull);
+      expect(person.motherId, isNull);
+    }
+    final out = JokboParser.parse('子承勳 出 系子').single;
+    expect(out.note ?? '', isNot(contains('입양 표기 후보')));
+    final spouse = JokboParser.parse('子承勳 配坡平尹氏 系子').single;
+    expect(spouse.note ?? '', isNot(contains('입양 표기 후보')));
+  });
+
   test('이름만 있는 본손도 성과 이름을 분리하여 내보낸다', () {
     final person = JokboParser.parse('固城李氏 子顯五 庚午生').single;
     expect(GedcomExport.toGedcom([person]), contains('1 NAME 현오 /이/'));
