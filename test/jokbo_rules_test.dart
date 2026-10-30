@@ -175,7 +175,7 @@ void main() {
   });
 
   test('초명 등 다른 이름은 본명과 구분하고 원문을 보존한다', () {
-    for (final marker in ['初名', '一名', '兒名', '異名']) {
+    for (final marker in ['初名', '初諱', '一名', '兒名', '異名']) {
       final raw = '子格$marker元吉 配坡平尹氏';
       final person = JokboParser.parse(raw).single;
       expect(person.nameHanja, '格', reason: marker);
