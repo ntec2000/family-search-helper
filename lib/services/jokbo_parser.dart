@@ -233,7 +233,7 @@ class JokboParser {
     if (RegExp(r'^女\s*夫').hasMatch(t)) return null;
 
     // 본명 없이 별명 표지만 있는 표제는 인물 이름으로 확정하지 않는다.
-    if (RegExp(r'^([子男]|[系繼]\s*子)\s*(?:[一二三四五六七八九十]+\s+)?(?:初名|初諱|一名|兒名|異名)(?=\s|$)').hasMatch(t)) {
+    if (RegExp(r'^([子男]|[系繼]\s*子)\s*(?:[一二三四五六七八九十]+\s*)?(?:初名|初諱|一名|兒名|異名)(?=\s|$)').hasMatch(t)) {
       return null;
     }
 

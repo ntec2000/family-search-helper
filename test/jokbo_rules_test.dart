@@ -189,6 +189,9 @@ void main() {
   test('본명이나 별도 이름이 없으면 표지와 생부를 이름으로 만들지 않는다', () {
     for (final marker in ['初名', '初諱', '一名', '兒名', '異名']) {
       expect(JokboParser.parse('子$marker 字君平'), isEmpty, reason: marker);
+      expect(JokboParser.parse('子二$marker 字君平'), isEmpty, reason: marker);
+      expect(JokboParser.unparsedRegions(['子二$marker 字君平']), isNotEmpty,
+          reason: marker);
       final raw = '子格 $marker 生父鈴';
       final person = JokboParser.parse(raw).single;
       expect(person.note ?? '', isNot(contains('$marker 生父鈴')), reason: marker);
