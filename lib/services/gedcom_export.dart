@@ -5,6 +5,7 @@ import 'unknown_spouse_name.dart';
 class GedcomExport {
   static String toGedcom(List<Person> persons,
       {List<(String, String)> reviewedCouples = const []}) {
+    bool hasValue(String? value) => value?.trim().isNotEmpty == true;
     final buf = StringBuffer();
     buf.writeln('0 HEAD');
     buf.writeln('1 SOUR FamilySearchHelper');
@@ -107,20 +108,20 @@ class GedcomExport {
       }
       buf.writeln('1 SEX ${p.gender}');
 
-      if (p.birthDateSolar != null || p.birthDateLunar != null ||
-          (p.birthPlace?.trim().isNotEmpty ?? false)) {
+      if (hasValue(p.birthDateSolar) || hasValue(p.birthDateLunar) ||
+          hasValue(p.birthPlace)) {
         buf.writeln('1 BIRT');
-        if (p.birthDateSolar != null) buf.writeln('2 DATE ${p.birthDateSolar}');
-        if (p.birthPlace != null) buf.writeln('2 PLAC ${p.birthPlace}');
-        if (p.birthDateLunar != null) buf.writeln('2 NOTE 음력: ${p.birthDateLunar}');
+        if (hasValue(p.birthDateSolar)) buf.writeln('2 DATE ${p.birthDateSolar}');
+        if (hasValue(p.birthPlace)) buf.writeln('2 PLAC ${p.birthPlace}');
+        if (hasValue(p.birthDateLunar)) buf.writeln('2 NOTE 음력: ${p.birthDateLunar}');
       }
 
-      if (p.deathDateSolar != null || p.deathDateLunar != null ||
-          (p.deathPlace?.trim().isNotEmpty ?? false)) {
+      if (hasValue(p.deathDateSolar) || hasValue(p.deathDateLunar) ||
+          hasValue(p.deathPlace)) {
         buf.writeln('1 DEAT');
-        if (p.deathDateSolar != null) buf.writeln('2 DATE ${p.deathDateSolar}');
-        if (p.deathPlace != null) buf.writeln('2 PLAC ${p.deathPlace}');
-        if (p.deathDateLunar != null) buf.writeln('2 NOTE 음력: ${p.deathDateLunar}');
+        if (hasValue(p.deathDateSolar)) buf.writeln('2 DATE ${p.deathDateSolar}');
+        if (hasValue(p.deathPlace)) buf.writeln('2 PLAC ${p.deathPlace}');
+        if (hasValue(p.deathDateLunar)) buf.writeln('2 NOTE 음력: ${p.deathDateLunar}');
       }
 
       if (p.burialPlace != null) {

@@ -75,6 +75,21 @@ void main() {
     expect(empty, isNot(contains('1 DEAT')));
   });
 
+  test('공백 생몰 날짜는 사건이나 빈 DATE를 만들지 않는다', () {
+    final output = GedcomExport.toGedcom([
+      Person(id: 'empty', birthDateSolar: ' ', birthDateLunar: '',
+          deathDateSolar: '', deathDateLunar: ' '),
+    ]);
+    expect(output, isNot(contains('1 BIRT')));
+    expect(output, isNot(contains('1 DEAT')));
+    expect(output, isNot(contains('2 DATE ')));
+    final original = GedcomExport.toGedcom([
+      Person(id: 'lunar', birthDateSolar: ' ', birthDateLunar: '丁未生'),
+    ]);
+    expect(original, contains('1 BIRT\n2 NOTE 음력: 丁未生'));
+    expect(original, isNot(contains('2 DATE ')));
+  });
+
   test('duplicate person IDs are rejected', () {
     expect(
       () => GedcomExport.toGedcom(<Person>[
