@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 import '../models/person.dart';
 import '../services/db_service.dart';
 import '../services/gedcom_export.dart';
+import '../services/ganzhi_year_label.dart';
 import '../services/familysearch_record.dart';
 import '../services/hanja_dict.dart';
 import '../services/genealogy.dart';
@@ -131,12 +132,16 @@ class _State extends State<ExportScreen> {
       if (p.ja != null) buf.writeln('  字(자)    : ${_kh(p.ja)}');
       if (p.ho != null) buf.writeln('  號(호)    : ${_kh(p.ho)}');
       buf.writeln('  출생      : ${p.birthDateSolar ?? p.birthDateLunar ?? '알 수 없음'}');
+      final birthGanzhi = GanzhiYearLabel.fromDate(p.birthDateLunar);
+      if (birthGanzhi != null) buf.writeln('  출생 참고 : ${p.birthDateLunar} ($birthGanzhi)');
       buf.writeln('  출생지    : ${p.birthPlace?.trim().isNotEmpty == true ? p.birthPlace : '알 수 없음'}');
       final deathDate = p.deathDateSolar ?? p.deathDateLunar ?? '';
       if (deathDate.isNotEmpty) {
         buf.writeln('  사망      : $deathDate');
         buf.writeln('  사망지    : ${p.deathPlace?.trim().isNotEmpty == true ? p.deathPlace : '알 수 없음'}');
       }
+      final deathGanzhi = GanzhiYearLabel.fromDate(p.deathDateLunar);
+      if (deathGanzhi != null) buf.writeln('  사망 참고 : ${p.deathDateLunar} ($deathGanzhi)');
       if (p.burialPlace != null) {
         final ori = p.burialOrientation != null ? ' (${p.burialOrientation})' : '';
         buf.writeln('  매장      : ${_kh(p.burialPlace)}$ori');

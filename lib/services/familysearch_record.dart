@@ -1,5 +1,6 @@
 import '../models/person.dart';
 import 'unknown_spouse_name.dart';
+import 'ganzhi_year_label.dart';
 
 /// 전송과 파일 내보내기에서 같은 성/이름·원문 날짜 필드를 사용한다.
 class FamilySearchRecord {
@@ -27,6 +28,10 @@ class FamilySearchRecord {
     ];
     final notes = <String>[
       if (!givenKnown) '개인 이름 미상. 성씨만 기록됨.',
+      if (GanzhiYearLabel.fromDate(person.birthDateLunar) case final label?)
+        '출생 간지 한글: $label',
+      if (GanzhiYearLabel.fromDate(person.deathDateLunar) case final label?)
+        '사망 간지 한글: $label',
       if (person.gender == 'M' && (person.spouseHanja?.isNotEmpty == true || person.spouseHangul?.isNotEmpty == true))
         '아내 표시명(실제 개인 이름 아님): ${UnknownSpouseName.wifeDisplayName(person) ?? '미상'}',
       for (final entry in <String, String?>{
