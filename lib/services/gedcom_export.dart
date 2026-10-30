@@ -107,14 +107,16 @@ class GedcomExport {
       }
       buf.writeln('1 SEX ${p.gender}');
 
-      if (p.birthDateSolar != null || p.birthDateLunar != null) {
+      if (p.birthDateSolar != null || p.birthDateLunar != null ||
+          (p.birthPlace?.trim().isNotEmpty ?? false)) {
         buf.writeln('1 BIRT');
         if (p.birthDateSolar != null) buf.writeln('2 DATE ${p.birthDateSolar}');
         if (p.birthPlace != null) buf.writeln('2 PLAC ${p.birthPlace}');
         if (p.birthDateLunar != null) buf.writeln('2 NOTE 음력: ${p.birthDateLunar}');
       }
 
-      if (p.deathDateSolar != null || p.deathDateLunar != null) {
+      if (p.deathDateSolar != null || p.deathDateLunar != null ||
+          (p.deathPlace?.trim().isNotEmpty ?? false)) {
         buf.writeln('1 DEAT');
         if (p.deathDateSolar != null) buf.writeln('2 DATE ${p.deathDateSolar}');
         if (p.deathPlace != null) buf.writeln('2 PLAC ${p.deathPlace}');

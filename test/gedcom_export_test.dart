@@ -61,6 +61,20 @@ void main() {
     expect(output, isNot(contains('0 @I')));
   });
 
+  test('날짜를 모르는 출생지와 사망지도 내보내고 날짜는 만들지 않는다', () {
+    final output = GedcomExport.toGedcom([
+      Person(id: 'p', birthPlace: '경주', deathPlace: '서울'),
+    ]);
+    expect(output, contains('1 BIRT\n2 PLAC 경주\n'));
+    expect(output, contains('1 DEAT\n2 PLAC 서울\n'));
+    expect(output, isNot(contains('2 DATE ')));
+    final empty = GedcomExport.toGedcom([
+      Person(id: 'empty', birthPlace: ' ', deathPlace: ''),
+    ]);
+    expect(empty, isNot(contains('1 BIRT')));
+    expect(empty, isNot(contains('1 DEAT')));
+  });
+
   test('duplicate person IDs are rejected', () {
     expect(
       () => GedcomExport.toGedcom(<Person>[
