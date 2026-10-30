@@ -30,7 +30,8 @@ def main():
     parser.add_argument("--tessdata", required=True)
     parser.add_argument("--language", default="chi_tra_vert")
     parser.add_argument("--names", required=True, help="Local JSON array of distinct reference names")
-    parser.add_argument("--bands", help="Local JSON array of [top, bottom] pixel coordinates")
+    parser.add_argument("--bands", action="append", default=[],
+                        help="Local JSON array of [top, bottom] pixel coordinates; repeat to compare")
     args = parser.parse_args()
     with open(args.names, encoding="utf-8") as source:
         names = json.load(source)
@@ -46,8 +47,8 @@ def main():
         return img.resize((img.width * 2, img.height * 2), Image.Resampling.LANCZOS)
 
     variants = {"original": [image], "scaled_2x": [scaled(image)]}
-    if args.bands:
-        with open(args.bands, encoding="utf-8") as source:
+    for band_index, bands_path in enumerate(args.bands):
+        with open(bands_path, encoding="utf-8") as source:
             bands = json.load(source)
         if not isinstance(bands, list) or not bands:
             parser.error("bands must be a non-empty JSON array")
@@ -60,7 +61,8 @@ def main():
             if not 0 <= top < bottom <= image.height:
                 parser.error("band coordinates must be within the image")
             crops.append(scaled(image.crop((0, top, image.width, bottom))))
-        variants["manual_bands_scaled_2x"] = crops
+        label = "manual_bands_scaled_2x" if band_index == 0 else f"manual_bands_{band_index + 1}_scaled_2x"
+        variants[label] = crops
     results = {}
     for label, images in variants.items():
         lines = [line for part in images for line in recognize(part, args.tessdata, args.language)]
@@ -71,8 +73,15 @@ def main():
             "found_count": len(found),
             "reference_count": len(names),
         }
+    for label, result in results.items():
+        other_names = {name for other_label, other in results.items()
+                       if other_label != label for name in other["found"]}
+        result["only_in_this_variant"] = [name for name in result["found"]
+                                          if name not in other_names]
+    any_found = [name for name in names if any(name in result["found"] for result in results.values())]
     print(json.dumps({"image_size": [image.width, image.height],
                       "measure": "exact reference strings within one OCR line; not person accuracy",
+                      "found_in_any_variant": any_found,
                       "results": results}, ensure_ascii=False, indent=2))
 
 
