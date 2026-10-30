@@ -251,8 +251,7 @@ class _ResultScreenState extends State<ResultScreen> {
       return;
     }
     final controller = TextEditingController();
-    final ganzhi = RegExp(r'([甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥])')
-        .firstMatch(source ?? '')?.group(1);
+    final ganzhi = LunarService.explicitYearGanzhi(source ?? '');
     final candidates = ganzhi == null ? <int>[] : LunarService.estimateYearsFromInput(ganzhi);
     try {
       final route = DialogRoute<String>(

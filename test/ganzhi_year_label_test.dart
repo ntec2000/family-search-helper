@@ -9,6 +9,8 @@ void main() {
     expect(GanzhiYearLabel.fromDate('庚申八月三日卒'), '경신년');
     expect(GanzhiYearLabel.fromDate('忌三月五日'), isNull);
     expect(GanzhiYearLabel.fromDate('甲丑生'), isNull);
+    expect(GanzhiYearLabel.fromDate('庚申日'), isNull);
+    expect(GanzhiYearLabel.fromDate('庚申月'), isNull);
   });
   test('추정 연도와 간지 원문 및 한글 읽기를 함께 내보낸다', () {
     final p = Person(id: 'p', birthDateSolar: 'about 1847',

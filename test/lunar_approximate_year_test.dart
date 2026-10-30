@@ -28,6 +28,12 @@ void main() {
       expect(LunarService.approximateYear('庚戌生', referenceYear: 1881), 'about 1910');
     });
 
+    test('기일과 간지 일자는 생몰 연도로 추정하지 않는다', () {
+      expect(LunarService.approximateYear('忌三月五日 庚戌', referenceYear: 1850), isNull);
+      expect(LunarService.approximateYear('庚戌日', referenceYear: 1850), isNull);
+      expect(LunarService.approximateYear('庚戌月', referenceYear: 1850), isNull);
+    });
+
     test('세대 차이로 about 연도 계산', () {
       expect(LunarService.approximateYearByGeneration(
           ancestorBirthYear: 950,

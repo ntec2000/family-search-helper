@@ -40,16 +40,22 @@ class LunarService {
     return results;
   }
 
+  /// 원문 시작에 연도로 명시된 간지만 인식한다. 간지 일·월은 제외한다.
+  static String? explicitYearGanzhi(String raw) {
+    final match = RegExp(r'^\s*([甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥])(?=\s*(?:年|生|卒|[正冬臘閏零一二三四五六七八九十百○0-9]+月|$))')
+        .firstMatch(raw);
+    final value = match?.group(1);
+    return value == null ? null : normalizeGanzhi(value);
+  }
+
   /// 간지와 기준 연도로 서기 연도 후보를 추정한다.
   /// 기준 연도는 확인된 조상 기록 또는 사용자가 검토한 세대 추정값이어야 한다.
   /// 60년마다 반복되므로 정확한 날짜로 확정하지 않고 about 표기로 반환한다.
   static String? approximateYear(String rawGanzhi, {int? referenceYear,
       int from = 1700, int to = 2100, int maxDistance = 45}) {
     if (referenceYear == null) return null;
-    final match = RegExp(r'([甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥])')
-        .firstMatch(rawGanzhi);
-    final gz = match?.group(1);
-    if (gz == null || normalizeGanzhi(gz) == null) return null;
+    final gz = explicitYearGanzhi(rawGanzhi);
+    if (gz == null) return null;
     final candidates = estimateYearsFromGanzhi(gz, from: from, to: to);
     if (candidates.isEmpty) return null;
     candidates.sort((a, b) {
