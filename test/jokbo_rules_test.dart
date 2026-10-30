@@ -150,7 +150,7 @@ void main() {
   });
 
   test('독립 구획의 계자 이름을 후보로 읽고 원문과 입양 표기를 보존한다', () {
-    for (final marker in ['系子', '繼子', '系 子']) {
+    for (final marker in ['系子', '繼子', '系 子', '系  子']) {
       final raw = '$marker 承勳 生父鈴';
       final person = JokboParser.parseRegions([raw]).single;
       expect(person.nameHanja, '承勳', reason: marker);

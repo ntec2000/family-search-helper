@@ -164,12 +164,18 @@ class JokboParser {
     // 인물 시작 표지는 독립 토큰일 때만 인정한다.
     // 子坐午向의 子, 본문 속 女/男 및 간지의 子를 인물로 오인하지 않는다.
     // OCR가 공백 없이 붙여 놓은 애매한 후보는 자동 분리하지 않고 원문에 남긴다.
-    final parts = text.split(_personBoundary).where((s) => s.trim().isNotEmpty).toList();
-    return parts.where((p) {
-      final t = p.trim();
-      return t.startsWith('子') || t.startsWith('女') || t.startsWith('男') ||
-          RegExp(r'^[系繼]\s*子').hasMatch(t);
-    }).toList();
+    final boundaries = _personBoundary.allMatches(text).where((match) {
+      // 系 子처럼 떨어진 글자를 두 번째 인물 표제로 다시 분리하지 않는다.
+      if (!text.substring(match.start).startsWith('子')) return true;
+      return !RegExp(r'[系繼]\s+$').hasMatch(text.substring(0, match.start));
+    }).map((match) => match.start).toList();
+    final parts = <String>[];
+    for (var i = 0; i < boundaries.length; i++) {
+      final end = i + 1 < boundaries.length ? boundaries[i + 1] : text.length;
+      final part = text.substring(boundaries[i], end);
+      if (part.trim().isNotEmpty) parts.add(part);
+    }
+    return parts;
   }
 
   /// 처가 직계(父·祖·曾祖) 이름 앞 관직·품계 제거.
