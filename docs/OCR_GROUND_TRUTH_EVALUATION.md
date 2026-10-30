@@ -55,7 +55,8 @@ flutter test test/actual_ocr_evaluation_test.dart --dart-define=OCR_RESULTS=loca
 입력 파일 옆에 `local_ocr_results.json.evaluation.json` 보고서가 생성됩니다.
 
 - `rawReferenceNameCoverage`: 각 OCR 열 내부에 정답 이름 문자열이 있는 비율입니다. 전체 OCR 글자 정확도가 아닙니다.
-- `parsedReferenceNameCoverage`: 파싱 결과에 기준 이름이 포함된 비율입니다.
+- `parsedReferenceNameCoverage`: 서로 다른 기준 이름 중 별도 인물로 파싱된 이름의 비율입니다. 같은 이름이 여러 번 등장해도 하나의 문자열로 계산하므로 인물 수 기준 인식률은 아닙니다.
+- `embeddedSpouseNames`: 딸 등의 기록에 포함된 배우자 이름입니다. 별도 인물로 파싱되지 않았다면 인물 이름 인식 성공에 포함하지 않습니다.
 - `referenceFieldEvaluation.fieldScores`: 제공한 정답 필드별 비교 수, 일치 수, 불일치 수입니다.
 - `referenceFieldEvaluation.fieldMismatches`: 인물별 불일치 세부 내용입니다. `nameHanja`, `field`, `expected`, `actual`을 기록하며, **일치한 항목은 포함하지 않습니다.**
 - `referenceFieldEvaluation.missingReferenceNames`: 정답 인물 목록에는 있지만 파싱 결과에서 발견되지 않은 이름입니다.
@@ -63,7 +64,7 @@ flutter test test/actual_ocr_evaluation_test.dart --dart-define=OCR_RESULTS=loca
 - `referenceFieldEvaluation.unresolvedNames`: 이름이 없거나, 정답 자료 또는 파싱 결과에서 이름이 중복되어 자동 대조할 수 없는 인물입니다. 이름 앞뒤 공백은 비교 전에 제거합니다.
 - `persons`, `regionsAssembled`: 수작업 검토를 위한 분석 결과입니다.
 
-현재 기본 기준 이름 17개는 테스트 코드에 고정돼 있습니다. 실제 평가 대상 페이지가 다르면 이 고정 목록과 일치하지 않을 수 있으므로, 해당 수치를 전체 족보 인식률로 해석하지 마세요. 본인·배우자의 출생·사망 필드가 바뀌거나 다른 인물의 기록이 섞였는지도 원문과 대조해야 합니다.
+기준 이름은 입력한 `referencePersons`에서만 가져옵니다. 기준 이름이 없으면 이름 포함 비율은 `null`이며, 특정 페이지의 이름을 자동으로 대입하지 않습니다. 이 수치를 전체 족보 인식률로 해석하지 마세요. 본인·배우자의 출생·사망 필드가 바뀌거나 다른 인물의 기록이 섞였는지도 원문과 대조해야 합니다.
 
 ## 검증 원칙
 
