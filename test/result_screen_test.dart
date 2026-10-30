@@ -185,7 +185,7 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    await HanjaDict.instance.load();
+    await tester.runAsync(() => HanjaDict.instance.load());
     final p = Person(id: 'p', gender: 'M', nameHanja: '格',
       spouseHanja: '豊壤趙氏', spouseFather: '永復');
     await tester.pumpWidget(MaterialApp(home: ResultScreen(
