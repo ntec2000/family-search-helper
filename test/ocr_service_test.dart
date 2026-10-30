@@ -4,6 +4,20 @@ import 'package:family_search_helper/services/ocr_service.dart';
 void main() {
   OcrResult result(String text) => OcrResult(text: text, rawBlocks: []);
 
+  test('구획 인식이 모두 비면 전체 페이지 OCR을 보존한다', () {
+    final whole = result('子格 字君平');
+    expect(OcrService.useSegmentedOrWhole(whole, ['', '  \n'], []), same(whole));
+    expect(OcrService.useSegmentedOrWhole(whole, [], []), same(whole));
+  });
+
+  test('구획 인식이 있으면 전체 OCR도 비교 원문으로 유지한다', () {
+    final whole = result('子格 字君平');
+    final combined = OcrService.useSegmentedOrWhole(
+        whole, ['子格 字君平'], ['子格\n字君平']);
+    expect(combined.regionTexts, ['子格 字君平']);
+    expect(combined.alternatives, ['子格 字君平', '子格\n字君平']);
+  });
+
   test('Latin noise and whitespace cannot outweigh more Han characters', () {
     final processed = result('子聖甲');
     final original = result('子 abcdefghijklmnopqrstuvwxyz          ');

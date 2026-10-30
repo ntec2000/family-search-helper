@@ -98,9 +98,16 @@ class OcrService {
         return wholePage;
       }
     }
+    return useSegmentedOrWhole(wholePage, texts, rawColumns);
+  }
+
+  /// 구획 결과가 전부 비었다면 읽힌 전체 페이지 결과를 잃지 않는다.
+  static OcrResult useSegmentedOrWhole(OcrResult wholePage,
+      List<String> regions, List<String> rawColumns) {
+    if (!regions.any((text) => text.trim().isNotEmpty)) return wholePage;
     // 구획과 전체 인식은 원문 탭에서 함께 보존한다. 파싱은 구획 결과를 사용한다.
-    return OcrResult(text: texts.join('\n'), rawBlocks: wholePage.rawBlocks,
-        alternatives: [wholePage.text, ...rawColumns], regionTexts: texts);
+    return OcrResult(text: regions.join('\n'), rawBlocks: wholePage.rawBlocks,
+        alternatives: [wholePage.text, ...rawColumns], regionTexts: regions);
   }
 
   /// 공백이나 검출 블록 수가 늘어도 한자가 적은 후보를 우선하지 않는다.
