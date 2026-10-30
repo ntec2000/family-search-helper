@@ -8,6 +8,7 @@ import '../services/gedcom_export.dart';
 import '../services/ganzhi_year_label.dart';
 import '../services/female_name_display.dart';
 import '../services/spouse_parent_text.dart';
+import '../services/gender_label.dart';
 import '../services/familysearch_record.dart';
 import '../services/hanja_dict.dart';
 import '../services/genealogy.dart';
@@ -155,7 +156,7 @@ class _State extends State<ExportScreen> {
       buf.writeln('  이름      : ${np.givenHangul} ${np.givenHanja}'
           '${np.givenRoman.isNotEmpty ? ' (${np.givenRoman})' : ''}');
       buf.writeln('  로마자    : $roman');
-      buf.writeln('  성별      : 남');
+      buf.writeln('  성별      : ${genderLabel(p.gender)}');
       if (p.bongwan != null) {
         buf.writeln('  본관      : ${_kh(p.bongwan)}'
             '${p.pa != null ? '   派: ${p.pa}' : ''}');
@@ -196,7 +197,7 @@ class _State extends State<ExportScreen> {
       }
       if (p.marriageDate != null) buf.writeln('  결혼      : ${p.marriageDate}');
       // ── 처가(장인) 계열 — 아내 성씨를 붙여 표기 ──
-      final ss = Genealogy.spouseSurname(p.spouseHanja);
+      final ss = p.gender == 'M' ? Genealogy.spouseSurname(p.spouseHanja) : null;
       String inLawName(String? n) {
         if (n == null || n.isEmpty) return '';
         if (ss != null) return '${ss.$1}$n (${ss.$2}${dict.toHangul(n)})';
