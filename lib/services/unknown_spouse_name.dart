@@ -8,6 +8,8 @@ class UnknownSpouseName {
   static bool hasSpouseEvidence(Person person) => [
     person.spouseHanja, person.spouseHangul, person.spouseBongwan,
     person.spouseFather, person.spouseMother, person.spouseBirth, person.spouseDeath,
+    person.spouseGrandfather, person.spouseGreatGrandfather,
+    person.spouseMaternalGrandfather,
   ].any((value) => (value ?? '').trim().isNotEmpty);
 
   /// 배우자 개인 이름으로 읽힌 후보가 있으면 미상 표시명을 내보내지 않는다.

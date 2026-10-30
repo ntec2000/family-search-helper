@@ -51,6 +51,20 @@ void main() {
     expect(unnamed.firstWhere((row) => row.role == '배우자 후보').display, '이름 미상');
   });
 
+  test('배우자 측 조상은 원문을 유지하고 관계별 후보로 표시한다', () {
+    final p = Person(id: 'p', gender: 'M', nameHangul: '이핵',
+        spouseGrandfather: '東憶', spouseGreatGrandfather: '道經',
+        spouseMaternalGrandfather: '高');
+    final original = p.toMap();
+    final rows = FamilyNameCandidates.fromPerson(p);
+    expect(rows.firstWhere((r) => r.role == '배우자의 조부 후보').display, '東憶');
+    expect(rows.firstWhere((r) => r.role == '배우자의 증조부 후보').display, '道經');
+    expect(rows.firstWhere((r) => r.role == '배우자의 외조부 후보').display, '高');
+    expect(rows.where((r) => r.role.contains('아버지')), isEmpty);
+    expect(rows.firstWhere((r) => r.role == '배우자 후보').display, '이핵의 부인');
+    expect(p.toMap(), original);
+  });
+
   test('배우자 성씨를 이용한 부친 이름은 추정 후보로 표시한다', () {
     final p = Person(id: 'p', gender: 'M', spouseHanja: '豊壤趙氏',
         spouseFather: '永復');

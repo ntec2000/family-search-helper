@@ -62,6 +62,16 @@ class FamilyNameCandidates {
       result.add(FamilyNameCandidate('배우자의 어머니 · 이름 미상', '$fatherDisplay의 부인',
           person.id, placeholder: true));
     }
+    for (final entry in <String, String?>{
+      '배우자의 조부 후보': person.spouseGrandfather,
+      '배우자의 증조부 후보': person.spouseGreatGrandfather,
+      '배우자의 외조부 후보': person.spouseMaternalGrandfather,
+    }.entries) {
+      final name = value(entry.value);
+      if (name.isNotEmpty) {
+        result.add(FamilyNameCandidate(entry.key, name, person.id));
+      }
+    }
     return result;
   }
 }
