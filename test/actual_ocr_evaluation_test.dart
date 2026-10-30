@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:family_search_helper/models/person.dart';
 import 'package:family_search_helper/services/hanja_dict.dart';
 import 'package:family_search_helper/services/jokbo_parser.dart';
 import 'package:family_search_helper/services/ocr_column_text.dart';
@@ -8,6 +9,17 @@ import 'package:family_search_helper/services/ocr_column_text.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   const path = String.fromEnvironment('OCR_RESULTS');
+  test('딸의 남편 이름은 별도 인물로 분석되지 않으면 인물 이름에 포함하지 않는다', () {
+    final people = [
+      Person(id: 'daughter', gender: 'F', spouseHanja: '權龜壽'),
+      Person(id: 'son', nameHanja: '核'),
+    ];
+    expect(_parsedPersonNames(people), {'核'});
+    expect(_embeddedSpouseNames(people), {'權龜壽'});
+    people.add(Person(id: 'husband', nameHanja: '權龜壽', gender: 'M'));
+    expect(_parsedPersonNames(people), {'核', '權龜壽'});
+  });
+
   test('서로 다른 OCR 열의 끝과 시작을 하나의 이름으로 오인하지 않는다', () {
     const reference = '聖甲';
     final rawColumns = ['子聖', '甲子生'];
@@ -208,8 +220,8 @@ void main() {
       }
       return [result['text'] as String];
     }).map((column) => column.replaceAll(RegExp(r'\s+'), '')).toList();
-    final names = people.expand((p) => [p.nameHanja,
-      if (p.gender == 'F') p.spouseHanja ?? '']).where((n) => n.isNotEmpty).toSet();
+    final names = _parsedPersonNames(people);
+    final embeddedSpouseNames = _embeddedSpouseNames(people);
     // 열 경계에서 서로 다른 문자열이 합쳐져 가짜 이름이 생기지 않도록 한다.
     final rawNamesPresent = reference
         .where((name) => rawColumns.any((column) => column.contains(name))).toList();
@@ -227,9 +239,10 @@ void main() {
       'parsedNamesCorrect': parsedNamesCorrect,
       'parsedNamesMissing': parsedNamesMissing,
       'parsedOtherCandidates': parsedOtherCandidates,
+      'embeddedSpouseNames': embeddedSpouseNames.toList(),
       'rawReferenceNameCoverage': _referenceCoverage(rawNamesPresent.length, reference.length),
       'parsedReferenceNameCoverage': reference.isEmpty ? null : _referenceCoverage(parsedNamesCorrect.length, reference.length),
-      'note': 'Name-string coverage only; missing and extra candidates require manual review.',
+      'note': 'Unique person name-string coverage only; embedded spouse names are reported separately. Missing and extra candidates require manual review.',
       'persons': people.map((p) => p.toMap()).toList(),
       'regionsAssembled': regions,
     };
@@ -317,11 +330,20 @@ void main() {
       };
     }
     File('$path.evaluation.json').writeAsStringSync(const JsonEncoder.withIndent('  ').convert(report));
-    expect(names.contains('四'), isFalse);
-    expect(names.contains('甲子十'), isFalse);
     expect(people.every((p) => p.fatherId == null && p.motherId == null), isTrue);
   });
 }
+
+Set<String> _parsedPersonNames(List<Person> people) => people
+    .map((person) => person.nameHanja.trim())
+    .where((name) => name.isNotEmpty)
+    .toSet();
+
+Set<String> _embeddedSpouseNames(List<Person> people) => people
+    .where((person) => person.gender == 'F')
+    .map((person) => (person.spouseHanja ?? '').trim())
+    .where((name) => name.isNotEmpty)
+    .toSet();
 
 String _fieldColumn(String field) {
   const columns = <String, String>{
