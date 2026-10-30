@@ -170,4 +170,16 @@ void main() {
     expect(person.rawText, contains('外祖李承金'));
   });
 
+  test('인물별 원래 OCR 줄바꿈과 공백을 보존한다', () {
+    const first = '子格\n字君平 壬 辰 生\n配原州邊氏 父國聖\n';
+    const second = '子核\n字君實 丁酉生';
+    final people = JokboParser.parse('$first$second');
+    expect(people, hasLength(2));
+    expect(people[0].nameHanja, '格');
+    expect(people[0].rawText, first);
+    expect(people[0].rawText, isNot(contains('君實')));
+    expect(people[1].nameHanja, '核');
+    expect(people[1].rawText, second);
+  });
+
 }

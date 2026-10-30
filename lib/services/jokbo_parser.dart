@@ -74,10 +74,18 @@ class JokboParser {
             ? clanHangulOverride
             : detected?.$2;
     final entries = _splitByPerson(normalized);
+    final originalEntries = _splitByPerson(rawText);
 
     final persons = <Person>[];
-    for (final block in entries) {
+    for (var index = 0; index < entries.length; index++) {
+      final block = entries[index];
+      // 원본과 파싱 경계가 일치할 때만 개별 원문으로 사용한다.
+      // 일치하지 않으면 다른 인물의 원문을 붙이는 대신 기존 안전 경로를 쓴다.
+      final original = originalEntries.length == entries.length &&
+              _normalize(originalEntries[index]).trim() == block.trim()
+          ? originalEntries[index] : null;
       final p = _parsePersonBlock(block,
+          sourceRawText: original,
           sourceImagePath: sourceImagePath,
           clanHanja: clanHanja,
           clanHangul: clanHangul);
@@ -157,7 +165,7 @@ class JokboParser {
   }
 
   static Person? _parsePersonBlock(String block,
-      {String? sourceImagePath, String? clanHanja, String? clanHangul}) {
+      {String? sourceImagePath, String? sourceRawText, String? clanHanja, String? clanHangul}) {
     final t = block.trim();
     if (t.length < 2) return null;
 
@@ -165,7 +173,7 @@ class JokboParser {
     final person = Person(
       id: _uuid.v4(),
       sourceImagePath: sourceImagePath,
-      rawText: t,
+      rawText: sourceRawText ?? t,
     );
 
     // 메모(특이사항) 누적 헬퍼
