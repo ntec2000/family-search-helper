@@ -34,6 +34,23 @@ void main() {
     expect(spouse.placeholder, isFalse);
   });
 
+  test('배우자 기록이 있으면 이름 미상 아내를 표시하되 인물을 생성하지 않는다', () {
+    final p = Person(id: 'p', gender: 'M', surnameHangul: '홍', nameHangul: '길동',
+        spouseFather: '光岳');
+    final before = p.toMap();
+    final rows = FamilyNameCandidates.fromPerson(p);
+    final spouse = rows.firstWhere((row) => row.role == '배우자 후보');
+    expect(spouse.display, '홍길동의 부인');
+    expect(spouse.placeholder, isTrue);
+    expect(p.toMap(), before);
+    final unrelated = FamilyNameCandidates.fromPerson(
+        Person(id: 'q', gender: 'M', nameHangul: '홍길동'));
+    expect(unrelated.where((row) => row.role == '배우자 후보'), isEmpty);
+    final unnamed = FamilyNameCandidates.fromPerson(
+        Person(id: 'u', gender: 'M', spouseBirth: '乙巳'));
+    expect(unnamed.firstWhere((row) => row.role == '배우자 후보').display, '이름 미상');
+  });
+
   test('배우자 성씨를 이용한 부친 이름은 추정 후보로 표시한다', () {
     final p = Person(id: 'p', gender: 'M', spouseHanja: '豊壤趙氏',
         spouseFather: '永復');
