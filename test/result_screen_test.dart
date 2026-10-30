@@ -121,4 +121,31 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('사망 간지 연도를 검토해 추정하고 출생 기록은 바꾸지 않는다', (tester) async {
+    tester.view.physicalSize = const Size(1200, 1100);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final original = Person(id: 'p', nameHanja: '昃', gender: 'M',
+      birthDateLunar: '丁未生', deathDateLunar: '庚申八月三日卒');
+    await tester.pumpWidget(MaterialApp(home: ResultScreen(
+      rawText: '원문', persons: [original], imagePath: 'missing-test-image')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('인물 작업 메뉴 · 인물 아님 제외').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('만세력 사망 연도 추정'));
+    await tester.pumpAndSettle();
+    expect(find.text('사망 연도 추정 검토'), findsOneWidget);
+    await tester.enterText(find.byType(TextField).last, '1920');
+    await tester.pumpAndSettle();
+    expect(find.textContaining('about 1920'), findsOneWidget);
+    await tester.tap(find.text('승인'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('사망 서기 about 1920'), findsOneWidget);
+    expect(original.deathDateSolar, isNull);
+    expect(original.birthDateLunar, '丁未生');
+    expect(original.deathDateLunar, '庚申八月三日卒');
+    expect(tester.takeException(), isNull);
+  });
+
 }

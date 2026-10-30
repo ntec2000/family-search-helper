@@ -239,12 +239,14 @@ class _ResultScreenState extends State<ResultScreen> {
     return involved;
   }
 
-  Future<void> _reviewApproximateYear(Person person) async {
+  Future<void> _reviewApproximateYear(Person person, {bool death = false}) async {
     if (_saved || _saving) return;
-    if (person.birthDateSolar?.isNotEmpty == true &&
-        !person.birthDateSolar!.startsWith('about ')) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('이미 입력된 출생일이 있습니다. 정확한 날짜는 인물 수정에서 확인하세요.'),
+    final current = death ? person.deathDateSolar : person.birthDateSolar;
+    final source = death ? person.deathDateLunar : person.birthDateLunar;
+    final label = death ? '사망' : '출생';
+    if (current?.isNotEmpty == true && !current!.startsWith('about ')) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('이미 입력된 $label 날짜가 있습니다. 인물 수정에서 확인하세요.'),
       ));
       return;
     }
@@ -255,14 +257,14 @@ class _ResultScreenState extends State<ResultScreen> {
         builder: (ctx) => StatefulBuilder(builder: (ctx, refresh) {
           final reference = int.tryParse(controller.text.trim());
           final proposal = LunarService.approximateYear(
-              person.birthDateLunar ?? '', referenceYear: reference);
+              source ?? '', referenceYear: reference);
           return AlertDialog(
-            title: const Text('출생 연도 추정 검토'),
+            title: Text('$label 연도 추정 검토'),
             content: SingleChildScrollView(child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('족보 원문: ${person.birthDateLunar ?? "없음"}'),
+                Text('족보 원문: ${source ?? "없음"}'),
                 Text('세대: ${person.sega?.toString() ?? "미상"}'),
                 TextField(
                   controller: controller,
@@ -292,10 +294,14 @@ class _ResultScreenState extends State<ResultScreen> {
       );
       if (approved == null || !mounted || _saved || _saving) return;
       setState(() {
-        person.birthDateSolar = approved;
+        if (death) {
+          person.deathDateSolar = approved;
+        } else {
+          person.birthDateSolar = approved;
+        }
         person.reasonStatement = [
           if (person.reasonStatement?.isNotEmpty == true) person.reasonStatement!,
-          '간지 ${person.birthDateLunar ?? ""}, 검토자가 입력한 기준 연도 ${controller.text.trim()}년에서 추정: $approved',
+          '$label 간지 ${source ?? ""}, 검토자가 입력한 기준 연도 ${controller.text.trim()}년에서 추정: $approved',
         ].join('\n');
         _relationshipsReviewed = false;
       });
@@ -846,7 +852,7 @@ class _ResultScreenState extends State<ResultScreen> {
               ),
             ]))],
             body: TabBarView(children: [
-                _PersonList(persons: _persons, onEstimate: _reviewApproximateYear, onDelete: _deletePerson, onEdit: _editCandidate, onParent: _chooseParent, onUnlink: _clearParentLinks, saved: _saved || _saving, largeText: _largeText, relationshipMode: _reviewStep == 1, issueIds: _reviewStep == 1 && _showOnlyRelationshipIssues ? _relationshipIssueIds() : null),
+                _PersonList(persons: _persons, onEstimate: _reviewApproximateYear, onEstimateDeath: (p) => _reviewApproximateYear(p, death: true), onDelete: _deletePerson, onEdit: _editCandidate, onParent: _chooseParent, onUnlink: _clearParentLinks, saved: _saved || _saving, largeText: _largeText, relationshipMode: _reviewStep == 1, issueIds: _reviewStep == 1 && _showOnlyRelationshipIssues ? _relationshipIssueIds() : null),
                 _TextCompare(hanja: widget.rawText, hangul: hangulText),
                 Container(
                   color: Colors.black,
@@ -872,6 +878,7 @@ class _ResultScreenState extends State<ResultScreen> {
 class _PersonList extends StatelessWidget {
   final List<Person> persons;
   final Future<void> Function(Person) onEstimate;
+  final Future<void> Function(Person) onEstimateDeath;
   final Future<void> Function(Person) onDelete;
   final Future<void> Function(Person) onEdit;
   final Future<void> Function(Person) onParent;
@@ -880,7 +887,7 @@ class _PersonList extends StatelessWidget {
   final bool largeText;
   final bool relationshipMode;
   final Set<String>? issueIds;
-  const _PersonList({required this.persons, required this.onEstimate, required this.onDelete, required this.onEdit, required this.onParent, required this.onUnlink, required this.saved, required this.largeText, required this.relationshipMode, this.issueIds});
+  const _PersonList({required this.persons, required this.onEstimate, required this.onEstimateDeath, required this.onDelete, required this.onEdit, required this.onParent, required this.onUnlink, required this.saved, required this.largeText, required this.relationshipMode, this.issueIds});
 
   // 한자(한글) 표기
   static String _a(String? s) =>
@@ -988,6 +995,7 @@ class _PersonList extends StatelessWidget {
               if (p.birthDateSolar?.isNotEmpty == true) '서기 ${p.birthDateSolar}',
               if (p.birthPlace != null) '生地 ${_a(p.birthPlace)}',
               if (p.deathDateLunar != null) '卒 ${p.deathDateLunar}',
+              if (p.deathDateSolar?.isNotEmpty == true) '사망 서기 ${p.deathDateSolar}',
               if (p.burialPlace != null) '墓 ${_a(p.burialPlace)}',
               if (p.spouseHanja != null)
                 (isFemale ? '夫(사위) ' : '配 ') + _a(p.spouseHanja) +
@@ -1026,6 +1034,9 @@ class _PersonList extends StatelessWidget {
                   case 'estimate':
                     onEstimate(p);
                     break;
+                  case 'estimateDeath':
+                    onEstimateDeath(p);
+                    break;
                   case 'parent':
                     onParent(p);
                     break;
@@ -1050,6 +1061,10 @@ class _PersonList extends StatelessWidget {
                   const PopupMenuItem(value: 'estimate',
                     child: ListTile(leading: Icon(Icons.calendar_month),
                       title: Text('만세력 출생 연도 추정'))),
+                if (!saved && p.deathDateLunar?.isNotEmpty == true)
+                  const PopupMenuItem(value: 'estimateDeath',
+                    child: ListTile(leading: Icon(Icons.calendar_month),
+                      title: Text('만세력 사망 연도 추정'))),
                 if (!saved && relationshipMode)
                   const PopupMenuItem(value: 'parent',
                       child: ListTile(leading: Icon(Icons.account_tree_outlined),
