@@ -306,7 +306,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
         MaterialPageRoute(
           builder: (_) => ResultScreen(
               rawText: [ocr.text, ...ocr.alternatives.map((text) =>
-                  '\n[OCR 비교 원문 · 전체/세로 열]\n$text')].join('\n'),
+                  '\n[OCR 비교 결과 · 전체/세로 열]\n$text')].join('\n'),
               persons: persons, unparsedRegions: unparsedRegions,
               imagePath: _sourcePath ?? path,
               sourceDocumentPath: _sourceDocumentPath,

@@ -103,6 +103,21 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('OCR 텍스트는 원본이 아닌 인식 결과로 표시한다', (tester) async {
+    tester.view.physicalSize = const Size(1200, 1100);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const MaterialApp(home: ResultScreen(
+      rawText: '子格', persons: [], imagePath: 'missing-test-image',
+    )));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('한자/한글'));
+    await tester.pumpAndSettle();
+    expect(find.text('OCR 인식 결과 (원본 대조 필요)'), findsOneWidget);
+    expect(find.text('原文 (한자)'), findsNothing);
+  });
+
   testWidgets('미분류 구획에서 인물 추가 시 원문을 수정 화면에 보존한다', (tester) async {
     tester.view.physicalSize = const Size(1200, 1100);
     tester.view.devicePixelRatio = 1;

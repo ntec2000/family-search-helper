@@ -1142,7 +1142,7 @@ class _TextCompare extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('原文 (한자)',
+                const Text('OCR 인식 결과 (원본 대조 필요)',
                     style: TextStyle(color: HanjiColors.ju, fontWeight: FontWeight.bold)),
                 const Divider(),
                 SelectableText(hanja, style: const TextStyle(fontSize: 16, height: 1.8)),
