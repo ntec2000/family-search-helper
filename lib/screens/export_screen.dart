@@ -200,7 +200,11 @@ class _State extends State<ExportScreen> {
       final ss = p.gender == 'M' ? Genealogy.spouseSurname(p.spouseHanja) : null;
       String inLawName(String? n) {
         if (n == null || n.isEmpty) return '';
-        if (ss != null) return '${ss.$1}$n (${ss.$2}${dict.toHangul(n)})';
+        if (ss != null) {
+          final fullName = Genealogy.surnamePrefixedName(n, ss.$1);
+          final given = fullName.substring(ss.$1.length);
+          return '$fullName (${ss.$2}${dict.toHangul(given)})';
+        }
         return '$n (${dict.toHangul(n)})';
       }
       final father = (p.spouseFather ?? '').trim();

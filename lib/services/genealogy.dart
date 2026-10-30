@@ -61,16 +61,29 @@ class Genealogy {
   /// 장인·장인 부친 등 처가 인물에 성을 붙여 표기할 때 사용.
   static (String hanja, String hangul)? spouseSurname(String? spouseHanja) {
     if (spouseHanja == null) return null;
-    final m = RegExp(r'([㐀-鿿])氏$').firstMatch(spouseHanja.trim());
-    final ch = m != null
-        ? m.group(1)!
-        : (spouseHanja.trim().isNotEmpty
-            ? spouseHanja.trim().substring(spouseHanja.trim().length - 1)
-            : '');
-    if (ch.isEmpty) return null;
+    final text = spouseHanja.trim();
+    const compounds = <String, String>{
+      '南宮': '남궁', '諸葛': '제갈', '皇甫': '황보', '鮮于': '선우',
+      '司空': '사공', '西門': '서문', '東方': '동방',
+    };
+    for (final entry in compounds.entries) {
+      if (text == '${entry.key}氏') return (entry.key, entry.value);
+      // 본관과 복성이 붙어 있고 구분 근거가 없으면 마지막 글자로 추정하지 않는다.
+      if (text.endsWith('${entry.key}氏')) return null;
+    }
+    final m = RegExp(r'([㐀-鿿])氏$').firstMatch(text);
+    if (m == null) return null;
+    final ch = m.group(1)!;
     final hg = surnameHanjaToHangul[ch];
     if (hg == null) return null;
     return (ch, hg);
+  }
+
+  /// 이미 성씨가 붙어 있는 이름에 성씨를 중복해서 붙이지 않는다.
+  static String surnamePrefixedName(String name, String surname) {
+    final n = name.trim();
+    final s = surname.trim();
+    return s.isEmpty || n.startsWith(s) ? n : '$s$n';
   }
 
   /// 자유 텍스트 토큰 "海원 (해원)" / "崔海斗(최해두)" / "최씨" 등에서

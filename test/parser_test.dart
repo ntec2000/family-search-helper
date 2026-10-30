@@ -125,6 +125,16 @@ void main() {
       expect(clan.$2, '이');
     });
 
+    test('이름 마지막 한자를 배우자 성씨로 오인하지 않는다', () {
+      expect(Genealogy.spouseSurname('金英李'), isNull);
+      expect(Genealogy.spouseSurname('東方氏'), ('東方', '동방'));
+      expect(Genealogy.spouseSurname('延安東方氏'), isNull);
+    });
+    test('장인의 성씨가 이미 있으면 중복하지 않는다', () {
+      expect(Genealogy.surnamePrefixedName('永復', '趙'), '趙永復');
+      expect(Genealogy.surnamePrefixedName('趙永復', '趙'), '趙永復');
+    });
+
     test('처가 성씨 추출 (原州邊氏 → 邊/변)', () {
       final ss = Genealogy.spouseSurname('原州邊氏');
       expect(ss, isNotNull);
