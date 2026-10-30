@@ -1,5 +1,6 @@
 import '../models/person.dart';
 import 'unknown_spouse_name.dart';
+import 'genealogy.dart';
 
 /// 검토 화면 전용 목록. 별도 인물이나 관계를 저장하지 않는다.
 class FamilyNameCandidate {
@@ -34,14 +35,27 @@ class FamilyNameCandidates {
           display, person.id, placeholder: usePlaceholder));
     }
     final father = value(person.spouseFather);
+    var fatherDisplay = father;
+    var inferredSurname = false;
+    final spouseSurname = person.gender == 'M'
+        ? Genealogy.spouseSurname(person.spouseHanja) : null;
+    // 짧은 한자 이름에서만 후보로 제시하며, 이미 성이 있거나 모호하면 원문 유지.
+    if (father.length <= 2 && father.isNotEmpty && spouseSurname != null &&
+        RegExp(r'^[㐀-鿿]+$').hasMatch(father) &&
+        !Genealogy.surnamesHanja.contains(father[0])) {
+      fatherDisplay = Genealogy.surnamePrefixedName(father, spouseSurname.$1);
+      inferredSurname = fatherDisplay != father;
+    }
     if (father.isNotEmpty) {
-      result.add(FamilyNameCandidate('배우자의 아버지 후보', father, person.id));
+      result.add(FamilyNameCandidate(
+          inferredSurname ? '배우자의 아버지 후보 · 성씨 추정' : '배우자의 아버지 후보',
+          fatherDisplay, person.id));
     }
     final mother = value(person.spouseMother);
     if (mother.isNotEmpty) {
       result.add(FamilyNameCandidate('배우자의 어머니 후보', mother, person.id));
     } else if (father.isNotEmpty) {
-      result.add(FamilyNameCandidate('배우자의 어머니 · 이름 미상', '$father의 부인',
+      result.add(FamilyNameCandidate('배우자의 어머니 · 이름 미상', '$fatherDisplay의 부인',
           person.id, placeholder: true));
     }
     return result;

@@ -34,4 +34,24 @@ void main() {
     expect(spouse.placeholder, isFalse);
   });
 
+  test('배우자 성씨를 이용한 부친 이름은 추정 후보로 표시한다', () {
+    final p = Person(id: 'p', gender: 'M', spouseHanja: '豊壤趙氏',
+        spouseFather: '永復');
+    final rows = FamilyNameCandidates.fromPerson(p);
+    final father = rows.firstWhere((r) => r.role.contains('아버지'));
+    expect(father.display, '趙永復');
+    expect(father.role, contains('성씨 추정'));
+    expect(rows.last.display, '趙永復의 부인');
+    expect(rows.last.placeholder, isTrue);
+    expect(p.spouseFather, '永復');
+  });
+  test('배우자 부친의 성씨가 모호하면 추가하지 않는다', () {
+    final p = Person(id: 'p', gender: 'M', spouseHanja: '豊壤趙氏',
+        spouseFather: '金復');
+    final father = FamilyNameCandidates.fromPerson(p)
+        .firstWhere((r) => r.role.contains('아버지'));
+    expect(father.display, '金復');
+    expect(father.role, isNot(contains('성씨 추정')));
+  });
+
 }
