@@ -120,8 +120,12 @@ class _State extends State<ExportScreen> {
           final label = GanzhiYearLabel.fromDate(p.spouseDeath);
           buf.writeln('  남편 사망 : ${p.spouseDeath}${label == null ? '' : ' ($label)'}');
         }
-        if ((p.spouseHanja ?? '').isNotEmpty) {
-          buf.writeln('  사위      : ${dict.toHangul(p.spouseHanja!)} ${p.spouseHanja}'
+        if ((p.spouseHanja ?? '').trim().isNotEmpty ||
+            (p.spouseHangul ?? '').trim().isNotEmpty) {
+          final spouseHanja = (p.spouseHanja ?? '').trim();
+          final spouseHangul = (p.spouseHangul ?? '').trim();
+          final reading = spouseHangul.isNotEmpty ? spouseHangul : dict.toHangul(spouseHanja);
+          buf.writeln('  남편      : $reading $spouseHanja'
               '${(p.spouseBongwan ?? '').isNotEmpty ? '   [본관: ${p.spouseBongwan}]' : ''}');
         } else if ((p.spouseBongwan ?? '').isNotEmpty) {
           buf.writeln('  사위      : $femaleName의 남편 (이름 미상)   [지역: ${p.spouseBongwan}人]');
@@ -174,8 +178,12 @@ class _State extends State<ExportScreen> {
         buf.writeln('  매장      : ${_kh(p.burialPlace)}$ori');
       }
       // ── 배우자 ──
-      if ((p.spouseHanja ?? '').isNotEmpty) {
-        buf.writeln('  배우자    : ${_kh(p.spouseHanja)}'
+      if ((p.spouseHanja ?? '').trim().isNotEmpty ||
+          (p.spouseHangul ?? '').trim().isNotEmpty) {
+        final h = (p.spouseHangul ?? '').trim();
+        final hanja = (p.spouseHanja ?? '').trim();
+        final display = h.isEmpty ? _kh(hanja) : '$h${hanja.isEmpty ? '' : ' ($hanja)'}';
+        buf.writeln('  배우자    : $display'
             '${(p.spouseBongwan ?? '').isNotEmpty ? '   [본관: ${p.spouseBongwan}]' : ''}');
       }
       if ((p.spouseBirth ?? '').isNotEmpty) {

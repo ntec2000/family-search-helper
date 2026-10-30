@@ -27,6 +27,8 @@ void main() {
     expect(find.text('세대는 양의 정수로 입력하세요.'), findsOneWidget);
     expect(edited, isNull);
     await tester.enterText(field('세대(世)'), '21');
+    await tester.ensureVisible(field('배우자/사위 한글'));
+    await tester.enterText(field('배우자/사위 한글'), '윤씨');
     await tester.ensureVisible(field('배우자 부친'));
     await tester.enterText(field('배우자 부친'), '光岳');
     await tester.ensureVisible(field('배우자 모친'));
@@ -34,6 +36,7 @@ void main() {
     await tester.tap(find.text('내용 적용'));
     await tester.pumpAndSettle();
     expect(edited!.spouseFather, '光岳');
+    expect(edited!.spouseHangul, '윤씨');
     expect(edited!.spouseMother, '윤광악의 부인');
     expect(edited!.sega, 21);
     expect(edited!.fatherId, 'father');

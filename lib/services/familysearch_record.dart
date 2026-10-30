@@ -40,7 +40,8 @@ class FamilySearchRecord {
         '아내 표시명(실제 개인 이름 아님): ${UnknownSpouseName.wifeDisplayName(person) ?? '미상'}',
       for (final entry in <String, String?>{
         '로마자 표기': person.nameRoman, '字': person.ja, '號': person.ho, '본관': person.bongwan,
-        '배우자': person.spouseHanja, '배우자 본관': person.spouseBongwan,
+        '배우자': person.spouseHanja, '배우자 한글': person.spouseHangul,
+        '배우자 본관': person.spouseBongwan,
         '출생 원문(간지·음력)': person.birthDateLunar,
         '사망 원문(간지·음력)': person.deathDateLunar,
         '배우자 출생': person.spouseBirth, '배우자 사망': person.spouseDeath,

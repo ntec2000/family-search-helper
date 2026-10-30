@@ -111,4 +111,13 @@ void main() {
     expect(person.rawText, '원문');
   });
 
+  test('한글 배우자 이름은 JSON과 GEDCOM의 메모에 보존한다', () {
+    final p = Person(id: 'p', gender: 'F', surnameHangul: '이',
+      spouseHangul: '권구수');
+    final note = (FamilySearchRecord.person(p)['notes'] as List).first['text'] as String;
+    expect(note, contains('배우자 한글: 권구수'));
+    expect(GedcomExport.toGedcom([p]), contains('1 NOTE 배우자 한글: 권구수'));
+    expect(p.spouseHanja, isNull);
+  });
+
 }
