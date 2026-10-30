@@ -71,4 +71,25 @@ void main() {
     );
   });
 
+  test('검토한 자녀 없는 부부도 하나의 가족으로 내보낸다', () {
+    final people = [Person(id: 'a', gender: 'M'), Person(id: 'b', gender: 'F')];
+    final ged = GedcomExport.toGedcom(people, reviewedCouples: [('b', 'a')]);
+    expect(ged, contains('1 HUSB @Ia@'));
+    expect(ged, contains('1 WIFE @Ib@'));
+    expect(ged.split(' FAM\n').length - 1, 1);
+    expect(ged.split('1 FAMS @F1@').length - 1, 2);
+  });
+  test('기존 부모 자녀 가족과 확인한 부부는 중복 생성하지 않는다', () {
+    final people = [Person(id: 'a', gender: 'M'), Person(id: 'b', gender: 'F'),
+      Person(id: 'c', fatherId: 'a', motherId: 'b')];
+    final ged = GedcomExport.toGedcom(people, reviewedCouples: [('a', 'b')]);
+    expect(ged.split(' FAM\n').length - 1, 1);
+    expect(ged, contains('1 CHIL @Ic@'));
+  });
+  test('부모 역할을 추정해야 하는 관계는 차단한다', () {
+    final people = [Person(id: 'a', gender: 'U'), Person(id: 'b', gender: 'F')];
+    expect(() => GedcomExport.toGedcom(people, reviewedCouples: [('a', 'b')]),
+        throwsStateError);
+  });
+
 }

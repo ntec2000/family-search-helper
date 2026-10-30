@@ -3,7 +3,8 @@ import 'unknown_spouse_name.dart';
 
 /// GEDCOM 5.5.1 내보내기 (FamilySearch 호환)
 class GedcomExport {
-  static String toGedcom(List<Person> persons) {
+  static String toGedcom(List<Person> persons,
+      {List<(String, String)> reviewedCouples = const []}) {
     final buf = StringBuffer();
     buf.writeln('0 HEAD');
     buf.writeln('1 SOUR FamilySearchHelper');
@@ -48,6 +49,25 @@ class GedcomExport {
         family.children.add(child.id);
       }
       childFamily[child.id] = key;
+    }
+    // 부부 관계는 사용자가 검토한 ID만 포함한다. 성별 미상은 자동 배치하지 않는다.
+    final byId = {for (final person in persons) person.id: person};
+    final reviewed = <(String, String)>{};
+    for (final (a, b) in reviewedCouples) {
+      final first = byId[a];
+      final second = byId[b];
+      if (a.isEmpty || b.isEmpty || a == b || first == null || second == null) {
+        throw StateError('부부 관계의 인물 ID를 확인하세요.');
+      }
+      if (!((first.gender == 'M' && second.gender == 'F') ||
+          (first.gender == 'F' && second.gender == 'M'))) {
+        throw StateError('GEDCOM 부부 역할에 대한 성별 확인이 필요합니다.');
+      }
+      final father = first.gender == 'M' ? a : b;
+      final mother = first.gender == 'F' ? a : b;
+      if (!reviewed.add((father, mother))) throw StateError('중복 부부 관계');
+      final key = '$father|$mother';
+      families.putIfAbsent(key, () => (father: father, mother: mother, children: <String>[]));
     }
     final familyIds = <String, String>{};
     var familyIndex = 0;

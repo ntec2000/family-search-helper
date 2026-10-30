@@ -4,7 +4,8 @@ import '../models/person.dart';
 /// 출력할 관계만 선택한다. 이 대화상자는 DB를 수정하지 않는다.
 class CoupleExportDialog extends StatefulWidget {
   final List<Person> people;
-  const CoupleExportDialog({super.key, required this.people});
+  final String formatLabel;
+  const CoupleExportDialog({super.key, required this.people, this.formatLabel = 'JSON'});
 
   @override
   State<CoupleExportDialog> createState() => _CoupleExportDialogState();
@@ -30,6 +31,15 @@ class _CoupleExportDialogState extends State<CoupleExportDialog> {
       setState(() => _error = '서로 다른 두 인물을 선택하세요.');
       return;
     }
+    if (widget.formatLabel == 'GEDCOM') {
+      final first = widget.people.firstWhere((p) => p.id == a);
+      final second = widget.people.firstWhere((p) => p.id == b);
+      if (!((first.gender == 'M' && second.gender == 'F') ||
+          (first.gender == 'F' && second.gender == 'M'))) {
+        setState(() => _error = 'GEDCOM에는 남녀 성별을 확인한 두 인물만 추가할 수 있습니다.');
+        return;
+      }
+    }
     if (_couples.any((pair) => (pair.$1 == a && pair.$2 == b) ||
         (pair.$1 == b && pair.$2 == a))) {
       setState(() => _error = '이미 추가된 관계입니다.');
@@ -51,7 +61,9 @@ class _CoupleExportDialogState extends State<CoupleExportDialog> {
       content: SizedBox(width: 560, child: SingleChildScrollView(child: Column(
         mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('원문에서 확인한 두 인물만 선택하세요. 이 선택은 이번 JSON에만 포함되며 앱에 저장되지 않습니다.'),
+          Text('원문에서 확인한 두 인물만 선택하세요. 이 선택은 이번 ${widget.formatLabel}에만 포함되며 앱에 저장되지 않습니다.'),
+          if (widget.formatLabel == 'GEDCOM')
+            const Text('GEDCOM 내보내기는 두 인물의 남녀 성별이 확인된 관계만 지원합니다.'),
           for (final item in [(true, _first), (false, _second)])
             DropdownButtonFormField<String>(
               key: ValueKey('${item.$1}-${item.$2}'),

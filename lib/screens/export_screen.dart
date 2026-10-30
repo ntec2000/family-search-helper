@@ -56,7 +56,15 @@ class _State extends State<ExportScreen> {
   Future<void> _exportGedcom() async {
     try {
       final list = await DbService.instance.listPersons();
-      final ged = GedcomExport.toGedcom(list);
+      if (list.map((p) => p.id).toSet().length != list.length) {
+        throw StateError('중복 인물 ID');
+      }
+      if (!mounted) return;
+      final couples = await showDialog<List<(String, String)>>(
+        context: context,
+        builder: (_) => CoupleExportDialog(people: list, formatLabel: 'GEDCOM'));
+      if (couples == null || !mounted) return;
+      final ged = GedcomExport.toGedcom(list, reviewedCouples: couples);
       final filename = 'family_${DateTime.now().millisecondsSinceEpoch}.ged';
       await Share.shareXFiles([
         XFile.fromData(Uint8List.fromList(utf8.encode(ged)),
@@ -65,7 +73,7 @@ class _State extends State<ExportScreen> {
     } on StateError {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('인물 ID가 중복되어 내보내기를 중단했습니다. 원본 자료를 확인해 주세요.')),
+        const SnackBar(content: Text('인물 ID 또는 부부 관계의 성별을 확인해 주세요.')),
       );
     } catch (_) {
       if (!mounted) return;
