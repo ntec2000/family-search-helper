@@ -131,4 +131,20 @@ void main() {
     expect(gedcom, isNot(contains('홍길동의 부인')));
   });
 
+  test('한자 복성은 성씨 전체를 표시하고 원문을 보존한다', () {
+    final husband = Person(id: 'h', gender: 'M', nameHangul: '홍길동',
+      spouseHanja: '東方氏');
+    expect(UnknownSpouseName.wifeDisplayName(husband), '동방씨');
+    expect(husband.spouseHanja, '東方氏');
+    final withClan = Person(id: 'b', gender: 'M', nameHangul: '홍길동',
+      spouseHanja: '咸悅南宮氏', spouseBongwan: '咸悅');
+    expect(UnknownSpouseName.wifeDisplayName(withClan), '남궁씨');
+    expect(withClan.spouseHanja, '咸悅南宮氏');
+  });
+  test('복성인지 불명확한 한자 표기는 원문을 유지한다', () {
+    final husband = Person(id: 'h', gender: 'M', nameHangul: '홍길동',
+      spouseHanja: '咸悅南宮氏');
+    expect(UnknownSpouseName.wifeDisplayName(husband), '咸悅南宮氏');
+  });
+
 }

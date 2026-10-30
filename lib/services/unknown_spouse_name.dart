@@ -27,6 +27,17 @@ class UnknownSpouseName {
         .firstMatch(korean);
     if (separated != null) return separated.group(1);
     final hanja = (husband.spouseHanja ?? '').trim();
+    // 한자 복성이 단독이거나 별도 본관과 분리되는 경우에만 읽는다.
+    const compoundSurnames = <String, String>{
+      '南宮': '남궁', '諸葛': '제갈', '皇甫': '황보',
+      '鮮于': '선우', '司空': '사공', '西門': '서문', '東方': '동방',
+    };
+    final hanjaName = bongwan.isNotEmpty && hanja.startsWith(bongwan)
+        ? hanja.substring(bongwan.length) : hanja;
+    if (hanjaName.endsWith('氏')) {
+      final compound = compoundSurnames[hanjaName.substring(0, hanjaName.length - 1)];
+      if (compound != null) return '$compound씨';
+    }
     const surnames = <String, String>{
       '尹': '윤', '邊': '변', '金': '김', '李': '이',
       '朴': '박', '崔': '최', '趙': '조', '權': '권',
