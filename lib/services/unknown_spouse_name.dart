@@ -3,6 +3,14 @@ import '../models/person.dart';
 /// 아내 표시명: 확인된 실제 이름 > 기록된 성씨 > 남편 이름의 부인.
 /// 표시 전용이며 원본 OCR과 저장된 인명 필드를 변경하지 않는다.
 class UnknownSpouseName {
+  /// 배우자 개인 이름으로 읽힌 후보가 있으면 미상 표시명을 내보내지 않는다.
+  static bool hasPersonalNameCandidate(Person person) {
+    final korean = (person.spouseHangul ?? '').trim();
+    if (korean.isNotEmpty && !korean.endsWith('씨')) return true;
+    final hanja = (person.spouseHanja ?? '').trim();
+    return hanja.isNotEmpty && !hanja.endsWith('氏');
+  }
+
   static String? wifeDisplayName(Person husband, {String? confirmedWifeName}) {
     final known = confirmedWifeName?.trim();
     if (known != null && known.isNotEmpty) return known;

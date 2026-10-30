@@ -120,4 +120,15 @@ void main() {
     expect(p.spouseHanja, isNull);
   });
 
+  test('배우자의 개인 이름 후보가 있으면 이름 미상 표시를 내보내지 않는다', () {
+    final husband = Person(id: 'h', gender: 'M', nameHangul: '홍길동',
+      spouseHangul: '김영희');
+    final notes = (FamilySearchRecord.person(husband)['notes'] as List).first['text'] as String;
+    expect(notes, contains('배우자 한글: 김영희'));
+    expect(notes, isNot(contains('홍길동의 부인')));
+    final gedcom = GedcomExport.toGedcom([husband]);
+    expect(gedcom, contains('배우자 한글: 김영희'));
+    expect(gedcom, isNot(contains('홍길동의 부인')));
+  });
+
 }
