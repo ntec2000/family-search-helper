@@ -9,6 +9,7 @@ import '../services/lunar_service.dart';
 import '../services/parent_child_review.dart';
 import '../services/surname_review.dart';
 import '../services/family_name_candidates.dart';
+import '../services/female_name_display.dart';
 import '../theme/traditional_theme.dart';
 import '../widgets/surname_input_dialog.dart';
 import 'person_card_screen.dart';
@@ -968,13 +969,14 @@ class _PersonList extends StatelessWidget {
                 !p.nameHangul.startsWith(sHangul))
             ? sHangul + p.nameHangul
             : p.nameHangul;
-        // v3.0.1 — 형제 순서 라벨은 아들에게는 표시하지 않고(이름만), 딸은
-        //          이름이 없으므로 '첫째딸/둘째딸'을 식별자로 사용한다.
+        // 관계 표기가 있는 경우에만 딸이나 배우자 관계를 표시한다.
         final segaPrefix = p.sega != null ? '[${p.sega}世] ' : '';
         final String nameLine;
         if (isFemale) {
-          final ord = (p.relation ?? '').isNotEmpty ? p.relation! : '딸';
-          final nm = p.nameHangul.trim().isNotEmpty ? p.nameHangul.trim() : (p.nameHanja.trim().isNotEmpty ? p.nameHanja.trim() : (sHangul.isNotEmpty ? '$sHangul씨 (개인 이름 미상)' : '이름 미상'));
+          final ord = (p.relation ?? '').trim().isNotEmpty ? p.relation!.trim() : '여성';
+          final displayed = FemaleNameDisplay.forPerson(p);
+          final nm = p.nameHangul.trim().isEmpty && p.nameHanja.trim().isEmpty
+              ? '$displayed (개인 이름 미상)' : displayed;
           nameLine = '$segaPrefix$ord (이름: $nm)';
         } else if (p.nameHanja.isNotEmpty) {
           final nm = fullHangul.isNotEmpty ? fullHangul : p.nameHanja;

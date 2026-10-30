@@ -6,6 +6,20 @@ import 'package:family_search_helper/services/hanja_dict.dart';
 import 'package:family_search_helper/theme/traditional_theme.dart';
 
 void main() {
+  testWidgets('여성이라는 이유만으로 딸 관계를 만들지 않는다', (tester) async {
+    tester.view.physicalSize = const Size(1200, 1100);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final p = Person(id: 'woman', gender: 'F', surnameHangul: '윤', nameHangul: '영희');
+    await tester.pumpWidget(MaterialApp(home: ResultScreen(
+      rawText: '', persons: [p], imagePath: 'missing-test-image',
+    )));
+    await tester.pumpAndSettle();
+    expect(find.text('여성 (이름: 윤영희)'), findsOneWidget);
+    expect(find.text('딸 (이름: 영희)'), findsNothing);
+  });
+
   for (final size in [const Size(360, 740), const Size(740, 360)]) {
   testWidgets('$size 확대 글씨에서도 안내와 인물 목록을 스크롤한다', (tester) async {
     tester.view.physicalSize = size;
