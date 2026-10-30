@@ -48,7 +48,13 @@ class JokboParser {
   static List<Person> parseRegions(List<String> regions, {String? sourceImagePath,
       String? clanHanjaOverride, String? clanHangulOverride}) {
     if (regions.isEmpty) return [];
-    final clan = Genealogy.detectClanSurname(regions.first.split('配').first);
+    final first = _normalize(regions.first);
+    final firstPerson = _personBoundary.firstMatch(first);
+    final prefix = (firstPerson == null ? first : first.substring(0, firstPerson.start))
+        .split('配').first;
+    // 표제가 누락된 개인 주석에서 배우자 성씨를 가문 성씨로 삼지 않는다.
+    final clan = RegExp(r'[字號生卒墓忌]').hasMatch(prefix)
+        ? null : Genealogy.detectClanSurname(prefix);
     return [for (final region in regions) ...parse(region,
       sourceImagePath: sourceImagePath,
       clanHanjaOverride: clanHanjaOverride ?? clan?.$1,

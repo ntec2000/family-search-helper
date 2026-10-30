@@ -206,4 +206,16 @@ void main() {
     expect(people.single.spouseHanja, isNull);
   });
 
+  test('첫 인물 기록 안의 씨 표기를 가문 성씨로 상속하지 않는다', () {
+    final people = JokboParser.parseRegions(['子格 字君平 坡平尹氏', '子核 丁酉生']);
+    expect(people, hasLength(2));
+    expect(people[0].surnameHanja, isNull);
+    expect(people[1].surnameHanja, isNull);
+  });
+  test('첫 표제가 없고 개인 주석만 있는 구획의 배우자 성씨는 상속하지 않는다', () {
+    final people = JokboParser.parseRegions(['字君平 壬辰生 坡平尹氏', '子核 丁酉生']);
+    expect(people, hasLength(1));
+    expect(people.single.surnameHanja, isNull);
+  });
+
 }
