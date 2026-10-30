@@ -351,8 +351,11 @@ class _State extends State<ExportScreen> {
     final approved = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('FamilySearch 신규 인물 등록 확인'),
+        title: const Text(FamilySearchService.useSandbox
+            ? 'FamilySearch 테스트 서버 등록 확인'
+            : 'FamilySearch 신규 인물 등록 확인'),
         content: const Text(
+          '${FamilySearchService.useSandbox ? '현재 테스트 서버에만 등록하며 실제 가계도에는 반영되지 않습니다. ' : ''}'
           '이 작업은 기존 인물과의 중복 여부를 자동 확인하지 않고 신규 인물을 생성합니다. '
           '이 앱에서 등록에 성공한 인물은 저장된 FamilySearch ID를 기준으로 재등록하지 않습니다. '
           '다른 기기나 기존 FamilySearch 가계도의 중복 인물은 확인하지 못합니다. 계속하시겠습니까?'),
@@ -485,19 +488,23 @@ class _State extends State<ExportScreen> {
               onTap: _exportFamilySearchJson,
             )),
             const SizedBox(height: 32),
-            const Text('② FamilySearch 직접 동기화',
+            const Text('② FamilySearch 직접 등록',
                 style: TextStyle(fontWeight: FontWeight.bold, color: HanjiColors.ju)),
             const SizedBox(height: 8),
             if (FamilySearchService.enabled)
               Card(
                 child: ListTile(
                   leading: const Icon(Icons.cloud_upload, color: HanjiColors.ju),
-                  title: const Text('FamilySearch.org 직접 업로드'),
+                  title: const Text(FamilySearchService.useSandbox
+                      ? 'FamilySearch 테스트 서버 등록'
+                      : 'FamilySearch 인물 등록'),
                   subtitle: Text(!FamilySearchService.isConfigured
                       ? 'Client ID 미입력 — 설정에서 입력하세요'
                       : (FamilySearchService.isLoggedIn
-                          ? '로그인됨 — 인물 등록 가능'
-                          : 'LDS 회원 계정 로그인 필요')),
+                          ? (FamilySearchService.useSandbox
+                              ? '로그인됨 — 테스트 서버만 사용'
+                              : '로그인됨 — 인물 등록 가능')
+                          : 'FamilySearch 로그인 필요')),
                   trailing: const Icon(Icons.upload),
                   onTap: (_busy || !FamilySearchService.isConfigured)
                       ? null
@@ -509,7 +516,7 @@ class _State extends State<ExportScreen> {
                 child: ListTile(
                   leading: Icon(Icons.cloud_off, color: HanjiColors.muk),
                   title: Text('FamilySearch 연동 꺼짐'),
-                  subtitle: Text('설정 → FamilySearch 연동에서 켜면 사용할 수 있습니다.'),
+                  subtitle: Text('설정에서 켤 수 있습니다. 현재 테스트 서버 전용입니다.'),
                 ),
               ),
             if (FamilySearchService.enabled)
