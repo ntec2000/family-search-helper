@@ -23,6 +23,21 @@ void main() {
     expect(combined.alternatives, ['子格 字君平', '子格\n字君平']);
   });
 
+  test('원본과 전처리 OCR 중 선택되지 않은 결과도 보존한다', () {
+    final processed = result('子格');
+    final original = result('子聖甲');
+    final whole = OcrService.retainWholePageAlternatives(processed, original);
+    expect(whole.text, '子聖甲');
+    expect(whole.alternatives, ['子格']);
+    final combined = OcrService.useSegmentedOrWhole(whole, ['子格'], []);
+    expect(combined.alternatives, ['子聖甲', '子格']);
+  });
+
+  test('같은 전체 페이지 OCR은 비교 원문에 중복하지 않는다', () {
+    final whole = OcrService.retainWholePageAlternatives(result('子格'), result('子格'));
+    expect(whole.alternatives, isEmpty);
+  });
+
   test('Latin noise and whitespace cannot outweigh more Han characters', () {
     final processed = result('子聖甲');
     final original = result('子 abcdefghijklmnopqrstuvwxyz          ');

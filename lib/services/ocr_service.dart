@@ -65,7 +65,7 @@ class OcrService {
       throw StateError('OCR 입력을 읽을 수 없습니다');
     }
     final wholePage = processed == null ? original! : original == null
-        ? processed : selectCandidate(processed, original);
+        ? processed : retainWholePageAlternatives(processed, original);
     late final List<Uint8List> regions;
     try {
       regions = await compute(genealogyOcrRegions,
@@ -110,12 +110,25 @@ class OcrService {
   static bool hasReadableText(List<String> texts) =>
       texts.any((text) => text.trim().isNotEmpty);
 
+  /// 선택하지 않은 전체 페이지 OCR도 사용자가 원문 비교에 활용할 수 있다.
+  static OcrResult retainWholePageAlternatives(OcrResult processed, OcrResult original) {
+    final selected = selectCandidate(processed, original);
+    final other = identical(selected, processed) ? original : processed;
+    return OcrResult(text: selected.text, rawBlocks: selected.rawBlocks,
+        alternatives: [
+          ...selected.alternatives,
+          if (other.text.trim().isNotEmpty && other.text != selected.text) other.text,
+          ...other.alternatives,
+        ], regionTexts: selected.regionTexts);
+  }
+
   static OcrResult useSegmentedOrWhole(OcrResult wholePage,
       List<String> regions, List<String> rawColumns) {
     if (!hasReadableText(regions)) return wholePage;
     // 구획과 전체 인식은 원문 탭에서 함께 보존한다. 파싱은 구획 결과를 사용한다.
     return OcrResult(text: regions.join('\n'), rawBlocks: wholePage.rawBlocks,
-        alternatives: [wholePage.text, ...rawColumns], regionTexts: regions);
+        alternatives: [wholePage.text, ...wholePage.alternatives, ...rawColumns],
+        regionTexts: regions);
   }
 
   /// 공백이나 검출 블록 수가 늘어도 한자가 적은 후보를 우선하지 않는다.
