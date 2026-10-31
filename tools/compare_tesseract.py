@@ -32,7 +32,11 @@ def main():
     parser.add_argument("--names", required=True, help="Local JSON array of distinct reference names")
     parser.add_argument("--bands", action="append", default=[],
                         help="Local JSON array of [top, bottom] pixel coordinates; repeat to compare")
+    parser.add_argument("--threshold", type=int,
+                        help="Optional 0–255 threshold for extra 2x binary comparisons")
     args = parser.parse_args()
+    if args.threshold is not None and not 0 <= args.threshold <= 255:
+        parser.error("threshold must be between 0 and 255")
     with open(args.names, encoding="utf-8") as source:
         names = json.load(source)
     if (not isinstance(names, list) or not names or
@@ -63,6 +67,14 @@ def main():
             crops.append(scaled(image.crop((0, top, image.width, bottom))))
         label = "manual_bands_scaled_2x" if band_index == 0 else f"manual_bands_{band_index + 1}_scaled_2x"
         variants[label] = crops
+    if args.threshold is not None:
+        def binary(img):
+            enhanced = ImageOps.autocontrast(img, cutoff=1)
+            return enhanced.point(lambda pixel: 255 if pixel > args.threshold else 0)
+        # Keep the original variants; thresholding is a comparison, not a replacement.
+        variants.update({f"{label}_binary_{args.threshold}": [binary(part) for part in parts]
+                         for label, parts in list(variants.items())
+                         if label != "original"})
     results = {}
     for label, images in variants.items():
         lines = [line for part in images for line in recognize(part, args.tessdata, args.language)]
