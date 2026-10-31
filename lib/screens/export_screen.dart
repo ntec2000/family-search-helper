@@ -18,6 +18,7 @@ import '../services/familysearch_service.dart';
 import '../theme/traditional_theme.dart';
 import '../widgets/couple_export_dialog.dart';
 import '../widgets/familysearch_parent_link_dialog.dart';
+import '../widgets/familysearch_fact_review_dialog.dart';
 import 'familysearch_login_screen.dart';
 
 class ExportScreen extends StatefulWidget {
@@ -433,6 +434,9 @@ class _State extends State<ExportScreen> {
       ))),
       actions: [
         TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('닫기')),
+        TextButton(onPressed: () => showDialog<void>(context: ctx,
+            builder: (_) => FamilySearchFactReviewDialog(remote: remotePerson, incoming: appPerson)),
+            child: const Text('생몰 변경안 검토')),
         FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('같은 인물로 ID 연결')),
       ],
     ));
