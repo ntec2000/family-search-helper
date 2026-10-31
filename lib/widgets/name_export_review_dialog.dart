@@ -10,7 +10,7 @@ Future<bool> showNameExportReview(BuildContext context, List<Person> persons) as
     title: const Text('성씨와 이름 구분 확인'),
     content: SizedBox(width: 560, child: Column(mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('아래 이름은 성씨로 시작합니다. 내보내기는 앞의 성씨를 분리합니다. '
+        const Text('아래 이름은 성씨로 시작합니다. 내보내기에서 성과 이름이 잘못 분리되거나 중복될 수 있습니다. '
           '입력값이 개인 이름이라면 원본을 확인하고 성을 포함한 전체 이름으로 수정하세요. '
           '예: 성 이, 개인 이름 이인 → 전체 이름 이이인.'),
         const SizedBox(height: 8),
