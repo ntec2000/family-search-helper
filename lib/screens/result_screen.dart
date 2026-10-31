@@ -531,6 +531,31 @@ class _ResultScreenState extends State<ResultScreen> {
     });
   }
 
+  Future<void> _addPersonFromOcr() async {
+    if (_saved || _saving) return;
+    final controller = TextEditingController();
+    final source = await showDialog<String>(context: context,
+      builder: (ctx) => StatefulBuilder(builder: (ctx, refresh) {
+        return AlertDialog(
+          title: const Text('OCR 문장으로 인물 추가'),
+          content: Column(mainAxisSize: MainAxisSize.min, children: [
+            const Text('인식 결과에서 확인할 문장을 복사해 붙여 넣고 원본 이미지와 대조하세요.'),
+            TextField(controller: controller, minLines: 2, maxLines: 5,
+              decoration: const InputDecoration(labelText: '확인할 OCR 문장'),
+              onChanged: (_) => refresh(() {})),
+          ]),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('취소')),
+            FilledButton(onPressed: controller.text.trim().isEmpty ? null :
+              () => Navigator.pop(ctx, controller.text), child: const Text('인물 내용 입력')),
+          ],
+        );
+      }));
+    controller.dispose();
+    if (source == null || !mounted || _saved || _saving) return;
+    await _addPerson(sourceRegion: source);
+  }
+
   /// 일괄 추정 대신 사용자가 검토한 개별 인물에만 성씨를 적용한다.
   Future<void> _applySurname() async {
     if (_saved || _saving) return;
@@ -880,7 +905,8 @@ class _ResultScreenState extends State<ResultScreen> {
             ]))],
             body: TabBarView(children: [
                 _PersonList(persons: _persons, onEstimate: _reviewApproximateYear, onEstimateDeath: (p) => _reviewApproximateYear(p, death: true), onDelete: _deletePerson, onEdit: _editCandidate, onParent: _chooseParent, onUnlink: _clearParentLinks, saved: _saved || _saving, largeText: _largeText, relationshipMode: _reviewStep == 1, issueIds: _reviewStep == 1 && _showOnlyRelationshipIssues ? _relationshipIssueIds() : null),
-                _TextCompare(hanja: widget.rawText, hangul: hangulText),
+                _TextCompare(hanja: widget.rawText, hangul: hangulText,
+                    onAddFromOcr: _saved || _saving ? null : _addPersonFromOcr),
                 Container(
                   color: Colors.black,
                   child: InteractiveViewer(
@@ -1128,7 +1154,8 @@ class _PersonList extends StatelessWidget {
 class _TextCompare extends StatelessWidget {
   final String hanja;
   final String hangul;
-  const _TextCompare({required this.hanja, required this.hangul});
+  final VoidCallback? onAddFromOcr;
+  const _TextCompare({required this.hanja, required this.hangul, required this.onAddFromOcr});
   @override
   Widget build(BuildContext context) {
     return Row(children: [
@@ -1148,6 +1175,9 @@ class _TextCompare extends StatelessWidget {
                     style: TextStyle(color: HanjiColors.ju, fontWeight: FontWeight.bold)),
                 if (hanja.contains('[OCR 비교 결과 · 전체/세로 열]'))
                   const Text('첫 결과는 인물 분석에 사용된 내용입니다. 아래 OCR 비교 결과는 자동으로 인물 목록에 추가되지 않으므로 원본과 함께 확인하세요.'),
+                TextButton.icon(onPressed: onAddFromOcr,
+                  icon: const Icon(Icons.person_add_alt_1),
+                  label: const Text('OCR 문장으로 인물 추가')),
                 const Divider(),
                 SelectableText(hanja, style: const TextStyle(fontSize: 16, height: 1.8)),
               ],
