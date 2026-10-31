@@ -109,9 +109,14 @@ class FamilySearchService {
   }
 
   /// 사용자가 입력한 인물 ID의 현재 기록을 조회한다. 조회만 수행한다.
+  static String? normalizePersonId(String id) {
+    final value = id.trim().toUpperCase();
+    return RegExp(r'^[A-Z0-9-]{4,40}$').hasMatch(value) ? value : null;
+  }
+
   static Future<Map<String, dynamic>?> readPerson(String id) async {
-    final value = id.trim();
-    if (!RegExp(r'^[A-Za-z0-9-]{4,40}$').hasMatch(value)) return null;
+    final value = normalizePersonId(id);
+    if (value == null) return null;
     final result = await _get('/platform/tree/persons/${Uri.encodeComponent(value)}');
     final persons = result?['persons'];
     if (persons is! List || persons.length != 1 || persons.first is! Map ||

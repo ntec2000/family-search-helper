@@ -379,8 +379,8 @@ class _State extends State<ExportScreen> {
       actions: [
         TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('취소')),
         FilledButton(onPressed: () {
-          final id = controller.text.trim();
-          if (!RegExp(r'^[A-Za-z0-9-]{4,40}$').hasMatch(id)) return;
+          final id = FamilySearchService.normalizePersonId(controller.text);
+          if (id == null) return;
           Navigator.pop(ctx, id);
         }, child: const Text('조회')),
       ],
