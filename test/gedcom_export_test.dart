@@ -118,6 +118,13 @@ void main() {
     expect(() => GedcomExport.toGedcom(people), throwsStateError);
   });
 
+  test('자기 자신을 부모로 지정한 기록은 조용히 누락하지 않고 차단한다', () {
+    for (final person in [Person(id: 'p', fatherId: 'p'),
+        Person(id: 'p', motherId: 'p')]) {
+      expect(() => GedcomExport.toGedcom([person]), throwsStateError);
+    }
+  });
+
   test('검토한 자녀 없는 부부도 하나의 가족으로 내보낸다', () {
     final people = [Person(id: 'a', gender: 'M'), Person(id: 'b', gender: 'F')];
     final ged = GedcomExport.toGedcom(people, reviewedCouples: [('b', 'a')]);

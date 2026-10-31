@@ -25,6 +25,12 @@ void main() {
       Person(id: 'child', fatherId: 'parent', motherId: 'parent')];
     expect(() => FamilySearchRecord.document(people), throwsStateError);
   });
+  test('자기 자신을 부모로 지정한 기록은 내보내기를 차단한다', () {
+    for (final person in [Person(id: 'p', fatherId: 'p'),
+        Person(id: 'p', motherId: 'p')]) {
+      expect(() => FamilySearchRecord.document([person]), throwsStateError);
+    }
+  });
   test('자기 자신, 누락 ID, 역순 중복 관계를 거부한다', () {
     final people = [Person(id: 'a'), Person(id: 'b')];
     for (final couples in <List<(String, String)>>[

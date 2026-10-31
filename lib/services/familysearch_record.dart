@@ -91,6 +91,9 @@ class FamilySearchRecord {
     final ids = persons.map((p) => p.id).toSet();
     if (ids.length != persons.length) throw StateError('중복 인물 ID');
     for (final child in persons) {
+      if (child.fatherId == child.id || child.motherId == child.id) {
+        throw StateError('인물 ${child.id}이 자신의 부모로 지정되어 있습니다.');
+      }
       if (child.fatherId != null && child.fatherId == child.motherId &&
           ids.contains(child.fatherId)) {
         throw StateError('같은 인물이 아버지와 어머니로 지정되어 있습니다.');
