@@ -16,4 +16,14 @@ void main() {
     final lines = FamilySearchComparisonSummary.lines({'names': [null], 'facts': '잘못된 자료'});
     expect(lines.single, contains('전체 자료를 확인'));
   });
+  test('기존과 앱에만 있는 표기를 분리하고 빈 자료 안내는 차이로 만들지 않는다', () {
+    final remote = {'names': [{'nameForms': [{'fullText': '이격'}]}]};
+    final app = {'names': [{'nameForms': [{'fullText': '이핵'}]}]};
+    final diff = FamilySearchComparisonSummary.differences(remote, app);
+    expect(diff.remoteOnly, ['이름: 이격']);
+    expect(diff.appOnly, ['이름: 이핵']);
+    final missing = FamilySearchComparisonSummary.differences({}, app);
+    expect(missing.remoteOnly, isEmpty);
+    expect(missing.appOnly, ['이름: 이핵']);
+  });
 }

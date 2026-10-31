@@ -1,5 +1,16 @@
 /// FamilySearch GEDCOM-X 자료에서 확인 가능한 값만 읽기 쉽게 요약한다.
 class FamilySearchComparisonSummary {
+  static const _empty = '표시할 이름·생몰 정보가 없습니다. 전체 자료를 확인하세요.';
+
+  /// 단순 표기 차이도 보여주며 자동으로 같은 사람이나 수정 대상이라고 판단하지 않는다.
+  static ({List<String> remoteOnly, List<String> appOnly}) differences(
+      Map<String, dynamic> remote, Map<String, dynamic> app) {
+    final oldLines = lines(remote).where((line) => line != _empty).toSet();
+    final newLines = lines(app).where((line) => line != _empty).toSet();
+    return (remoteOnly: oldLines.difference(newLines).toList(),
+        appOnly: newLines.difference(oldLines).toList());
+  }
+
   static List<String> lines(Map<String, dynamic> person) {
     final result = <String>[];
     final names = person['names'];
@@ -41,6 +52,6 @@ class FamilySearchComparisonSummary {
         result.add('$label: ${values.isEmpty ? '상세 내용 없음' : values.join(' · ')}');
       }
     }
-    return result.isEmpty ? ['표시할 이름·생몰 정보가 없습니다. 전체 자료를 확인하세요.'] : result;
+    return result.isEmpty ? [_empty] : result;
   }
 }

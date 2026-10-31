@@ -405,6 +405,7 @@ class _State extends State<ExportScreen> {
     const pretty = JsonEncoder.withIndent('  ');
     final remotePerson = Map<String, dynamic>.from((remote['persons'] as List).first as Map);
     final appPerson = FamilySearchRecord.person(person);
+    final differences = FamilySearchComparisonSummary.differences(remotePerson, appPerson);
     final linkRequested = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
       title: Text('인물 비교 · $targetId'),
       content: SizedBox(width: 700, child: SingleChildScrollView(child: Column(
@@ -417,6 +418,13 @@ class _State extends State<ExportScreen> {
           const SizedBox(height: 12),
           const Text('앱에서 검토한 자료', style: TextStyle(fontWeight: FontWeight.bold)),
           for (final line in FamilySearchComparisonSummary.lines(appPerson)) SelectableText(line),
+          const SizedBox(height: 12),
+          const Text('표기 차이 확인', style: TextStyle(fontWeight: FontWeight.bold)),
+          const Text('같은 내용의 다른 표기일 수도 있으므로 원본과 대조하세요.'),
+          for (final line in differences.remoteOnly) SelectableText('기존 기록에만: $line'),
+          for (final line in differences.appOnly) SelectableText('앱 자료에만: $line'),
+          if (differences.remoteOnly.isEmpty && differences.appOnly.isEmpty)
+            const Text('요약된 이름·생몰 표기에 차이가 없습니다. 전체 자료도 확인하세요.'),
           ExpansionTile(title: const Text('전체 자료 보기'), children: [
             const Text('FamilySearch 조회 내용'), SelectableText(pretty.convert(remote)),
             const Text('앱 자료'), SelectableText(pretty.convert(appPerson)),
