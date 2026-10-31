@@ -56,7 +56,7 @@ class JokboParser {
       sourceImagePath: sourceImagePath,
       clanHanjaOverride: hasOverride ? clanHanjaOverride : clan?.$1,
       clanHangulOverride: hasOverride ? clanHangulOverride : clan?.$2,
-      numberDaughters: false)];
+      numberDaughters: false, detectLocalClan: false)];
     _numberDaughters(persons);
     return persons;
   }
@@ -65,10 +65,10 @@ class JokboParser {
   static (String, String)? detectWorkingSurname(Iterable<String> texts) {
     (String, String)? found;
     for (final text in texts) {
-      final clan = _detectClanFromHeader(_normalize(text));
-      if (clan == null) continue;
-      if (found != null && found.$1 != clan.$1) return null;
-      found = clan;
+      for (final clan in _clansFromHeader(_normalize(text))) {
+        if (found != null && found.$1 != clan.$1) return null;
+        found = clan;
+      }
     }
     return found;
   }
@@ -121,11 +121,22 @@ class JokboParser {
 
   /// 표제 이전에 개인 주석이 있으면 씨 표기를 가문 성씨로 추정하지 않는다.
   static (String, String)? _detectClanFromHeader(String text) {
+    final clans = _clansFromHeader(text);
+    return clans.length == 1 ? clans.single : null;
+  }
+
+  static List<(String, String)> _clansFromHeader(String text) {
     final firstPerson = _personBoundary.firstMatch(text);
     final prefix = (firstPerson == null ? text : text.substring(0, firstPerson.start))
         .split('配').first;
-    if (RegExp(r'[字號生卒墓忌]').hasMatch(prefix)) return null;
-    return Genealogy.detectClanSurname(prefix);
+    if (RegExp(r'[字號生卒墓忌]').hasMatch(prefix)) return [];
+    final clans = <String, String>{};
+    for (final match in RegExp(r'([㐀-鿿])\s*氏').allMatches(prefix)) {
+      final hanja = match.group(1)!;
+      final hangul = Genealogy.surnameHanjaToHangul[hanja];
+      if (hangul != null) clans[hanja] = hangul;
+    }
+    return [for (final entry in clans.entries) (entry.key, entry.value)];
   }
 
   /// OCR 인식 텍스트(세로쓰기 → 정렬된 평문)를 받아 인물 카드 목록 추출
@@ -133,10 +144,11 @@ class JokboParser {
       {String? sourceImagePath,
       String? clanHanjaOverride,
       String? clanHangulOverride,
-      bool numberDaughters = true}) {
+      bool numberDaughters = true,
+      bool detectLocalClan = true}) {
     final normalized = _normalize(rawText);
     // 문서 표제에서만 가문 성씨를 감지한다.
-    final detected = _detectClanFromHeader(normalized);
+    final detected = detectLocalClan ? _detectClanFromHeader(normalized) : null;
     // v2.7 — [족보작성]에서 미리 입력받은 성씨가 있으면 자동 감지보다 우선 적용한다.
     final manualHanja = (clanHanjaOverride ?? '').trim();
     final manualHangul = SurnameReview.normalizeHangul(clanHangulOverride);
@@ -361,11 +373,19 @@ class JokboParser {
       person.spouseHangul = husband.isEmpty ? null : dict.toHangul(husband);
       // 女 블록의 父는 사위 부친 후보다. 본손의 아버지로 연결하지 않는다.
       final ancestry = afterHusband.substring(bgM?.end ?? 0);
-      final husbandFather = RegExp(
-          r'(?:^|[\s、。:：;；,，])父\s*([一-鿿]{1,4}?)(?=\s|$|[祖配生卒忌墓])')
+      final fatherMarker = RegExp(r'(?:^|[\s、。:：;；,，])父\s*')
           .firstMatch(ancestry);
-      if (husbandFather != null) {
-        person.spouseFather = _stripTitle(husbandFather.group(1)!);
+      if (fatherMarker != null) {
+        var fatherText = ancestry.substring(fatherMarker.end).trim();
+        // 學生의 生을 출생 표기로 오인하지 않도록 관직부터 제거한다.
+        while (fatherText.isNotEmpty) {
+          final title = _titles.where(fatherText.startsWith).firstOrNull;
+          if (title == null) break;
+          fatherText = fatherText.substring(title.length).trim();
+        }
+        final fatherName = RegExp(r'^([一-鿿]{1,4}?)(?=\s|$|[祖配生卒忌墓])')
+            .firstMatch(fatherText);
+        person.spouseFather = fatherName?.group(1);
       }
       addNote('딸의 개인 이름 미상. 女 뒤 표기는 사위 후보이며 원문 대조가 필요합니다.');
       // 딸의 성은 가문 성씨 상속 (이름 없음 → 내보내기에서 "○씨")
