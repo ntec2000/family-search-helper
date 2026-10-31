@@ -1146,6 +1146,8 @@ class _TextCompare extends StatelessWidget {
               children: [
                 const Text('OCR 인식 결과 (원본 대조 필요)',
                     style: TextStyle(color: HanjiColors.ju, fontWeight: FontWeight.bold)),
+                if (hanja.contains('[OCR 비교 결과 · 전체/세로 열]'))
+                  const Text('첫 결과는 인물 분석에 사용된 내용입니다. 아래 OCR 비교 결과는 자동으로 인물 목록에 추가되지 않으므로 원본과 함께 확인하세요.'),
                 const Divider(),
                 SelectableText(hanja, style: const TextStyle(fontSize: 16, height: 1.8)),
               ],
