@@ -100,9 +100,17 @@ class GedcomExport {
       // Only separate a surname when it was explicitly recorded.
       final fullName = p.nameHangul.trim();
       final surname = (p.surnameHangul ?? '').trim();
-      final given = surname.isNotEmpty && fullName.startsWith(surname)
+      var given = surname.isNotEmpty && fullName.startsWith(surname)
           ? fullName.substring(surname.length).trim()
           : fullName;
+      // 한글 이름만 비어 있고 한자 이름은 있으면 이름을 누락하지 않는다.
+      if (fullName.isEmpty && p.nameHanja.trim().isNotEmpty) {
+        final hanja = p.nameHanja.trim();
+        final hanjaSurname = (p.surnameHanja ?? '').trim();
+        given = hanjaSurname.isNotEmpty && hanja.startsWith(hanjaSurname) &&
+                hanja.length > hanjaSurname.length
+            ? hanja.substring(hanjaSurname.length).trim() : hanja;
+      }
       if (surname.isNotEmpty) {
         buf.writeln('1 NAME $given /$surname/');
       } else {

@@ -54,6 +54,14 @@ void main() {
     expect(output, isNot(contains('1 NAME 최해두 /崔海斗/')));
   });
 
+  test('한글 이름이 없으면 확인된 한자 이름을 성씨와 함께 보존한다', () {
+    final output = GedcomExport.toGedcom([
+      Person(id: 'p', surnameHangul: '이', surnameHanja: '李', nameHanja: '李核'),
+    ]);
+    expect(output, contains('1 NAME 核 /이/'));
+    expect(output, contains('1 NOTE 한자 이름: 李核'));
+  });
+
   test('empty export has a header and trailer', () {
     final output = GedcomExport.toGedcom(<Person>[]);
     expect(output, contains('0 HEAD'));
