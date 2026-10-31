@@ -62,12 +62,12 @@ class FamilySearchRecord {
         '족보 원문': person.rawText,
         'PDF 페이지': person.sourcePageNumber?.toString(),
       }.entries)
-        if (entry.value?.isNotEmpty == true) '${entry.key}: ${entry.value}',
+        if (entry.value?.trim().isNotEmpty == true) '${entry.key}: ${entry.value}',
     ];
     Map<String, dynamic> fact(String type, String? date, String? place) => {
       'type': 'http://gedcomx.org/$type',
-      if (date?.isNotEmpty == true) 'date': {'original': date},
-      if (place?.isNotEmpty == true) 'place': {'original': place},
+      if (date?.trim().isNotEmpty == true) 'date': {'original': date},
+      if (place?.trim().isNotEmpty == true) 'place': {'original': place},
     };
     return {
       'id': person.id,

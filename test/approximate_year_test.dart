@@ -60,6 +60,17 @@ void main() {
     expect(record.containsKey('living'), isFalse);
   });
 
+  test('날짜가 있어도 공백 장소나 공백 메모는 내보내지 않는다', () {
+    final record = FamilySearchRecord.person(Person(id: 'p', nameHangul: '격',
+        birthDateLunar: '壬辰生', birthPlace: ' ', deathDateLunar: '庚申卒',
+        deathPlace: ' ', burialOrientation: ' '));
+    final facts = record['facts'] as List;
+    expect(facts, hasLength(2));
+    expect(facts.every((fact) => !fact.containsKey('place')), isTrue);
+    final notes = (record['notes'] as List).first['text'] as String;
+    expect(notes, isNot(contains('묘 좌향:')));
+  });
+
   test('FamilySearch 자료에 묘 좌향을 보존하고 빈 묘지 사건은 생략한다', () {
     final record = FamilySearchRecord.person(Person(id: 'p', burialPlace: ' ',
         burialOrientation: '壬坐'));
