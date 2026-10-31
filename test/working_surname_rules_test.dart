@@ -116,4 +116,35 @@ void main() {
         .firstWhere((row) => row.role.contains('아버지')).display, '金正明');
     expect(full.spouseFather, '金正明');
   });
+
+  test('사위 부친 앞 관직은 이름으로 잘라내지 않고 이름이 없으면 생성하지 않는다', () {
+    for (final input in ['學生正明', '學生金正明', '贈通政學生正明']) {
+      final daughter = JokboParser.parseRegions(['女金免傑 金海人 父$input'],
+          clanHangulOverride: '이').single;
+      expect(daughter.spouseFather, input.contains('金') ? '金正明' : '正明', reason: input);
+      expect(FamilyNameCandidates.fromPerson(daughter)
+          .firstWhere((row) => row.role.contains('아버지')).display, '金正明');
+      expect(daughter.rawText, contains(input));
+    }
+    final unnamed = JokboParser.parseRegions(['女金免傑 父學生'],
+        clanHangulOverride: '이').single;
+    expect(unnamed.spouseFather, isNull);
+  });
+
+  test('한 OCR 문장 안에 다른 문중 표제가 있어도 자동 확정하지 않는다', () {
+    expect(JokboParser.detectWorkingSurname(['固城李氏 金海金氏 子格']), isNull);
+    expect(JokboParser.detectWorkingSurname(['固城李氏 固城李氏 子格']), ('李', '이'));
+  });
+
+  test('상충 표제는 구획별 재감지로 복구하지 않고 수동 작업 성씨만 우선한다', () {
+    const regions = ['固城李氏 子格', '金海金氏 子核'];
+    final unresolved = JokboParser.parseRegions(regions);
+    expect(unresolved.map((p) => p.surnameHanja ?? ''), everyElement(isEmpty));
+    expect(unresolved.map((p) => p.surnameHangul ?? ''), everyElement(isEmpty));
+    final single = JokboParser.parse('固城李氏 金海金氏 子格').single;
+    expect(single.surnameHanja, isNull);
+    final selected = JokboParser.parseRegions(regions, clanHangulOverride: '최');
+    expect(selected.map((p) => p.surnameHangul), everyElement('최'));
+    expect(selected.map((p) => p.surnameHanja ?? ''), everyElement(isEmpty));
+  });
 }
