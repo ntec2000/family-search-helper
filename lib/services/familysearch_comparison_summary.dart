@@ -26,6 +26,16 @@ class FamilySearchComparisonSummary {
         }
       }
     }
+    final gender = person['gender'];
+    if (gender is Map) {
+      final genderLabel = switch (gender['type']) {
+        'http://gedcomx.org/Male' => '남성',
+        'http://gedcomx.org/Female' => '여성',
+        'http://gedcomx.org/Unknown' => '미상',
+        _ => null,
+      };
+      if (genderLabel != null) result.add('성별: $genderLabel');
+    }
     final facts = person['facts'];
     if (facts is List) {
       for (final fact in facts) {

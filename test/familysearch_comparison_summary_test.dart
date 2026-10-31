@@ -23,6 +23,16 @@ void main() {
     expect(diff.remoteOnly, ['출생: 날짜 정규화 값: +1800']);
     expect(diff.appOnly, ['출생: 날짜: 1801']);
   });
+  test('기록된 성별 차이를 표시하고 없는 성별은 추측하지 않는다', () {
+    final remote = {'gender': {'type': 'http://gedcomx.org/Female'}};
+    final app = {'gender': {'type': 'http://gedcomx.org/Male'}};
+    final diff = FamilySearchComparisonSummary.differences(remote, app);
+    expect(diff.remoteOnly, ['성별: 여성']);
+    expect(diff.appOnly, ['성별: 남성']);
+    expect(FamilySearchComparisonSummary.lines({'gender': {'type': 'http://gedcomx.org/Unknown'}}),
+        ['성별: 미상']);
+    expect(FamilySearchComparisonSummary.lines({}).single, contains('전체 자료를 확인'));
+  });
   test('자료가 누락되거나 잘못된 형태면 없는 값을 만들지 않는다', () {
     final lines = FamilySearchComparisonSummary.lines({'names': [null], 'facts': '잘못된 자료'});
     expect(lines.single, contains('전체 자료를 확인'));
