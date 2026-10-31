@@ -10,6 +10,7 @@ import '../services/female_name_display.dart';
 import '../services/spouse_parent_text.dart';
 import '../services/gender_label.dart';
 import '../services/familysearch_record.dart';
+import '../services/familysearch_comparison_summary.dart';
 import '../services/hanja_dict.dart';
 import '../services/genealogy.dart';
 import '../services/romanizer.dart';
@@ -402,6 +403,8 @@ class _State extends State<ExportScreen> {
     setState(() { _busy = false; _status = remote == null ? '조회 실패: ID, 로그인 또는 서버 상태를 확인하세요.' : '조회 완료: 기존 기록과 앱 자료를 비교하세요.'; });
     if (remote == null) return;
     const pretty = JsonEncoder.withIndent('  ');
+    final remotePerson = Map<String, dynamic>.from((remote['persons'] as List).first as Map);
+    final appPerson = FamilySearchRecord.person(person);
     await showDialog<void>(context: context, builder: (ctx) => AlertDialog(
       title: Text('인물 비교 · $targetId'),
       content: SizedBox(width: 700, child: SingleChildScrollView(child: Column(
@@ -410,10 +413,14 @@ class _State extends State<ExportScreen> {
           const Text('조회 결과와 앱 자료를 대조하세요. 이 화면은 기록을 수정하지 않습니다.'),
           const SizedBox(height: 12),
           const Text('FamilySearch 기존 기록', style: TextStyle(fontWeight: FontWeight.bold)),
-          SelectableText(pretty.convert(remote)),
+          for (final line in FamilySearchComparisonSummary.lines(remotePerson)) SelectableText(line),
           const SizedBox(height: 12),
           const Text('앱에서 검토한 자료', style: TextStyle(fontWeight: FontWeight.bold)),
-          SelectableText(pretty.convert(FamilySearchRecord.person(person))),
+          for (final line in FamilySearchComparisonSummary.lines(appPerson)) SelectableText(line),
+          ExpansionTile(title: const Text('전체 자료 보기'), children: [
+            const Text('FamilySearch 조회 내용'), SelectableText(pretty.convert(remote)),
+            const Text('앱 자료'), SelectableText(pretty.convert(appPerson)),
+          ]),
         ],
       ))),
       actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('닫기'))],
