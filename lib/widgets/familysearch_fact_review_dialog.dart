@@ -34,7 +34,11 @@ class _FamilySearchFactReviewDialogState extends State<FamilySearchFactReviewDia
       final id = (fact['id'] as String).trim();
       if (id.isEmpty) continue;
       final date = fact['date'];
-      final original = date is Map && date['original'] is String ? date['original'] as String : '날짜 미상';
+      final original = date is Map && date['original'] is String &&
+          (date['original'] as String).trim().isNotEmpty
+          ? date['original'] as String
+          : date is Map && date['formal'] is String && (date['formal'] as String).trim().isNotEmpty
+              ? '정규화 값: ${date['formal']}' : '날짜 표기 없음';
       choices[id] = '$id · $original';
     }
     return choices;
@@ -43,7 +47,11 @@ class _FamilySearchFactReviewDialogState extends State<FamilySearchFactReviewDia
   String _describe(Map<String, dynamic> values) {
     String value(String key) {
       final entry = values[key];
-      return entry is Map && entry['original'] is String ? entry['original'] as String : '미상';
+      if (entry is Map && entry['original'] is String &&
+          (entry['original'] as String).trim().isNotEmpty) return entry['original'] as String;
+      if (entry is Map && entry['formal'] is String &&
+          (entry['formal'] as String).trim().isNotEmpty) return '정규화 값: ${entry['formal']}';
+      return '응답에 표시 가능한 값 없음';
     }
     return '날짜: ${value('date')}\n장소: ${value('place')}';
   }

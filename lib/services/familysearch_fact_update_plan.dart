@@ -37,18 +37,20 @@ class FamilySearchFactUpdatePlan {
     if (matches.length != 1 || candidates.length != 1) {
       throw StateError('수정할 기존 항목과 앱 항목을 각각 하나씩 확인하세요.');
     }
-    Map<String, dynamic> knownValues(Map fact) {
+    Map<String, dynamic> knownValues(Map fact, {bool preserveExisting = false}) {
       final result = <String, dynamic>{};
       for (final field in ['date', 'place']) {
         final value = fact[field];
-        if (value is Map && value['original'] is String &&
+        if (preserveExisting && value is Map && value.isNotEmpty) {
+          result[field] = Map<String, dynamic>.from(value);
+        } else if (value is Map && value['original'] is String &&
             (value['original'] as String).trim().isNotEmpty) {
           result[field] = {'original': value['original']};
         }
       }
       return result;
     }
-    final oldValues = knownValues(matches.single);
+    final oldValues = knownValues(matches.single, preserveExisting: true);
     final newValues = knownValues(candidates.single);
     if (newValues.isEmpty) throw StateError('수정할 날짜 또는 장소가 없습니다.');
     final fact = matches.single;

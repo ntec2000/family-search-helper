@@ -11,7 +11,7 @@ void main() {
     const birth = 'http://gedcomx.org/Birth';
     await tester.pumpWidget(const MaterialApp(home: Scaffold(body:
       FamilySearchFactReviewDialog(remote: {'id': 'ABCD-123', 'facts': [
-        {'id': 'old-1', 'type': birth, 'date': {'original': '1800'},
+        {'id': 'old-1', 'type': birth, 'date': {'formal': '+1800'},
           'attribution': {'changeMessage': '기존 출처 대조'}},
       ]}, incoming: {'facts': [
         {'type': birth, 'date': {'original': 'about 1801'}},
@@ -19,13 +19,13 @@ void main() {
     )));
     await tester.tap(find.text('기존 항목 선택'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('old-1 · 1800').last);
+    await tester.tap(find.text('old-1 · 정규화 값: +1800').last);
     await tester.pumpAndSettle();
     await tester.enterText(find.widgetWithText(TextField, '변경 근거'), '족보 224쪽');
     await tester.tap(find.text('변경안 보기'));
     await tester.pumpAndSettle();
     expect(find.text('변경 전후 검토'), findsOneWidget);
-    expect(find.textContaining('날짜: 1800'), findsOneWidget);
+    expect(find.textContaining('날짜: 정규화 값: +1800'), findsOneWidget);
     expect(find.textContaining('기존 변경 근거: 기존 출처 대조'), findsOneWidget);
     expect(find.textContaining('항목의 출처 참조: 응답에 없음'), findsOneWidget);
     expect(find.textContaining('날짜: about 1801'), findsOneWidget);

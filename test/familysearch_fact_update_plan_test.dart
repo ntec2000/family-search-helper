@@ -36,6 +36,20 @@ void main() {
     expect(missing.priorReason, '응답에 없음');
     expect(missing.priorSourceReferences, isEmpty);
   });
+  test('원문이 없는 기존 정규화 날짜를 장소 변경 시 보존한다', () {
+    final formalRemote = <String, dynamic>{'id': 'ABCD-123', 'facts': [
+      {'id': 'old-1', 'type': birth, 'date': {'formal': '+1800'},
+        'place': {'original': '경주'}},
+    ]};
+    final placeOnly = <String, dynamic>{'facts': [
+      {'type': birth, 'place': {'original': '서울'}},
+    ]};
+    final plan = FamilySearchFactUpdatePlan.prepare(remote: formalRemote,
+        incoming: placeOnly, factId: 'old-1', type: birth, reason: '자료 대조');
+    expect(plan.previous['date']['formal'], '+1800');
+    expect(plan.proposed['date']['formal'], '+1800');
+    expect(plan.proposed['place']['original'], '서울');
+  });
   test('기존 항목 ID가 다르거나 근거가 없으면 변경안을 만들지 않는다', () {
     expect(() => FamilySearchFactUpdatePlan.prepare(remote: remote, incoming: incoming,
         factId: 'missing', type: birth, reason: '족보'), throwsStateError);
