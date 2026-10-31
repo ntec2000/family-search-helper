@@ -159,7 +159,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(const MaterialApp(home: ResultScreen(
       rawText: '子格\n[OCR 비교 결과 · 전체/세로 열]\n子核 字君實',
-      persons: [], imagePath: 'missing-test-image',
+      persons: [], imagePath: 'missing-test-image', sourcePageNumber: 224,
     )));
     await tester.pumpAndSettle();
     await tester.tap(find.text('한자/한글'));
@@ -179,6 +179,10 @@ void main() {
     expect(find.text('인물 내용 수정'), findsOneWidget);
     expect(find.text('인식 원문 (보존)'), findsOneWidget);
     expect(find.text('子核 字君實'), findsOneWidget);
+    final reason = tester.widget<TextField>(find.widgetWithText(TextField, '출처 · 확인 근거'));
+    expect(reason.controller!.text, contains('사용자가 선택한 OCR 문장'));
+    expect(reason.controller!.text, contains('입력 문서 224쪽'));
+    expect(reason.controller!.text, contains('원본 대조 필요'));
     await tester.tap(find.text('취소').last);
     await tester.pumpAndSettle();
     expect(find.text('인식 결과 (0명)'), findsOneWidget);

@@ -95,12 +95,15 @@ void main() {
   test('PDF 출처·페이지·OCR 원문을 인물과 함께 보존한다', () async {
     final person = Person(id: 'pdf-person', nameHanja: '格',
         sourceDocumentPath: 'original.pdf', sourcePageNumber: 2,
-        sourceImagePath: 'page-2.png', rawText: '子格');
+        sourceImagePath: 'page-2.png', rawText: '子格',
+        reasonStatement: '사용자가 선택한 OCR 문장 · 원본 대조 필요 · 입력 문서 2쪽');
     await service.upsertPersonsAtomically([person], sourceOcrText: 'OCR 원문 전체');
     final saved = (await service.getPerson(person.id))!;
     expect(saved.sourceDocumentPath, 'original.pdf');
     expect(saved.sourcePageNumber, 2);
     expect(saved.sourceImagePath, 'page-2.png');
+    expect(saved.rawText, '子格');
+    expect(saved.reasonStatement, '사용자가 선택한 OCR 문장 · 원본 대조 필요 · 입력 문서 2쪽');
     expect(await service.getConfig('ocr_source:${person.id}'), 'OCR 원문 전체');
   });
 

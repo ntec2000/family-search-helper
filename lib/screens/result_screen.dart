@@ -521,7 +521,9 @@ class _ResultScreenState extends State<ResultScreen> {
         sourceImagePath: widget.imagePath,
         rawText: sourceRegion,
         sourceDocumentPath: widget.sourceDocumentPath,
-        sourcePageNumber: widget.sourcePageNumber);
+        sourcePageNumber: widget.sourcePageNumber,
+        reasonStatement: sourceRegion == null ? null :
+          '사용자가 선택한 OCR 문장 · 원본 대조 필요${widget.sourcePageNumber == null ? "" : " · 입력 문서 ${widget.sourcePageNumber}쪽"}');
     final person = await showDialog<Person>(context: context,
         builder: (_) => CandidateEditor(person: candidate));
     if (person == null || !mounted || _saved || _saving) return;
