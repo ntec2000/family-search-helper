@@ -425,7 +425,7 @@ class _State extends State<ExportScreen> {
           for (final line in differences.remoteOnly) SelectableText('기존 기록에만: $line'),
           for (final line in differences.appOnly) SelectableText('앱 자료에만: $line'),
           if (differences.remoteOnly.isEmpty && differences.appOnly.isEmpty)
-            const Text('요약된 이름·생몰 표기에 차이가 없습니다. 전체 자료도 확인하세요.'),
+            const Text('요약에서 차이가 확인되지 않았습니다. 비교할 정보가 부족할 수 있으며, 이 결과만으로 같은 사람인지 판단할 수 없습니다. 전체 자료와 원본을 확인하세요.'),
           ExpansionTile(title: const Text('전체 자료 보기'), children: [
             const Text('FamilySearch 조회 내용'), SelectableText(pretty.convert(remote)),
             const Text('앱 자료'), SelectableText(pretty.convert(appPerson)),
