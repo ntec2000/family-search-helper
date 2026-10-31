@@ -55,7 +55,11 @@ class _FamilySearchFactReviewDialogState extends State<FamilySearchFactReviewDia
       showDialog<void>(context: context, builder: (ctx) => AlertDialog(
         title: const Text('변경 전후 검토'),
         content: SingleChildScrollView(child: Text('기존 기록\n${_describe(plan.previous)}\n\n'
-            '변경안\n${_describe(plan.proposed)}\n\n근거: ${plan.reason}\n\n'
+            '기존 기여자 참조: ${plan.priorContributor}\n'
+            '기존 변경 시각 원문: ${plan.priorModified}\n'
+            '기존 변경 근거: ${plan.priorReason}\n'
+            '항목의 출처 참조: ${plan.priorSourceReferences.isEmpty ? '응답에 없음' : plan.priorSourceReferences.join(', ')}\n\n'
+            '변경안\n${_describe(plan.proposed)}\n\n새 변경 근거: ${plan.reason}\n\n'
             '검토용 화면이며 FamilySearch 기록은 변경하지 않았습니다.')),
         actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('닫기'))],
       ));

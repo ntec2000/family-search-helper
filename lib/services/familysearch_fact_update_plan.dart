@@ -6,9 +6,14 @@ class FamilySearchFactUpdatePlan {
   final Map<String, dynamic> previous;
   final Map<String, dynamic> proposed;
   final String reason;
+  final String priorContributor;
+  final String priorModified;
+  final String priorReason;
+  final List<String> priorSourceReferences;
 
   const FamilySearchFactUpdatePlan._(this.personId, this.factId, this.type,
-      this.previous, this.proposed, this.reason);
+      this.previous, this.proposed, this.reason, this.priorContributor,
+      this.priorModified, this.priorReason, this.priorSourceReferences);
 
   static FamilySearchFactUpdatePlan prepare({required Map<String, dynamic> remote,
       required Map<String, dynamic> incoming, required String factId,
@@ -46,7 +51,27 @@ class FamilySearchFactUpdatePlan {
     final oldValues = knownValues(matches.single);
     final newValues = knownValues(candidates.single);
     if (newValues.isEmpty) throw StateError('수정할 날짜 또는 장소가 없습니다.');
+    final fact = matches.single;
+    final attribution = fact['attribution'];
+    String nonempty(dynamic value) => value is String && value.trim().isNotEmpty
+        ? value.trim() : '응답에 없음';
+    final contributor = attribution is Map ? attribution['contributor'] : null;
+    final contributorReference = contributor is Map
+        ? nonempty(contributor['resourceId'] ?? contributor['resource']) : '응답에 없음';
+    final modified = attribution is Map ? attribution['modified'] : null;
+    final modifiedText = modified is num ? modified.toString() : nonempty(modified);
+    final priorReason = attribution is Map ? nonempty(attribution['changeMessage']) : '응답에 없음';
+    final sources = fact['sources'];
+    final references = <String>[];
+    if (sources is List) {
+      for (final source in sources) {
+        if (source is! Map) continue;
+        final reference = source['description'] ?? source['id'];
+        if (reference is String && reference.trim().isNotEmpty) references.add(reference.trim());
+      }
+    }
     return FamilySearchFactUpdatePlan._(personId, factId, type,
-        Map.unmodifiable(oldValues), Map.unmodifiable({...oldValues, ...newValues}), reason.trim());
+        Map.unmodifiable(oldValues), Map.unmodifiable({...oldValues, ...newValues}), reason.trim(),
+        contributorReference, modifiedText, priorReason, List.unmodifiable(references));
   }
 }
