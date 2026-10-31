@@ -3,7 +3,8 @@ import '../services/familysearch_parent_link_plan.dart';
 
 /// 관계 전송은 수행하지 않는 검토용 입력 화면.
 class FamilySearchParentLinkDialog extends StatefulWidget {
-  const FamilySearchParentLinkDialog({super.key});
+  final List<({String name, String id})> linkedPeople;
+  const FamilySearchParentLinkDialog({super.key, this.linkedPeople = const []});
 
   @override
   State<FamilySearchParentLinkDialog> createState() => _FamilySearchParentLinkDialogState();
@@ -59,9 +60,31 @@ class _FamilySearchParentLinkDialogState extends State<FamilySearchParentLinkDia
         TextField(controller: _child,
           onChanged: (_) => setState(() { _childConfirmed = false; _reviewed = false; _error = null; }),
           decoration: const InputDecoration(labelText: '자녀 FamilySearch ID')),
+        if (widget.linkedPeople.isNotEmpty)
+          PopupMenuButton<int>(
+            tooltip: '저장된 자녀 ID 선택',
+            onSelected: (index) => setState(() {
+              _child.text = widget.linkedPeople[index].id;
+              _childConfirmed = false; _reviewed = false; _error = null;
+            }),
+            itemBuilder: (_) => [for (var i = 0; i < widget.linkedPeople.length; i++)
+              PopupMenuItem(value: i, child: Text('${widget.linkedPeople[i].name} · ${widget.linkedPeople[i].id}'))],
+            child: const Padding(padding: EdgeInsets.all(12), child: Text('저장된 자녀 ID 선택')),
+          ),
         TextField(controller: _parent,
           onChanged: (_) => setState(() { _parentConfirmed = false; _reviewed = false; _error = null; }),
           decoration: const InputDecoration(labelText: '부모 FamilySearch ID')),
+        if (widget.linkedPeople.isNotEmpty)
+          PopupMenuButton<int>(
+            tooltip: '저장된 부모 ID 선택',
+            onSelected: (index) => setState(() {
+              _parent.text = widget.linkedPeople[index].id;
+              _parentConfirmed = false; _reviewed = false; _error = null;
+            }),
+            itemBuilder: (_) => [for (var i = 0; i < widget.linkedPeople.length; i++)
+              PopupMenuItem(value: i, child: Text('${widget.linkedPeople[i].name} · ${widget.linkedPeople[i].id}'))],
+            child: const Padding(padding: EdgeInsets.all(12), child: Text('저장된 부모 ID 선택')),
+          ),
         DropdownButton<String>(value: _relationship, isExpanded: true,
           items: const [DropdownMenuItem(value: '미확인', child: Text('관계 미확인')),
             DropdownMenuItem(value: '친생', child: Text('친생 관계')),

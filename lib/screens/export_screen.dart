@@ -460,6 +460,21 @@ class _State extends State<ExportScreen> {
     setState(() => _status = '확인한 인물 ID를 앱에 저장했습니다. FamilySearch 기록은 변경하지 않았습니다.');
   }
 
+  Future<void> _prepareParentLink() async {
+    final people = await DbService.instance.listPersons();
+    final linked = <({String name, String id})>[];
+    for (final person in people) {
+      final id = await DbService.instance.getConfig(FamilySearchService.personIdConfigKey(person.id));
+      if (id == null || id.trim().isEmpty) continue;
+      final name = person.nameHangul.trim().isNotEmpty ? person.nameHangul.trim()
+          : person.nameHanja.trim().isNotEmpty ? person.nameHanja.trim() : '이름 미상';
+      linked.add((name: name, id: id));
+    }
+    if (!mounted) return;
+    await showDialog<void>(context: context,
+        builder: (_) => FamilySearchParentLinkDialog(linkedPeople: linked));
+  }
+
   Future<void> _syncFamilySearch() async {
     if (_busy) return;
     final approved = await showDialog<bool>(
@@ -617,8 +632,7 @@ class _State extends State<ExportScreen> {
               leading: const Icon(Icons.account_tree_outlined, color: HanjiColors.muk),
               title: const Text('부모·자녀 연결 준비'),
               subtitle: const Text('ID와 근거 검토 · 전송 및 연결 기능은 준비 중'),
-              onTap: _busy ? null : () => showDialog<void>(context: context,
-                  builder: (_) => const FamilySearchParentLinkDialog()),
+              onTap: _busy ? null : _prepareParentLink,
             )),
             if (FamilySearchService.enabled)
               Card(

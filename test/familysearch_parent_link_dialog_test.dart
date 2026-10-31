@@ -41,4 +41,22 @@ void main() {
     expect(checked('부모 ID의 인물을 확인했습니다'), isTrue);
     expect(checked('기존 부모·자녀 관계를 확인했습니다'), isFalse);
   });
+
+  testWidgets('저장된 인물을 선택해 ID를 채우되 관계는 확정하지 않는다', (tester) async {
+    tester.view.physicalSize = const Size(1200, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(const MaterialApp(home: Scaffold(
+      body: FamilySearchParentLinkDialog(linkedPeople: [(name: '아버지', id: 'ABCD-123')]),
+    )));
+    await tester.tap(find.text('저장된 부모 ID 선택'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('아버지 · ABCD-123'));
+    await tester.pumpAndSettle();
+    expect(find.text('ABCD-123'), findsOneWidget);
+    final tile = tester.widget<CheckboxListTile>(
+        find.widgetWithText(CheckboxListTile, '부모 ID의 인물을 확인했습니다'));
+    expect(tile.value, isFalse);
+  });
 }
