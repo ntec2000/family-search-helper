@@ -44,6 +44,9 @@ class FamilySearchComparisonSummary {
         if (date is Map && date['original'] is String &&
             (date['original'] as String).trim().isNotEmpty) {
           values.add('날짜: ${(date['original'] as String).trim()}');
+        } else if (date is Map && date['formal'] is String &&
+            (date['formal'] as String).trim().isNotEmpty) {
+          values.add('날짜 정규화 값: ${(date['formal'] as String).trim()}');
         }
         if (place is Map && place['original'] is String &&
             (place['original'] as String).trim().isNotEmpty) {

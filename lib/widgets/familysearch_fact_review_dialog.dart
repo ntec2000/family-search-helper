@@ -48,9 +48,13 @@ class _FamilySearchFactReviewDialogState extends State<FamilySearchFactReviewDia
     String value(String key) {
       final entry = values[key];
       if (entry is Map && entry['original'] is String &&
-          (entry['original'] as String).trim().isNotEmpty) return entry['original'] as String;
+          (entry['original'] as String).trim().isNotEmpty) {
+        return entry['original'] as String;
+      }
       if (entry is Map && entry['formal'] is String &&
-          (entry['formal'] as String).trim().isNotEmpty) return '정규화 값: ${entry['formal']}';
+          (entry['formal'] as String).trim().isNotEmpty) {
+        return '정규화 값: ${entry['formal']}';
+      }
       return '응답에 표시 가능한 값 없음';
     }
     return '날짜: ${value('date')}\n장소: ${value('place')}';

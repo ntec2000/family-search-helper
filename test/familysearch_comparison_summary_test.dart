@@ -12,6 +12,17 @@ void main() {
     });
     expect(lines, ['이름: 이격', '출생: 날짜: 壬辰生', '사망: 장소: 경주']);
   });
+  test('원문이 없는 정규화 날짜도 차이 비교에 표시한다', () {
+    final remote = {'facts': [
+      {'type': 'http://gedcomx.org/Birth', 'date': {'formal': '+1800'}},
+    ]};
+    final app = {'facts': [
+      {'type': 'http://gedcomx.org/Birth', 'date': {'original': '1801'}},
+    ]};
+    final diff = FamilySearchComparisonSummary.differences(remote, app);
+    expect(diff.remoteOnly, ['출생: 날짜 정규화 값: +1800']);
+    expect(diff.appOnly, ['출생: 날짜: 1801']);
+  });
   test('자료가 누락되거나 잘못된 형태면 없는 값을 만들지 않는다', () {
     final lines = FamilySearchComparisonSummary.lines({'names': [null], 'facts': '잘못된 자료'});
     expect(lines.single, contains('전체 자료를 확인'));
