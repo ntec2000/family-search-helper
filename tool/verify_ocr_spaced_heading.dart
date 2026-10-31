@@ -1,3 +1,8 @@
+// Standalone checks intentionally run without a Flutter package configuration.
+// ignore_for_file: avoid_relative_lib_imports
+
+import 'dart:io';
+
 import '../lib/services/ocr_column_text.dart';
 
 void main() {
@@ -15,5 +20,5 @@ void main() {
     check(entries.last == '子核', '다음 인물에게 주석이 넘어가면 안 됩니다');
     check(columns.join('|') == before.join('|'), '입력 원문을 변경하면 안 됩니다');
   }
-  print('PASS: $checks checks');
+  stdout.writeln('PASS: $checks checks');
 }

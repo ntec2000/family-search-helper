@@ -1,3 +1,8 @@
+// Standalone checks intentionally run without a Flutter package configuration.
+// ignore_for_file: avoid_relative_lib_imports
+
+import 'dart:io';
+
 import '../lib/models/person.dart';
 import '../lib/services/unknown_spouse_name.dart';
 import '../lib/services/familysearch_record.dart';
@@ -32,5 +37,5 @@ void main() {
   final gedcom = GedcomExport.toGedcom([h]);
   check(gedcom.contains('1 NOTE 아내 표시명(실제 개인 이름 아님): 윤씨'), true);
   check(RegExp(r' INDI$', multiLine: true).allMatches(gedcom).length, 1);
-  print('PASS: $checks checks');
+  stdout.writeln('PASS: $checks checks');
 }
