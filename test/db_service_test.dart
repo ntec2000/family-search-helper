@@ -143,6 +143,66 @@ void main() {
     expect(await service.getConfig('ocr_source:new-child'), '원본 족보 OCR');
   });
 
+  test('기존 DB 부모의 성별이 역할과 다르면 두 저장 경로 모두 거부한다', () async {
+    for (final atomic in [true, false]) {
+      for (final father in [true, false]) {
+        final suffix = '$atomic-$father';
+        final parent = Person(id: 'parent-$suffix',
+            gender: father ? 'F' : 'M', rawText: '기존 부모 원문');
+        final existing = Person(id: 'existing-$suffix', rawText: '기존 인물 원문');
+        await service.upsertPerson(parent);
+        await service.upsertPerson(existing);
+        final pending = [
+          Person(id: existing.id, rawText: '저장되면 안 되는 수정'),
+          Person(id: 'child-$suffix', fatherId: father ? parent.id : null,
+              motherId: father ? null : parent.id),
+        ];
+        await expectLater(atomic
+            ? service.upsertPersonsAtomically(pending, sourceOcrText: '저장 금지 OCR')
+            : service.upsertPersonsValidated(pending), throwsStateError);
+        expect((await service.getPerson(existing.id))!.rawText, '기존 인물 원문');
+        expect((await service.getPerson(parent.id))!.rawText, '기존 부모 원문');
+        expect(await service.getPerson('child-$suffix'), isNull);
+        expect(await service.getConfig('ocr_source:${existing.id}'), isNull);
+      }
+    }
+  });
+
+  test('기존 DB 부모 성별이 미확정이면 저장 전에 검토를 요구한다', () async {
+    for (final atomic in [true, false]) {
+      final parent = Person(id: 'unknown-parent-$atomic', gender: 'U');
+      await service.upsertPerson(parent);
+      final child = Person(id: 'unknown-child-$atomic', fatherId: parent.id);
+      await expectLater(atomic
+          ? service.upsertPersonsAtomically([child])
+          : service.upsertPersonsValidated([child]), throwsStateError);
+      expect(await service.getPerson(child.id), isNull);
+      expect((await service.getPerson(parent.id))!.gender, 'U');
+    }
+  });
+
+  test('기존 DB의 확인된 부모와 연결할 때 부모 원문을 바꾸지 않는다', () async {
+    for (final atomic in [true, false]) {
+      final father = Person(id: 'father-ok-$atomic', gender: 'M', rawText: '부친 원문');
+      final mother = Person(id: 'mother-ok-$atomic', gender: 'F', rawText: '모친 원문');
+      await service.upsertPerson(father);
+      await service.upsertPerson(mother);
+      final child = Person(id: 'child-ok-$atomic', fatherId: father.id,
+          motherId: mother.id, rawText: '자녀 원문');
+      if (atomic) {
+        await service.upsertPersonsAtomically([child]);
+      } else {
+        await service.upsertPersonsValidated([child]);
+      }
+      final saved = (await service.getPerson(child.id))!;
+      expect(saved.fatherId, father.id);
+      expect(saved.motherId, mother.id);
+      expect(saved.rawText, '자녀 원문');
+      expect((await service.getPerson(father.id))!.toMap(), father.toMap());
+      expect((await service.getPerson(mother.id))!.toMap(), mother.toMap());
+    }
+  });
+
   test('중복 인물 ID는 기존 기록을 덮어쓰지 않고 저장을 거부한다', () async {
     await service.upsertPerson(Person(id: 'same', rawText: '원본 보존'));
     await expectLater(
