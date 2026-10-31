@@ -2,6 +2,7 @@ import '../models/person.dart';
 import 'unknown_spouse_name.dart';
 import 'ganzhi_year_label.dart';
 import 'export_relationship_validation.dart';
+import 'name_export_review.dart';
 
 /// 전송과 파일 내보내기에서 같은 성/이름·원문 날짜 필드를 사용한다.
 class FamilySearchRecord {
@@ -21,13 +22,8 @@ class FamilySearchRecord {
     final givenHangul = given(person.nameHangul.trim(), surnameHangul);
     final givenHanja = given(person.nameHanja.trim(), surnameHanja);
     final givenKnown = givenHangul.isNotEmpty || givenHanja.isNotEmpty;
-    bool ambiguousName(String name, String surname) {
-      final value = name.trim();
-      final family = surname.trim();
-      return family.isNotEmpty && value.length > family.length && value.startsWith(family);
-    }
-    final ambiguousHangul = ambiguousName(person.nameHangul, surnameHangul);
-    final ambiguousHanja = ambiguousName(person.nameHanja, surnameHanja);
+    final ambiguousHangul = NameExportReview.overlaps(person.nameHangul, surnameHangul);
+    final ambiguousHanja = NameExportReview.overlaps(person.nameHanja, surnameHanja);
     Map<String, dynamic> form(String lang, String surname, String given) => {
       'lang': lang, 'fullText': '$surname$given',
       'parts': [

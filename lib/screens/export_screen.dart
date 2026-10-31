@@ -19,6 +19,7 @@ import '../theme/traditional_theme.dart';
 import '../widgets/couple_export_dialog.dart';
 import '../widgets/familysearch_parent_link_dialog.dart';
 import '../widgets/familysearch_fact_review_dialog.dart';
+import '../widgets/name_export_review_dialog.dart';
 import 'familysearch_login_screen.dart';
 
 class ExportScreen extends StatefulWidget {
@@ -38,6 +39,7 @@ class _State extends State<ExportScreen> {
         throw StateError('중복 인물 ID');
       }
       if (!mounted) return;
+      if (!await showNameExportReview(context, people) || !mounted) return;
       final couples = await showDialog<List<(String, String)>>(
         context: context, builder: (_) => CoupleExportDialog(people: people));
       if (couples == null || !mounted) return;
@@ -68,6 +70,7 @@ class _State extends State<ExportScreen> {
         throw StateError('중복 인물 ID');
       }
       if (!mounted) return;
+      if (!await showNameExportReview(context, list) || !mounted) return;
       final couples = await showDialog<List<(String, String)>>(
         context: context,
         builder: (_) => CoupleExportDialog(people: list, formatLabel: 'GEDCOM'));
@@ -525,6 +528,13 @@ class _State extends State<ExportScreen> {
       _status = 'FamilySearch 로 인물 동기화 중...';
     });
     final list = await DbService.instance.listPersons();
+    if (!mounted) return;
+    final namesReviewed = await showNameExportReview(context, list);
+    if (!mounted) return;
+    if (!namesReviewed) {
+      setState(() { _busy = false; _status = '성씨와 이름을 확인한 뒤 다시 진행하세요.'; });
+      return;
+    }
     // Check all unresolved requests before sending any new person.
     for (final person in list) {
       final pending = await DbService.instance.getConfig(FamilySearchService.pendingConfigKey(person.id));
