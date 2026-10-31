@@ -114,6 +114,12 @@ class FamilySearchService {
     return RegExp(r'^[A-Z0-9-]{4,40}$').hasMatch(value) ? value : null;
   }
 
+  /// 등록 결과가 불확실한 ID는 관계 검토의 선택 목록에 제공하지 않는다.
+  static String? selectableLinkedId(String? id, String? pending) {
+    if (pending == '1' || id == null) return null;
+    return normalizePersonId(id);
+  }
+
   static Future<Map<String, dynamic>?> readPerson(String id) async {
     final value = normalizePersonId(id);
     if (value == null) return null;

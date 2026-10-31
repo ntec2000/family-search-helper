@@ -464,8 +464,10 @@ class _State extends State<ExportScreen> {
     final people = await DbService.instance.listPersons();
     final linked = <({String name, String id})>[];
     for (final person in people) {
-      final id = await DbService.instance.getConfig(FamilySearchService.personIdConfigKey(person.id));
-      if (id == null || id.trim().isEmpty) continue;
+      final storedId = await DbService.instance.getConfig(FamilySearchService.personIdConfigKey(person.id));
+      final pending = await DbService.instance.getConfig(FamilySearchService.pendingConfigKey(person.id));
+      final id = FamilySearchService.selectableLinkedId(storedId, pending);
+      if (id == null) continue;
       final name = person.nameHangul.trim().isNotEmpty ? person.nameHangul.trim()
           : person.nameHanja.trim().isNotEmpty ? person.nameHanja.trim() : '이름 미상';
       linked.add((name: name, id: id));

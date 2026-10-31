@@ -6,6 +6,13 @@ void main() {
     expect(FamilySearchService.normalizePersonId(' abcd-123 '), 'ABCD-123');
     expect(FamilySearchService.normalizePersonId('../bad'), isNull);
   });
+
+  test('미확인 등록 또는 잘못된 ID는 부모 연결 선택 목록에서 제외한다', () {
+    expect(FamilySearchService.selectableLinkedId('abcd-123', '1'), isNull);
+    expect(FamilySearchService.selectableLinkedId('../bad', '0'), isNull);
+    expect(FamilySearchService.selectableLinkedId(null, '0'), isNull);
+    expect(FamilySearchService.selectableLinkedId(' abcd-123 ', '0'), 'ABCD-123');
+  });
   test('테스트 서버와 운영 서버의 인물 ID 및 대기 기록은 분리한다', () {
     expect(FamilySearchService.personIdConfigKey('p', sandbox: true), 'fs_person_id_p');
     expect(FamilySearchService.personIdConfigKey('p', sandbox: false), 'fs_production_person_id_p');
