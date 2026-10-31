@@ -110,7 +110,9 @@ class FamilySearchService {
     final result = await _get('/platform/tree/persons/${Uri.encodeComponent(value)}');
     final persons = result?['persons'];
     if (persons is! List || persons.length != 1 || persons.first is! Map ||
-        (persons.first as Map)['id'] != value) return null;
+        (persons.first as Map)['id'] != value) {
+      return null;
+    }
     return result;
   }
 

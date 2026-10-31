@@ -400,7 +400,7 @@ class _State extends State<ExportScreen> {
     if (!mounted) return;
     setState(() { _busy = false; _status = remote == null ? '조회 실패: ID, 로그인 또는 서버 상태를 확인하세요.' : '조회 완료: 기존 기록과 앱 자료를 비교하세요.'; });
     if (remote == null) return;
-    final pretty = const JsonEncoder.withIndent('  ');
+    const pretty = JsonEncoder.withIndent('  ');
     await showDialog<void>(context: context, builder: (ctx) => AlertDialog(
       title: Text('인물 비교 · $targetId'),
       content: SizedBox(width: 700, child: SingleChildScrollView(child: Column(
