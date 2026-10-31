@@ -8,6 +8,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:family_search_helper/models/person.dart';
 import 'package:family_search_helper/services/db_service.dart';
 import 'package:family_search_helper/screens/home_screen.dart';
+import 'package:family_search_helper/screens/export_screen.dart';
 import 'package:family_search_helper/theme/traditional_theme.dart';
 
 void main() {
@@ -105,6 +106,52 @@ void main() {
     expect(saved.rawText, '子格');
     expect(saved.reasonStatement, '사용자가 선택한 OCR 문장 · 원본 대조 필요 · 입력 문서 2쪽');
     expect(await service.getConfig('ocr_source:${person.id}'), 'OCR 원문 전체');
+  });
+
+  testWidgets('텍스트 미리보기는 이름 독음을 성씨로 추측하거나 이름을 지우지 않는다', (tester) async {
+    final people = [
+      Person(id: 'name-wood', gender: 'M', nameHanja: '木', nameHangul: '목'),
+      Person(id: 'name-hyeon', gender: 'M', nameHanja: '顯', nameHangul: '현'),
+    ];
+    await tester.runAsync(() async {
+      for (final person in people) {
+        await service.upsertPerson(person);
+      }
+    });
+    await tester.pumpWidget(const MaterialApp(home: ExportScreen()));
+    await tester.ensureVisible(find.text('텍스트 (수동 입력용)'));
+    await tester.tap(find.text('텍스트 (수동 입력용)'));
+    await tester.runAsync(() => service.listPersons());
+    await tester.pumpAndSettle();
+    final text = tester.widget<SelectableText>(find.byType(SelectableText)).data!;
+    expect(text, contains('목 木'));
+    expect(text, contains('현 顯'));
+    expect(RegExp(r'성\(姓\)\s*:\s*목').hasMatch(text), isFalse);
+    expect(RegExp(r'성\(姓\)\s*:\s*현').hasMatch(text), isFalse);
+    for (final person in people) {
+      final saved = await tester.runAsync(() => service.getPerson(person.id));
+      expect(saved!.toMap(), person.toMap());
+    }
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('텍스트 배우자는 성씨로 표시하고 자동 모친 표시는 원문 미확인으로 구분한다', (tester) async {
+    final person = Person(id: 'spouse-display', gender: 'M',
+        nameHanja: '格', nameHangul: '격', spouseHangul: '파평윤씨',
+        spouseHanja: '坡平尹氏', spouseBongwan: '坡平', spouseFather: '光岳');
+    await tester.runAsync(() => service.upsertPerson(person));
+    await tester.pumpWidget(const MaterialApp(home: ExportScreen()));
+    await tester.ensureVisible(find.text('텍스트 (수동 입력용)'));
+    await tester.tap(find.text('텍스트 (수동 입력용)'));
+    await tester.runAsync(() => service.listPersons());
+    await tester.pumpAndSettle();
+    final text = tester.widget<SelectableText>(find.byType(SelectableText)).data!;
+    expect(text, contains('배우자    : 윤씨 (坡平尹氏)'));
+    expect(text, contains('배우자 모친 표시명(원문 미확인)'));
+    expect(text, isNot(contains('배우자 모친 :')));
+    final saved = await tester.runAsync(() => service.getPerson(person.id));
+    expect(saved!.toMap(), person.toMap());
+    await tester.pumpWidget(const SizedBox.shrink());
   });
 
   test('일괄 저장은 가족관계와 OCR 원문을 함께 보존한다', () async {
