@@ -54,6 +54,11 @@ void main() {
     expect(daughters.first.note, contains('등장 순서'));
     expect(daughters.first.rawText, '女金免傑 金海人');
     expect(daughters.last.rawText, '女三權頭');
+    final explicit = JokboParser.parseRegions(['女十一金免傑'],
+        clanHangulOverride: '이').single;
+    expect(explicit.relation, '11번째딸');
+    expect(explicit.spouseHanja, '金免傑');
+    expect(explicit.note, isNot(contains('현재 분석 쪽')));
   });
 
   test('다음 족보 분석에서는 딸 순번을 다시 시작한다', () {
@@ -88,5 +93,27 @@ void main() {
     expect(rows.firstWhere((row) => row.role == '배우자 후보').display, '변씨');
     expect(son.spouseHanja, '邊氏');
     expect(son.spouseBongwan, '原州');
+  });
+
+  test('표제 후보가 다르면 자동 확정하지 않고 배우자 본문은 표제로 사용하지 않는다', () {
+    expect(JokboParser.detectWorkingSurname([
+      '固城李氏 子格', '金海金氏 子正明',
+    ]), isNull);
+    expect(JokboParser.detectWorkingSurname(['子格 配原州邊氏']), isNull);
+    expect(JokboParser.detectWorkingSurname([
+      '固 城 李 氏 思菴公派譜', '子格 配原州邊氏',
+    ]), ('李', '이'));
+  });
+
+  test('사위 복성과 이미 성이 있는 부친 원문은 중복 조합하지 않는다', () {
+    final compound = JokboParser.parseRegions(['女南宮明 父正明'],
+        clanHangulOverride: '이').single;
+    expect(FamilyNameCandidates.fromPerson(compound)
+        .firstWhere((row) => row.role.contains('아버지')).display, '南宮正明');
+    final full = JokboParser.parseRegions(['女金免傑 父金正明'],
+        clanHangulOverride: '이').single;
+    expect(FamilyNameCandidates.fromPerson(full)
+        .firstWhere((row) => row.role.contains('아버지')).display, '金正明');
+    expect(full.spouseFather, '金正明');
   });
 }

@@ -28,4 +28,16 @@ void main() {
     expect(find.text('성씨: 최'), findsOneWidget);
     expect(find.textContaining('적용 성씨: 金'), findsNothing);
   });
+
+  testWidgets('성씨 확인을 취소하면 기존 작업 성씨를 보존한다', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: CaptureScreen(
+        surnameHanja: '金', surnameHangul: '김')));
+    await tester.tap(find.text('성씨: 김'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).first, '최');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('취소'));
+    await tester.pumpAndSettle();
+    expect(find.text('성씨: 김'), findsOneWidget);
+  });
 }

@@ -2,6 +2,13 @@ import '../models/person.dart';
 
 /// Applies a verified surname only to explicitly selected, eligible records.
 class SurnameReview {
+  /// 한글 성씨만 받으며 '이씨'와 '이'를 같은 작업 성씨로 취급한다.
+  static String normalizeHangul(String? input) {
+    var value = (input ?? '').replaceAll(RegExp(r'\s+'), '');
+    if (value.endsWith('씨')) value = value.substring(0, value.length - 1);
+    return RegExp(r'^[가-힣]{1,2}$').hasMatch(value) ? value : '';
+  }
+
   static bool eligible(Person person, String hanja, String hangul) =>
       (person.gender == 'M' || person.gender == 'F') &&
       ((person.surnameHanja ?? '').trim().isEmpty ||

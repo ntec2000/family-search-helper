@@ -13,6 +13,9 @@ import '../services/image_store.dart';
 import '../services/pdf_import.dart';
 import '../widgets/source_image.dart';
 import '../services/jokbo_parser.dart';
+import '../services/genealogy.dart';
+import '../services/surname_review.dart';
+import '../widgets/surname_input_dialog.dart';
 import '../theme/traditional_theme.dart';
 import 'result_screen.dart';
 import 'crop_screen.dart';
@@ -75,20 +78,43 @@ class _CaptureScreenState extends State<CaptureScreen> {
   String? _sourceDocumentPath;
   int? _sourcePageNumber;
   String? _sourceLabel;
+  String _surnameHanja = '';
+  String _surnameHangul = '';
+  bool _surnameConfirmed = false;
 
   bool get _hasPresetSurname =>
-      (widget.surnameHangul ?? '').isNotEmpty ||
-      (widget.surnameHanja ?? '').isNotEmpty;
+      _surnameHangul.isNotEmpty || _surnameHanja.isNotEmpty;
 
   @override
   void initState() {
     super.initState();
+    _surnameHanja = (widget.surnameHanja ?? '').trim();
+    _surnameHangul = SurnameReview.normalizeHangul(widget.surnameHangul);
+    if (_surnameHangul.isEmpty && (widget.surnameHangul ?? '').trim().isEmpty) {
+      _surnameHangul = Genealogy.surnameHanjaToHangul[_surnameHanja] ?? '';
+    }
+    _surnameConfirmed = _surnameHangul.isNotEmpty;
     // 홈에서 이미지를 들고 진입한 경우(레거시)는 바로 미리보기.
     if (widget.imagePath != null) {
       _previewPath = widget.imagePath;
       _sourcePath = widget.imagePath;
     }
     // 그 외에는 선택 화면(_Mode.select)으로 시작 — 카메라 자동 구동 안 함.
+  }
+
+  Future<bool> _chooseWorkingSurname({(String, String)? detected}) async {
+    final hasCurrent = _surnameHangul.isNotEmpty;
+    final selected = await showSurnameInputDialog(context,
+        forAnalysis: true,
+        initialHangul: hasCurrent ? _surnameHangul : (detected?.$2 ?? ''),
+        initialHanja: hasCurrent ? _surnameHanja : (detected?.$1 ?? _surnameHanja));
+    if (selected == null || !mounted) return false;
+    setState(() {
+      _surnameHanja = selected.$1;
+      _surnameHangul = selected.$2;
+      _surnameConfirmed = true;
+    });
+    return true;
   }
 
   /// 사용자가 [카메라로 촬영] 을 선택했을 때만 카메라를 초기화한다.
@@ -281,6 +307,17 @@ class _CaptureScreenState extends State<CaptureScreen> {
       );
 
       if (!mounted) return;
+      if (!_surnameConfirmed) {
+        setState(() => _status = '작업할 족보 성씨 확인 중...');
+        final detected = JokboParser.detectWorkingSurname([ocr.text, ...ocr.alternatives]);
+        if (!await _chooseWorkingSurname(detected: detected)) {
+          if (mounted) {
+            setState(() { _busy = false; _status = '성씨를 확인한 뒤 다시 분석하세요.'; });
+          }
+          return;
+        }
+      }
+      if (!mounted) return;
       setState(() => _status = '족보 정보 분석 중...');
       final regions = ocr.regionTexts.isEmpty ? [ocr.text] : ocr.regionTexts;
       final unparsedRegions = JokboParser.unparsedRegions(regions);
@@ -288,13 +325,14 @@ class _CaptureScreenState extends State<CaptureScreen> {
         regions,
         // OCR 전처리본은 인식용이고, 결과가 가리키는 출처는 사용자의 원본이다.
         sourceImagePath: _sourcePath ?? path,
-        clanHanjaOverride: widget.surnameHanja,
-        clanHangulOverride: widget.surnameHangul,
+        clanHanjaOverride: _surnameHanja,
+        clanHangulOverride: _surnameHangul,
       );
       for (final person in persons) {
         person.sourceDocumentPath = _sourceDocumentPath;
         person.sourcePageNumber = _sourcePageNumber;
-        person.reasonStatement = '출처: ${_sourceLabel ?? '선택한 족보 이미지'}. OCR 후보 · 원문 대조 필요.';
+        person.reasonStatement = '출처: ${_sourceLabel ?? '선택한 족보 이미지'}. '
+            '작업 성씨: $_surnameHangul. OCR 후보 · 원문 대조 필요.';
       }
 
       // OCR 후보는 검토 전 데이터베이스에 자동 저장하지 않습니다.
@@ -338,7 +376,11 @@ class _CaptureScreenState extends State<CaptureScreen> {
 
   Future<void> _manualEntry() async {
     if (_busy) return;
+    if (!_surnameConfirmed && !await _chooseWorkingSurname()) return;
+    if (!mounted) return;
     final person = Person(id: 'manual_${DateTime.now().microsecondsSinceEpoch}',
+        surnameHanja: _surnameHanja.isEmpty ? null : _surnameHanja,
+        surnameHangul: _surnameHangul,
         sourceImagePath: _sourcePath ?? _previewPath,
         sourceDocumentPath: _sourceDocumentPath,
         sourcePageNumber: _sourcePageNumber);
@@ -378,6 +420,11 @@ class _CaptureScreenState extends State<CaptureScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(hasPreview ? '이미지 확인' : '족보 이미지 입력'),
+        actions: [TextButton.icon(
+          onPressed: _busy ? null : () => _chooseWorkingSurname(),
+          icon: const Icon(Icons.drive_file_rename_outline),
+          label: Text(_surnameConfirmed ? '성씨: $_surnameHangul' : '성씨 입력'),
+        )],
       ),
       body: Stack(
         children: [
@@ -433,8 +480,8 @@ class _CaptureScreenState extends State<CaptureScreen> {
             _SourceSelect(
               presetLine: _hasPresetSurname
                   ? '적용 성씨: '
-                      '${(widget.surnameHanja ?? '').isNotEmpty ? '${widget.surnameHanja} ' : ''}'
-                      '${widget.surnameHangul ?? ''}'
+                      '${_surnameHanja.isNotEmpty ? '$_surnameHanja ' : ''}'
+                      '$_surnameHangul'
                   : null,
               onCamera: _useCamera,
               onGallery: _pickFromGallery,
@@ -458,7 +505,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
                       Padding(
                         padding: const EdgeInsets.only(bottom: 8),
                         child: Text(
-                          '적용 성씨: ${(widget.surnameHanja ?? '').isNotEmpty ? '${widget.surnameHanja} ' : ''}${widget.surnameHangul ?? ''}',
+                          '적용 성씨: ${_surnameHanja.isNotEmpty ? '$_surnameHanja ' : ''}$_surnameHangul',
                           style: const TextStyle(
                               color: HanjiColors.hanji, fontSize: 13),
                         ),

@@ -2,6 +2,7 @@ import 'package:uuid/uuid.dart';
 import '../models/person.dart';
 import 'hanja_dict.dart';
 import 'genealogy.dart';
+import 'surname_review.dart';
 
 /// 족보 OCR 텍스트 파서.
 /// 표준 족보 표기 규칙(v2.5 체계화):
@@ -48,11 +49,46 @@ class JokboParser {
   static List<Person> parseRegions(List<String> regions, {String? sourceImagePath,
       String? clanHanjaOverride, String? clanHangulOverride}) {
     if (regions.isEmpty) return [];
-    final clan = _detectClanFromHeader(_normalize(regions.first));
-    return [for (final region in regions) ...parse(region,
+    final hasOverride = (clanHanjaOverride ?? '').trim().isNotEmpty ||
+        (clanHangulOverride ?? '').trim().isNotEmpty;
+    final clan = hasOverride ? null : detectWorkingSurname(regions);
+    final persons = [for (final region in regions) ...parse(region,
       sourceImagePath: sourceImagePath,
-      clanHanjaOverride: clanHanjaOverride ?? clan?.$1,
-      clanHangulOverride: clanHangulOverride ?? clan?.$2)];
+      clanHanjaOverride: hasOverride ? clanHanjaOverride : clan?.$1,
+      clanHangulOverride: hasOverride ? clanHangulOverride : clan?.$2,
+      numberDaughters: false)];
+    _numberDaughters(persons);
+    return persons;
+  }
+
+  /// 서로 다른 표제 후보가 있으면 자동 확정하지 않고 수동 확인을 요청한다.
+  static (String, String)? detectWorkingSurname(Iterable<String> texts) {
+    (String, String)? found;
+    for (final text in texts) {
+      final clan = _detectClanFromHeader(_normalize(text));
+      if (clan == null) continue;
+      if (found != null && found.$1 != clan.$1) return null;
+      found = clan;
+    }
+    return found;
+  }
+
+  static void _numberDaughters(List<Person> persons) {
+    var order = 0;
+    for (final person in persons) {
+      if (person.gender != 'F') continue;
+      order++;
+      if ((person.surnameHangul ?? '').isEmpty &&
+          (person.surnameHanja ?? '').isEmpty) {
+        continue;
+      }
+      if (person.relation != '순서 미상딸') continue;
+      final label = order <= _ordinal.length
+          ? _ordinal.values.elementAt(order - 1) : '$order번째';
+      person.relation = '$label딸';
+      const note = '딸 순번은 현재 분석 쪽의 女 등장 순서 기준이며 실제 출생순서는 확인이 필요합니다.';
+      person.note = (person.note ?? '').isEmpty ? note : '${person.note} / $note';
+    }
   }
 
   /// 구획에서 인물로 분류되지 않은 부분을 검토용으로 남긴다.
@@ -96,18 +132,24 @@ class JokboParser {
   static List<Person> parse(String rawText,
       {String? sourceImagePath,
       String? clanHanjaOverride,
-      String? clanHangulOverride}) {
+      String? clanHangulOverride,
+      bool numberDaughters = true}) {
     final normalized = _normalize(rawText);
     // 문서 표제에서만 가문 성씨를 감지한다.
     final detected = _detectClanFromHeader(normalized);
     // v2.7 — [족보작성]에서 미리 입력받은 성씨가 있으면 자동 감지보다 우선 적용한다.
-    final clanHanja = (clanHanjaOverride != null && clanHanjaOverride.isNotEmpty)
-        ? clanHanjaOverride
-        : detected?.$1;
-    final clanHangul =
-        (clanHangulOverride != null && clanHangulOverride.isNotEmpty)
-            ? clanHangulOverride
-            : detected?.$2;
+    final manualHanja = (clanHanjaOverride ?? '').trim();
+    final manualHangul = SurnameReview.normalizeHangul(clanHangulOverride);
+    final hasOverride = manualHanja.isNotEmpty ||
+        (clanHangulOverride ?? '').trim().isNotEmpty;
+    if ((clanHangulOverride ?? '').trim().isNotEmpty && manualHangul.isEmpty) {
+      throw ArgumentError('작업할 성씨만 한글로 입력하세요. 예: 이, 김, 최');
+    }
+    final clanHanja = hasOverride
+        ? (manualHanja.isEmpty ? null : manualHanja) : detected?.$1;
+    final clanHangul = hasOverride
+        ? (manualHangul.isNotEmpty ? manualHangul : Genealogy.surnameHanjaToHangul[manualHanja])
+        : detected?.$2;
     final entries = _splitByPerson(normalized);
     final originalEntries = _splitByPerson(rawText);
 
@@ -126,7 +168,8 @@ class JokboParser {
           clanHangul: clanHangul);
       if (p != null) persons.add(p);
     }
-    // OCR 등장 순서만으로 형제 순서나 부모를 추론하지 않습니다.
+    if (numberDaughters) _numberDaughters(persons);
+    // 딸의 작업 순번과 실제 부모 관계는 별개이며 ID 관계를 추론하지 않습니다.
     // 각 인물의 명시적 순서 표기는 _parsePersonBlock에서 보존합니다.
     // 간지만으로 서기 연도를 확정할 수 없으므로 세대별 연도 자동 추정은 하지 않습니다.
     return persons;
@@ -275,15 +318,11 @@ class JokboParser {
     }
 
     // 차례 숫자가 명시된 경우에만 순서를 부여한다.
-    final orderLab = (orderChar != null &&
-            orderChar.length == 1 &&
-            _ordinal[orderChar] != null)
-        ? _ordinal[orderChar]!
-        : '순서 미상';
+    final explicitOrder = orderChar == null ? null : _segaToInt(orderChar);
+    final orderLab = (explicitOrder != null && explicitOrder > 0)
+        ? (_ordinal[orderChar] ?? '$explicitOrder번째') : '순서 미상';
     person.relation = '$orderLab${isFemale ? '딸' : '아들'}';
-    if (orderChar != null &&
-        orderChar.length == 1 &&
-        _ordinal[orderChar] != null) {
+    if (explicitOrder != null && explicitOrder > 0) {
       addNote('$orderLab ${isFemale ? '딸' : '아들'}');
     }
 
@@ -309,7 +348,7 @@ class JokboParser {
       // 女 다음 첫 이름 토큰만 사위 후보로 사용한다.
       // 본관(安東人)은 별도로 읽고, 뒤따르는 卒/墓/配 등은 포함하지 않는다.
       final body = t.replaceFirst(
-          RegExp(r'^女\s*[一二三四五六七八九十]?\s*'), '').trim();
+          RegExp(r'^女\s*[一二三四五六七八九十]*\s*'), '').trim();
       final husbandMatch = RegExp(r'^(?![一-鿿]*人)([一-鿿]{1,4})(?=\s|$|[、。:：;；,，.!?！？「」-]|[生卒墓忌配字號娶出系])')
           .firstMatch(body);
       final husband = husbandMatch?.group(1) ?? '';
@@ -320,6 +359,14 @@ class JokboParser {
       }
       person.spouseHanja = husband.isEmpty ? null : husband;
       person.spouseHangul = husband.isEmpty ? null : dict.toHangul(husband);
+      // 女 블록의 父는 사위 부친 후보다. 본손의 아버지로 연결하지 않는다.
+      final ancestry = afterHusband.substring(bgM?.end ?? 0);
+      final husbandFather = RegExp(
+          r'(?:^|[\s、。:：;；,，])父\s*([一-鿿]{1,4}?)(?=\s|$|[祖配生卒忌墓])')
+          .firstMatch(ancestry);
+      if (husbandFather != null) {
+        person.spouseFather = _stripTitle(husbandFather.group(1)!);
+      }
       addNote('딸의 개인 이름 미상. 女 뒤 표기는 사위 후보이며 원문 대조가 필요합니다.');
       // 딸의 성은 가문 성씨 상속 (이름 없음 → 내보내기에서 "○씨")
       if ((clanHanja ?? '').isNotEmpty) person.surnameHanja = clanHanja;

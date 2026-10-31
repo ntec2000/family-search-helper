@@ -49,7 +49,7 @@ class Genealogy {
   /// 문서 전체에서 가문(본관) 성씨 자동 감지.
   /// 예) "固城李氏思菴公派譜" → ('李','이').  찾지 못하면 null.
   static (String hanja, String hangul)? detectClanSurname(String text) {
-    for (final m in RegExp(r'([㐀-鿿])氏').allMatches(text)) {
+    for (final m in RegExp(r'([㐀-鿿])\s*氏').allMatches(text)) {
       final ch = m.group(1)!;
       final hg = surnameHanjaToHangul[ch];
       if (hg != null) return (ch, hg);
@@ -77,6 +77,20 @@ class Genealogy {
     final hg = surnameHanjaToHangul[ch];
     if (hg == null) return null;
     return (ch, hg);
+  }
+
+  /// 사위의 성함에서 알려진 성씨만 후보로 분리한다. 원문은 변경하지 않는다.
+  static (String hanja, String hangul)? personalNameSurname(String fullName) {
+    final name = fullName.trim();
+    for (final prefix in ['南宮', '諸葛', '皇甫', '鮮于', '司空', '西門', '東方']) {
+      if (name.startsWith(prefix) && name.length > prefix.length) {
+        return spouseSurname('$prefix氏');
+      }
+    }
+    if (name.length < 2) return null;
+    final first = name.substring(0, 1);
+    final reading = surnameHanjaToHangul[first];
+    return reading == null ? null : (first, reading);
   }
 
   /// 이미 성씨가 붙어 있는 이름에 성씨를 중복해서 붙이지 않는다.
