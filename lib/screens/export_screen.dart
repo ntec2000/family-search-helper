@@ -448,17 +448,14 @@ class _State extends State<ExportScreen> {
       ],
     ));
     if (confirmed != true || !mounted) return;
-    for (final other in people) {
-      if (other.id == person.id) continue;
-      final otherId = await DbService.instance.getConfig(FamilySearchService.personIdConfigKey(other.id));
-      if (otherId != null && otherId.toUpperCase() == targetId.toUpperCase()) {
-        if (!mounted) return;
-        setState(() => _status = 'ID 연결 중지: 이 ID가 다른 앱 인물에 이미 연결되어 있습니다.');
-        return;
-      }
+    try {
+      await DbService.instance.bindConfirmedFamilySearchId(personId: person.id,
+          targetId: targetId, sandbox: FamilySearchService.useSandbox);
+    } on StateError catch (error) {
+      if (!mounted) return;
+      setState(() => _status = 'ID 연결 중지: ${error.message}');
+      return;
     }
-    if (!mounted) return;
-    await DbService.instance.setConfig(FamilySearchService.personIdConfigKey(person.id), targetId);
     if (!mounted) return;
     setState(() => _status = '확인한 인물 ID를 앱에 저장했습니다. FamilySearch 기록은 변경하지 않았습니다.');
   }

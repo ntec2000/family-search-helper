@@ -248,4 +248,39 @@ class DbService {
     await db.insert('app_config', {'k': key, 'v': value},
         conflictAlgorithm: ConflictAlgorithm.replace);
   }
+
+  /// 확인된 ID 연결을 중복·대기 상태 검사와 함께 원자적으로 저장한다.
+  Future<void> bindConfirmedFamilySearchId({required String personId,
+      required String targetId, required bool sandbox}) async {
+    final target = targetId.trim().toUpperCase();
+    if (personId.trim().isEmpty || !RegExp(r'^[A-Z0-9-]{4,40}$').hasMatch(target)) {
+      throw StateError('인물 ID를 확인하세요.');
+    }
+    final prefix = sandbox ? 'fs_person_id_' : 'fs_production_person_id_';
+    final pendingPrefix = sandbox ? 'fs_upload_pending_' : 'fs_production_upload_pending_';
+    final key = '$prefix$personId';
+    await db.transaction((txn) async {
+      final people = await txn.query('persons', columns: ['id'],
+          where: 'id = ?', whereArgs: [personId], limit: 1);
+      if (people.isEmpty) throw StateError('앱 인물을 찾을 수 없습니다.');
+      final pending = await txn.query('app_config', columns: ['v'],
+          where: 'k = ?', whereArgs: ['$pendingPrefix$personId'], limit: 1);
+      if (pending.isNotEmpty && pending.first['v'] == '1') {
+        throw StateError('미확인 등록 기록을 먼저 확인하세요.');
+      }
+      final bindings = await txn.query('app_config', columns: ['k', 'v'],
+          where: 'substr(k, 1, ?) = ?', whereArgs: [prefix.length, prefix]);
+      for (final row in bindings) {
+        final existing = (row['v'] as String? ?? '').trim().toUpperCase();
+        if (row['k'] == key && existing.isNotEmpty && existing != target) {
+          throw StateError('다른 FamilySearch ID가 이미 연결되어 있습니다.');
+        }
+        if (row['k'] != key && existing == target) {
+          throw StateError('이 ID가 다른 앱 인물에 이미 연결되어 있습니다.');
+        }
+      }
+      await txn.insert('app_config', {'k': key, 'v': target},
+          conflictAlgorithm: ConflictAlgorithm.replace);
+    });
+  }
 }

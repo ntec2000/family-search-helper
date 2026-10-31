@@ -52,6 +52,27 @@ void main() {
 
   setUp(() async => service.clearAll());
 
+  test('확인한 FamilySearch ID는 기존 연결·대기·중복을 원자적으로 보호한다', () async {
+    await service.upsertPerson(Person(id: 'bind-a'));
+    await service.upsertPerson(Person(id: 'bind-b'));
+    await service.bindConfirmedFamilySearchId(personId: 'bind-a',
+        targetId: 'abcd-123', sandbox: true);
+    expect(await service.getConfig('fs_person_id_bind-a'), 'ABCD-123');
+    await expectLater(service.bindConfirmedFamilySearchId(personId: 'bind-a',
+        targetId: 'OTHER-1', sandbox: true), throwsStateError);
+    await expectLater(service.bindConfirmedFamilySearchId(personId: 'bind-b',
+        targetId: 'abcd-123', sandbox: true), throwsStateError);
+    await service.setConfig('fs_upload_pending_bind-b', '1');
+    await expectLater(service.bindConfirmedFamilySearchId(personId: 'bind-b',
+        targetId: 'NEWID-1', sandbox: true), throwsStateError);
+    expect(await service.getConfig('fs_person_id_bind-a'), 'ABCD-123');
+    expect(await service.getConfig('fs_person_id_bind-b'), isNull);
+    expect(await service.getConfig('fs_upload_pending_bind-b'), '1');
+    await service.bindConfirmedFamilySearchId(personId: 'bind-b',
+        targetId: 'ABCD-123', sandbox: false);
+    expect(await service.getConfig('fs_production_person_id_bind-b'), 'ABCD-123');
+  });
+
   testWidgets('홈 화면은 좁은 화면과 큰 글씨에서도 가로로 넘치지 않는다', (tester) async {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
