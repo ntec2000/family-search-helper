@@ -21,8 +21,8 @@ void main() {
         expect(person.fatherId, isNull);
         expect(person.motherId, isNull);
       }
-      expect(FamilyNameCandidates.fromPerson(people.first).first.display, '${surname}격');
-      expect(FemaleNameDisplay.forPerson(people.last), '${surname}씨');
+      expect(FamilyNameCandidates.fromPerson(people.first).first.display, '$surname격');
+      expect(FemaleNameDisplay.forPerson(people.last), '$surname씨');
       expect(people.last.spouseHanja, '金免傑');
       expect(people.last.nameHangul, isEmpty);
     }
