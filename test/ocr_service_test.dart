@@ -75,6 +75,33 @@ void main() {
     expect(OcrService.selectCandidate(structured, noise), same(structured));
   });
 
+  test('구조 표지 뒤 OCR 공백이 있어도 같은 후보를 우선하고 원문을 보존한다', () {
+    final spaced = result('子 格 配 原州邊氏 丁未 生');
+    final noise = result('山川天地日月星辰花鳥風雨春夏秋冬');
+    final combined = OcrService.retainWholePageAlternatives(spaced, noise);
+    expect(combined.text, spaced.text);
+    expect(combined.alternatives, [noise.text]);
+    expect(spaced.text, '子 格 配 原州邊氏 丁未 生');
+  });
+
+  test('인물·배우자·간지 표지의 공백을 각각 후보 점수에 반영한다', () {
+    for (final pair in [
+      ('山川 子 格', '山川天地日'),
+      ('配 原州邊氏', '山川天地日月'),
+      ('丁 未 生', '山川天地'),
+    ]) {
+      final structured = result(pair.$1);
+      expect(OcrService.selectCandidate(structured, result(pair.$2)),
+          same(structured), reason: pair.$1);
+    }
+  });
+
+  test('공백으로 나뉜 묘지 좌향에는 인물 표제 점수를 주지 않는다', () {
+    final orientation = result('子 坐午向');
+    final other = result('山川天地日');
+    expect(OcrService.selectCandidate(orientation, other), same(other));
+  });
+
   test('compatibility Han characters count as Han characters', () {
     final processed = result('子');
     final original = result('子\uF900');
