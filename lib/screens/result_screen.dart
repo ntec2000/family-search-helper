@@ -533,25 +533,24 @@ class _ResultScreenState extends State<ResultScreen> {
 
   Future<void> _addPersonFromOcr() async {
     if (_saved || _saving) return;
-    final controller = TextEditingController();
+    var inputText = '';
     final source = await showDialog<String>(context: context,
       builder: (ctx) => StatefulBuilder(builder: (ctx, refresh) {
         return AlertDialog(
           title: const Text('OCR 문장으로 인물 추가'),
           content: Column(mainAxisSize: MainAxisSize.min, children: [
             const Text('인식 결과에서 확인할 문장을 복사해 붙여 넣고 원본 이미지와 대조하세요.'),
-            TextField(controller: controller, minLines: 2, maxLines: 5,
+            TextField(minLines: 2, maxLines: 5,
               decoration: const InputDecoration(labelText: '확인할 OCR 문장'),
-              onChanged: (_) => refresh(() {})),
+              onChanged: (value) => refresh(() => inputText = value)),
           ]),
           actions: [
             TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('취소')),
-            FilledButton(onPressed: controller.text.trim().isEmpty ? null :
-              () => Navigator.pop(ctx, controller.text), child: const Text('인물 내용 입력')),
+            FilledButton(onPressed: inputText.trim().isEmpty ? null :
+              () => Navigator.pop(ctx, inputText), child: const Text('인물 내용 입력')),
           ],
         );
       }));
-    controller.dispose();
     if (source == null || !mounted || _saved || _saving) return;
     await _addPerson(sourceRegion: source);
   }
