@@ -26,4 +26,26 @@ void main() {
     expect(() => FamilySearchParentLinkPayload.build(
         plan('친생'), Uri.parse('https://api.familysearch.org')), throwsStateError);
   });
+
+  test('친생 관계도 명시적으로 보존한다', () {
+    final payload = FamilySearchParentLinkPayload.build(
+        plan('친생'), Uri.parse('https://api-integ.familysearch.org'));
+    final relation = (payload['childAndParentsRelationships'] as List).single;
+    expect(relation['parent1Facts'][0]['type'], 'http://gedcomx.org/BiologicalParent');
+    expect(relation['parent1Facts'][0]['attribution']['changeMessage'], '족보 224쪽');
+  });
+
+  test('테스트 서버를 위장한 주소와 추가 경로는 거부한다', () {
+    for (final url in [
+      'http://apibeta.familysearch.org',
+      'https://apibeta.familysearch.org.example.com',
+      'https://user@apibeta.familysearch.org',
+      'https://apibeta.familysearch.org:8443',
+      'https://apibeta.familysearch.org/other',
+      'https://apibeta.familysearch.org?redirect=other',
+    ]) {
+      expect(() => FamilySearchParentLinkPayload.build(plan('친생'), Uri.parse(url)),
+          throwsStateError, reason: url);
+    }
+  });
 }
