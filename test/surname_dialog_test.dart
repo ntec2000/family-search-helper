@@ -6,6 +6,33 @@ import 'package:family_search_helper/widgets/surname_input_dialog.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  testWidgets('한자 선택 없이 이씨를 제출하면 한글 성 이만 반환한다', (tester) async {
+    (String, String)? result;
+    await tester.pumpWidget(MaterialApp(home: Builder(builder: (ctx) =>
+      Scaffold(body: TextButton(onPressed: () async {
+        result = await showSurnameInputDialog(ctx);
+      }, child: const Text('open'))))));
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).first, '이씨');
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, '적용'));
+    await tester.pumpAndSettle();
+    expect(result, ('', '이'));
+  });
+
+  testWidgets('성 대신 긴 이름을 입력하면 적용을 막는다', (tester) async {
+    await tester.pumpWidget(MaterialApp(home: Builder(builder: (ctx) =>
+      Scaffold(body: TextButton(onPressed: () => showSurnameInputDialog(ctx),
+          child: const Text('open'))))));
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).first, '홍길동');
+    await tester.pumpAndSettle();
+    final submit = tester.widget<FilledButton>(find.widgetWithText(FilledButton, '적용'));
+    expect(submit.onPressed, isNull);
+  });
+
   test('HanjaDict loads and byReading returns candidates', () async {
     await HanjaDict.instance.load();
     final c = HanjaDict.instance.byReading('최');

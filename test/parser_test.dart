@@ -385,12 +385,13 @@ void main() {
       expect(son('炳直').relation, '넷째아들'); // 四
     });
 
-    test('딸 차례는 원문 순서 표기가 없으면 미상', () {
-      expect(dau('權頭').relation, '순서 미상딸');
-      expect(dau('權龜壽').relation, '순서 미상딸');
-      expect(dau('李集').relation, '순서 미상딸');
-      expect(dau('金免傑').relation, '순서 미상딸');
-      expect(dau('尹兢秀').relation, '순서 미상딸');
+    test('작업 성씨가 확인된 딸 차례는 현재 쪽의 女 등장 순서로 표시한다', () {
+      expect(dau('權頭').relation, '첫째딸');
+      expect(dau('權龜壽').relation, '둘째딸');
+      expect(dau('李集').relation, '셋째딸');
+      expect(dau('金免傑').relation, '넷째딸');
+      expect(dau('尹兢秀').relation, '다섯째딸');
+      expect(dau('權頭').note, contains('등장 순서'));
     });
 
     test('본인 이름 = 가문 성 + 이름 (李 상속), 딸은 이름 없이 이씨', () {
