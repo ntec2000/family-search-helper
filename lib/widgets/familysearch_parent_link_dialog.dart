@@ -56,13 +56,21 @@ class _FamilySearchParentLinkDialogState extends State<FamilySearchParentLinkDia
       children: [
         const Text('FamilySearch에서 두 인물과 기존 관계를 확인한 뒤 입력하세요. '
             '이 화면은 새 인물을 만들거나 연결하지 않습니다.'),
-        TextField(controller: _child, decoration: const InputDecoration(labelText: '자녀 FamilySearch ID')),
-        TextField(controller: _parent, decoration: const InputDecoration(labelText: '부모 FamilySearch ID')),
+        TextField(controller: _child,
+          onChanged: (_) => setState(() { _childConfirmed = false; _reviewed = false; _error = null; }),
+          decoration: const InputDecoration(labelText: '자녀 FamilySearch ID')),
+        TextField(controller: _parent,
+          onChanged: (_) => setState(() { _parentConfirmed = false; _reviewed = false; _error = null; }),
+          decoration: const InputDecoration(labelText: '부모 FamilySearch ID')),
         DropdownButton<String>(value: _relationship, isExpanded: true,
           items: const [DropdownMenuItem(value: '미확인', child: Text('관계 미확인')),
             DropdownMenuItem(value: '친생', child: Text('친생 관계')),
             DropdownMenuItem(value: '양자', child: Text('양자 관계'))],
-          onChanged: (value) => setState(() => _relationship = value ?? '미확인')),
+          onChanged: (value) => setState(() {
+            _relationship = value ?? '미확인';
+            _reviewed = false;
+            _error = null;
+          })),
         TextField(controller: _reason, decoration: const InputDecoration(labelText: '연결 근거')),
         CheckboxListTile(contentPadding: EdgeInsets.zero, value: _childConfirmed,
           title: const Text('자녀 ID의 인물을 확인했습니다'),
