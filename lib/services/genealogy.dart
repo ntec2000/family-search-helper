@@ -112,6 +112,7 @@ class Genealogy {
     String? fallbackSurnameHanja,
     String? fallbackSurnameHangul,
     bool isFemale = false,
+    bool inferSurnameFromName = true,
   }) {
     var hj = hanja.trim();
     var hg = hangul.trim();
@@ -127,10 +128,10 @@ class Genealogy {
     String ghanja = '';
     if (shanja.isEmpty && hj.isNotEmpty) {
       final chars = hj.runes.map(String.fromCharCode).toList();
-      if (chars.length >= 2 && surnamesHanja.contains(chars.first)) {
+      if (inferSurnameFromName && chars.length >= 2 && surnamesHanja.contains(chars.first)) {
         shanja = chars.first;
         ghanja = chars.skip(1).join();
-      } else if (chars.length == 1 && surnamesHanja.contains(chars.first)) {
+      } else if (inferSurnameFromName && chars.length == 1 && surnamesHanja.contains(chars.first)) {
         shanja = chars.first;
         ghanja = '';
       } else {
@@ -151,10 +152,10 @@ class Genealogy {
     String ghangul = '';
     if (shangul.isEmpty && hg.isNotEmpty) {
       final chars = hg.runes.map(String.fromCharCode).toList();
-      if (chars.length >= 2 && surnamesHangul.contains(chars.first)) {
+      if (inferSurnameFromName && chars.length >= 2 && surnamesHangul.contains(chars.first)) {
         shangul = chars.first;
         ghangul = chars.skip(1).join();
-      } else if (chars.length == 1 && surnamesHangul.contains(chars.first)) {
+      } else if (inferSurnameFromName && chars.length == 1 && surnamesHangul.contains(chars.first)) {
         shangul = chars.first; // 성씨 한 글자만 (예: "최")
         ghangul = '';
       } else {

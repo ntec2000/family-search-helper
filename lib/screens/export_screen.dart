@@ -13,6 +13,7 @@ import '../services/familysearch_record.dart';
 import '../services/familysearch_comparison_summary.dart';
 import '../services/hanja_dict.dart';
 import '../services/genealogy.dart';
+import '../services/unknown_spouse_name.dart';
 import '../services/romanizer.dart';
 import '../services/familysearch_service.dart';
 import '../theme/traditional_theme.dart';
@@ -119,7 +120,7 @@ class _State extends State<ExportScreen> {
         final np = Genealogy.split(
             hanja: '', hangul: '',
             surnameHanja: p.surnameHanja, surnameHangul: p.surnameHangul,
-            isFemale: true);
+            isFemale: true, inferSurnameFromName: false);
         final dauRel = (p.relation ?? '').isNotEmpty ? p.relation! : '여성';
         final femaleName = FemaleNameDisplay.forPerson(p);
         final hasPersonalName = p.nameHangul.trim().isNotEmpty || p.nameHanja.trim().isNotEmpty;
@@ -173,7 +174,8 @@ class _State extends State<ExportScreen> {
               ? p.nameHangul
               : dict.toHangul(p.nameHanja),
           surnameHanja: p.surnameHanja,
-          surnameHangul: p.surnameHangul);
+          surnameHangul: p.surnameHangul,
+          inferSurnameFromName: false);
       final roman = p.nameRoman.isNotEmpty
           ? p.nameRoman
           : Romanizer.romanizeName(np.surnameHangul + np.givenHangul);
@@ -208,7 +210,10 @@ class _State extends State<ExportScreen> {
       // ── 배우자 ──
       if ((p.spouseHanja ?? '').trim().isNotEmpty ||
           (p.spouseHangul ?? '').trim().isNotEmpty) {
-        final h = (p.spouseHangul ?? '').trim();
+        final surnameDisplay = p.gender == 'M' &&
+                !UnknownSpouseName.hasPersonalNameCandidate(p)
+            ? UnknownSpouseName.wifeDisplayName(p) : null;
+        final h = surnameDisplay ?? (p.spouseHangul ?? '').trim();
         final hanja = (p.spouseHanja ?? '').trim();
         final display = h.isEmpty ? _kh(hanja) : '$h${hanja.isEmpty ? '' : ' ($hanja)'}';
         buf.writeln('  배우자    : $display'
@@ -242,7 +247,7 @@ class _State extends State<ExportScreen> {
       if (mother.isNotEmpty) {
         buf.writeln('  배우자 모친 : $mother');
       } else if (father.isNotEmpty) {
-        buf.writeln('  배우자 모친 : ${inLawName(father)}의 부인 (이름 미상)');
+        buf.writeln('  배우자 모친 표시명(원문 미확인) : ${inLawName(father)}의 부인 (이름 미상)');
       }
       if ((p.spouseGrandfather ?? '').isNotEmpty) {
         buf.writeln('  장인의 부 : ${inLawName(p.spouseGrandfather)}');
