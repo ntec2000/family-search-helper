@@ -52,17 +52,20 @@ class _State extends State<FamilyTreeScreen> {
     return null;
   }
 
-  /// 이름(한자/한글) 으로 실제 인물 레코드 매칭 (ID 연결).
+  /// 한자가 있으면 한자를 우선하고, 유일한 다른 인물일 때만 카드에 연결한다.
   Person? _matchByName(String hanja, String hangul) {
+    final matches = <Person>[];
     for (final p in _persons) {
-      if (hanja.isNotEmpty &&
-          (p.nameHanja == hanja ||
-              (p.surnameHanja ?? '') + (p.nameHanja) == hanja)) {
-        return p;
+      if (p.id == _focus?.id) continue;
+      final matchesName = hanja.isNotEmpty
+          ? (p.nameHanja == hanja ||
+              (p.surnameHanja ?? '') + p.nameHanja == hanja)
+          : hangul.isNotEmpty && p.nameHangul == hangul;
+      if (matchesName) {
+        matches.add(p);
       }
-      if (hangul.isNotEmpty && p.nameHangul == hangul) return p;
     }
-    return null;
+    return matches.length == 1 ? matches.single : null;
   }
 
   List<String> _splitNames(String? note) {
@@ -265,7 +268,7 @@ class _State extends State<FamilyTreeScreen> {
     for (var i = 0; i < childSpecs.length; i++) {
       final c = childSpecs[i];
       descendants.add(_PersonBox(
-        relation: _childLabel(i, c.isFemale),
+        relation: c.personId == null ? '자녀 후보 · 확인 필요' : _childLabel(i, c.isFemale),
         parts: c.parts,
         female: c.isFemale,
         onTap: c.personId != null ? () => _openPerson(c.personId!) : null,
@@ -273,7 +276,7 @@ class _State extends State<FamilyTreeScreen> {
     }
     for (final s in sonsInLaw) {
       descendants.add(_PersonBox(
-          relation: '사위',
+          relation: s.personId == null ? '사위 후보 · 확인 필요' : '사위',
           parts: s.parts,
           female: false,
           onTap: s.personId != null ? () => _openPerson(s.personId!) : null));
