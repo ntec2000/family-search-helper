@@ -125,6 +125,12 @@ void main() {
     }
   });
 
+  test('여러 인물의 순환 부모 관계를 내보내지 않는다', () {
+    final people = [Person(id: 'a', fatherId: 'b'),
+      Person(id: 'b', fatherId: 'c'), Person(id: 'c', fatherId: 'a')];
+    expect(() => GedcomExport.toGedcom(people), throwsStateError);
+  });
+
   test('검토한 자녀 없는 부부도 하나의 가족으로 내보낸다', () {
     final people = [Person(id: 'a', gender: 'M'), Person(id: 'b', gender: 'F')];
     final ged = GedcomExport.toGedcom(people, reviewedCouples: [('b', 'a')]);

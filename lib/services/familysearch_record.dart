@@ -1,6 +1,7 @@
 import '../models/person.dart';
 import 'unknown_spouse_name.dart';
 import 'ganzhi_year_label.dart';
+import 'export_relationship_validation.dart';
 
 /// 전송과 파일 내보내기에서 같은 성/이름·원문 날짜 필드를 사용한다.
 class FamilySearchRecord {
@@ -99,6 +100,7 @@ class FamilySearchRecord {
         throw StateError('같은 인물이 아버지와 어머니로 지정되어 있습니다.');
       }
     }
+    ExportRelationshipValidation.rejectParentCycles(persons);
     final uniqueCouples = <(String, String)>{};
     for (final (first, second) in reviewedCouples) {
       if (first.isEmpty || second.isEmpty || first == second ||

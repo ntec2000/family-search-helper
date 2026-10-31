@@ -1,5 +1,6 @@
 import '../models/person.dart';
 import 'unknown_spouse_name.dart';
+import 'export_relationship_validation.dart';
 
 /// GEDCOM 5.5.1 내보내기 (FamilySearch 호환)
 class GedcomExport {
@@ -30,6 +31,7 @@ class GedcomExport {
       used.add(candidate);
       ids[persons[i].id] = candidate;
     }
+    ExportRelationshipValidation.rejectParentCycles(persons);
 
     // Only link relationships backed by stored person IDs. Never infer family ties.
     final families = <(String?, String?), ({String? father, String? mother, List<String> children})>{};

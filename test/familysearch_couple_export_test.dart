@@ -31,6 +31,11 @@ void main() {
       expect(() => FamilySearchRecord.document([person]), throwsStateError);
     }
   });
+  test('여러 인물의 순환 부모 관계를 내보내지 않는다', () {
+    final people = [Person(id: 'a', fatherId: 'b'),
+      Person(id: 'b', fatherId: 'c'), Person(id: 'c', fatherId: 'a')];
+    expect(() => FamilySearchRecord.document(people), throwsStateError);
+  });
   test('자기 자신, 누락 ID, 역순 중복 관계를 거부한다', () {
     final people = [Person(id: 'a'), Person(id: 'b')];
     for (final couples in <List<(String, String)>>[
