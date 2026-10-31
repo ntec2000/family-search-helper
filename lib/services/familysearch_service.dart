@@ -44,6 +44,11 @@ class FamilySearchService {
 
   // Sandbox(개발) vs Production
   static const bool useSandbox = true;
+  // 기존 테스트 서버 기록은 유지하고, 운영 환경은 별도 키를 사용한다.
+  static String personIdConfigKey(String id, {bool sandbox = useSandbox}) =>
+      sandbox ? 'fs_person_id_$id' : 'fs_production_person_id_$id';
+  static String pendingConfigKey(String id, {bool sandbox = useSandbox}) =>
+      sandbox ? 'fs_upload_pending_$id' : 'fs_production_upload_pending_$id';
   static String get _base => useSandbox
       ? 'https://api-integ.familysearch.org'
       : 'https://api.familysearch.org';

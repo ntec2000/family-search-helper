@@ -298,7 +298,7 @@ class _State extends State<ExportScreen> {
     final people = await DbService.instance.listPersons();
     Person? pendingPerson;
     for (final person in people) {
-      if (await DbService.instance.getConfig('fs_upload_pending_${person.id}') == '1') {
+      if (await DbService.instance.getConfig(FamilySearchService.pendingConfigKey(person.id)) == '1') {
         pendingPerson = person;
         break;
       }
@@ -347,8 +347,8 @@ class _State extends State<ExportScreen> {
     );
     controller.dispose();
     if (confirmedId == null || !mounted) return;
-    await DbService.instance.setConfig('fs_person_id_${person.id}', confirmedId);
-    await DbService.instance.setConfig('fs_upload_pending_${person.id}', '0');
+    await DbService.instance.setConfig(FamilySearchService.personIdConfigKey(person.id), confirmedId);
+    await DbService.instance.setConfig(FamilySearchService.pendingConfigKey(person.id), '0');
     if (!mounted) return;
     setState(() => _status = '확인된 FamilySearch ID를 저장했습니다. 자동 재등록 대상에서 제외됩니다.');
   }
@@ -369,7 +369,7 @@ class _State extends State<ExportScreen> {
               child: Text('${p.nameHangul.isNotEmpty ? p.nameHangul : p.nameHanja} · ${p.id}')),
       ]));
     if (person == null || !mounted) return;
-    final savedId = await DbService.instance.getConfig('fs_person_id_${person.id}');
+    final savedId = await DbService.instance.getConfig(FamilySearchService.personIdConfigKey(person.id));
     if (!mounted) return;
     final controller = TextEditingController(text: savedId ?? '');
     final targetId = await showDialog<String>(context: context, builder: (ctx) => AlertDialog(
@@ -405,7 +405,7 @@ class _State extends State<ExportScreen> {
     const pretty = JsonEncoder.withIndent('  ');
     final remotePerson = Map<String, dynamic>.from((remote['persons'] as List).first as Map);
     final appPerson = FamilySearchRecord.person(person);
-    await showDialog<void>(context: context, builder: (ctx) => AlertDialog(
+    final linkRequested = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
       title: Text('인물 비교 · $targetId'),
       content: SizedBox(width: 700, child: SingleChildScrollView(child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -423,8 +423,44 @@ class _State extends State<ExportScreen> {
           ]),
         ],
       ))),
-      actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('닫기'))],
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('닫기')),
+        FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('같은 인물로 ID 연결')),
+      ],
     ));
+    if (linkRequested != true || !mounted) return;
+    final currentId = await DbService.instance.getConfig(FamilySearchService.personIdConfigKey(person.id));
+    final pending = await DbService.instance.getConfig(FamilySearchService.pendingConfigKey(person.id));
+    if (!mounted) return;
+    if (pending == '1' || (currentId != null && currentId.isNotEmpty &&
+        currentId.toUpperCase() != targetId.toUpperCase())) {
+      setState(() => _status = 'ID 연결 중지: 기존 ID 또는 미확인 등록 기록을 먼저 확인하세요.');
+      return;
+    }
+    final confirmed = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
+      title: const Text('동일 인물 연결 확인'),
+      content: Text('${person.nameHangul.isNotEmpty ? person.nameHangul : person.nameHanja}와 '
+          '$targetId가 같은 사람임을 원본과 대조해 확인했습니까? '
+          '앱에 ID만 저장하며 FamilySearch 기록은 변경하지 않습니다.'),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('취소')),
+        FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('확인 후 저장')),
+      ],
+    ));
+    if (confirmed != true || !mounted) return;
+    for (final other in people) {
+      if (other.id == person.id) continue;
+      final otherId = await DbService.instance.getConfig(FamilySearchService.personIdConfigKey(other.id));
+      if (otherId != null && otherId.toUpperCase() == targetId.toUpperCase()) {
+        if (!mounted) return;
+        setState(() => _status = 'ID 연결 중지: 이 ID가 다른 앱 인물에 이미 연결되어 있습니다.');
+        return;
+      }
+    }
+    if (!mounted) return;
+    await DbService.instance.setConfig(FamilySearchService.personIdConfigKey(person.id), targetId);
+    if (!mounted) return;
+    setState(() => _status = '확인한 인물 ID를 앱에 저장했습니다. FamilySearch 기록은 변경하지 않았습니다.');
   }
 
   Future<void> _syncFamilySearch() async {
@@ -465,7 +501,7 @@ class _State extends State<ExportScreen> {
     final list = await DbService.instance.listPersons();
     // Check all unresolved requests before sending any new person.
     for (final person in list) {
-      final pending = await DbService.instance.getConfig('fs_upload_pending_${person.id}');
+      final pending = await DbService.instance.getConfig(FamilySearchService.pendingConfigKey(person.id));
       if (pending == '1') {
         if (!mounted) return;
         setState(() {
@@ -482,12 +518,12 @@ class _State extends State<ExportScreen> {
     int ok = 0, fail = 0, skipped = 0, nameless = 0, alreadyRegistered = 0;
     bool uncertain = false;
     for (final p in list) {
-      final pending = await DbService.instance.getConfig('fs_upload_pending_${p.id}');
+      final pending = await DbService.instance.getConfig(FamilySearchService.pendingConfigKey(p.id));
       if (pending == '1') {
         uncertain = true;
         break;
       }
-      final savedId = await DbService.instance.getConfig('fs_person_id_${p.id}');
+      final savedId = await DbService.instance.getConfig(FamilySearchService.personIdConfigKey(p.id));
       if (savedId != null && savedId.isNotEmpty) {
         alreadyRegistered++;
         continue;
@@ -503,11 +539,11 @@ class _State extends State<ExportScreen> {
         skipped++;
         continue;
       }
-      await DbService.instance.setConfig('fs_upload_pending_${p.id}', '1');
+      await DbService.instance.setConfig(FamilySearchService.pendingConfigKey(p.id), '1');
       final id = await FamilySearchService.createPerson(p);
       if (id != null) {
-        await DbService.instance.setConfig('fs_person_id_${p.id}', id);
-        await DbService.instance.setConfig('fs_upload_pending_${p.id}', '0');
+        await DbService.instance.setConfig(FamilySearchService.personIdConfigKey(p.id), id);
+        await DbService.instance.setConfig(FamilySearchService.pendingConfigKey(p.id), '0');
         ok++;
         if (mounted) setState(() => _status = '진행 중: $ok명 등록 / 전체 ${list.length}명');
       } else {
