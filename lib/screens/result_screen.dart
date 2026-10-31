@@ -531,6 +531,10 @@ class _ResultScreenState extends State<ResultScreen> {
     });
   }
 
+  bool _containsOcrExcerpt(String value) => value.trim().isNotEmpty &&
+      widget.rawText.split('\n[OCR 비교 결과 · 전체/세로 열]\n')
+          .any((result) => result.contains(value));
+
   Future<void> _addPersonFromOcr() async {
     if (_saved || _saving) return;
     var inputText = '';
@@ -539,14 +543,16 @@ class _ResultScreenState extends State<ResultScreen> {
         return AlertDialog(
           title: const Text('OCR 문장으로 인물 추가'),
           content: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Text('인식 결과에서 확인할 문장을 복사해 붙여 넣고 원본 이미지와 대조하세요.'),
+            const Text('인식 결과에서 확인할 문장을 그대로 복사해 붙여 넣고 원본 이미지와 대조하세요. 직접 판독한 내용은 인물 추가 메뉴에서 입력하세요.'),
             TextField(minLines: 2, maxLines: 5,
-              decoration: const InputDecoration(labelText: '확인할 OCR 문장'),
+              decoration: InputDecoration(labelText: '확인할 OCR 문장',
+                errorText: inputText.trim().isNotEmpty && !_containsOcrExcerpt(inputText)
+                    ? '화면의 OCR 결과와 정확히 일치하는 문장을 붙여 넣으세요.' : null),
               onChanged: (value) => refresh(() => inputText = value)),
           ]),
           actions: [
             TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('취소')),
-            FilledButton(onPressed: inputText.trim().isEmpty ? null :
+            FilledButton(onPressed: !_containsOcrExcerpt(inputText) ? null :
               () => Navigator.pop(ctx, inputText), child: const Text('인물 내용 입력')),
           ],
         );

@@ -158,7 +158,7 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(const MaterialApp(home: ResultScreen(
-      rawText: '子格\n[OCR 비교 결과 · 전체/세로 열]\n子核',
+      rawText: '子格\n[OCR 비교 결과 · 전체/세로 열]\n子核 字君實',
       persons: [], imagePath: 'missing-test-image',
     )));
     await tester.pumpAndSettle();
@@ -168,6 +168,10 @@ void main() {
     await tester.pumpAndSettle();
     final next = find.widgetWithText(FilledButton, '인물 내용 입력');
     expect(tester.widget<FilledButton>(next).onPressed, isNull);
+    await tester.enterText(find.widgetWithText(TextField, '확인할 OCR 문장'), '子核 字君平');
+    await tester.pumpAndSettle();
+    expect(tester.widget<FilledButton>(next).onPressed, isNull);
+    expect(find.text('화면의 OCR 결과와 정확히 일치하는 문장을 붙여 넣으세요.'), findsOneWidget);
     await tester.enterText(find.widgetWithText(TextField, '확인할 OCR 문장'), '子核 字君實');
     await tester.pumpAndSettle();
     await tester.tap(next);
@@ -175,6 +179,9 @@ void main() {
     expect(find.text('인물 내용 수정'), findsOneWidget);
     expect(find.text('인식 원문 (보존)'), findsOneWidget);
     expect(find.text('子核 字君實'), findsOneWidget);
+    await tester.tap(find.text('취소').last);
+    await tester.pumpAndSettle();
+    expect(find.text('인식 결과 (0명)'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
