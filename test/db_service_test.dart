@@ -9,6 +9,8 @@ import 'package:family_search_helper/models/person.dart';
 import 'package:family_search_helper/services/db_service.dart';
 import 'package:family_search_helper/screens/home_screen.dart';
 import 'package:family_search_helper/screens/export_screen.dart';
+import 'package:family_search_helper/screens/person_card_screen.dart';
+import 'package:family_search_helper/screens/family_tree_screen.dart';
 import 'package:family_search_helper/theme/traditional_theme.dart';
 
 void main() {
@@ -132,6 +134,43 @@ void main() {
       final saved = await tester.runAsync(() => service.getPerson(person.id));
       expect(saved!.toMap(), person.toMap());
     }
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('인물 카드를 열어 저장해도 미확인 성씨를 만들지 않고 확인한 성씨는 유지한다', (tester) async {
+    for (final person in [
+      Person(id: 'card-unknown', gender: 'M', nameHanja: '木', nameHangul: '목', rawText: 'OCR 원문'),
+      Person(id: 'card-known', gender: 'M', nameHanja: '格', nameHangul: '격',
+          surnameHanja: '李', surnameHangul: '이', rawText: '확인한 원문'),
+    ]) {
+      await tester.runAsync(() => service.upsertPerson(person));
+      await tester.pumpWidget(MaterialApp(home: PersonCardScreen(
+          key: ValueKey(person.id), personId: person.id)));
+      await tester.runAsync(() => service.getPerson(person.id));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.save));
+      final saved = await tester.runAsync(() => service.getPerson(person.id));
+      await tester.pumpAndSettle();
+      expect(saved!.surnameHangul, person.surnameHangul);
+      expect(saved.surnameHanja, person.surnameHanja);
+      expect(saved.nameHangul, person.nameHangul);
+      expect(saved.nameHanja, person.nameHanja);
+      expect(saved.rawText, person.rawText);
+      await tester.pumpWidget(const SizedBox.shrink());
+    }
+  });
+
+  testWidgets('가계도는 이름 독음을 본인 성씨나 자녀의 상속 성씨로 추측하지 않는다', (tester) async {
+    final person = Person(id: 'tree-unknown', gender: 'M',
+        nameHanja: '木', nameHangul: '목', childrenNote: '火(화)', rawText: '원문');
+    await tester.runAsync(() => service.upsertPerson(person));
+    await tester.pumpWidget(const MaterialApp(home: FamilyTreeScreen()));
+    await tester.runAsync(() => service.listPersons());
+    await tester.pumpAndSettle();
+    expect(find.text('木\n목'), findsOneWidget);
+    expect(find.text('목'), findsNothing);
+    final saved = await tester.runAsync(() => service.getPerson(person.id));
+    expect(saved!.toMap(), person.toMap());
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
