@@ -21,6 +21,13 @@ class FamilySearchRecord {
     final givenHangul = given(person.nameHangul.trim(), surnameHangul);
     final givenHanja = given(person.nameHanja.trim(), surnameHanja);
     final givenKnown = givenHangul.isNotEmpty || givenHanja.isNotEmpty;
+    bool ambiguousName(String name, String surname) {
+      final value = name.trim();
+      final family = surname.trim();
+      return family.isNotEmpty && value.length > family.length && value.startsWith(family);
+    }
+    final ambiguousHangul = ambiguousName(person.nameHangul, surnameHangul);
+    final ambiguousHanja = ambiguousName(person.nameHanja, surnameHanja);
     Map<String, dynamic> form(String lang, String surname, String given) => {
       'lang': lang, 'fullText': '$surname$given',
       'parts': [
@@ -35,6 +42,10 @@ class FamilySearchRecord {
         form('ko-Hani', surnameHanja, givenHanja),
     ];
     final notes = <String>[
+      if (ambiguousHangul || ambiguousHanja)
+        '성씨와 입력 이름의 시작이 같아 전체 이름인지 개인 이름인지 원본 확인 필요.',
+      if (ambiguousHangul) '입력된 이름(한글): ${person.nameHangul}',
+      if (ambiguousHanja) '입력된 이름(한자): ${person.nameHanja}',
       if (!givenKnown) '개인 이름 미상. 성씨만 기록됨.',
       if (GanzhiYearLabel.fromDate(person.birthDateLunar) case final label?)
         '출생 간지 한글: $label',

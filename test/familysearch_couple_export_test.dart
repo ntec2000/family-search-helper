@@ -16,6 +16,21 @@ void main() {
     expect(relationships.where((r) => r['type'] == 'http://gedcomx.org/ParentChild').length, 2);
     expect(father.spouseHanja, '趙氏');
   });
+  test('성과 입력 이름이 겹치면 원래 표기와 확인 필요성을 기록한다', () {
+    final p = Person(id: 'p', surnameHangul: '이', surnameHanja: '李',
+        nameHangul: '이인', nameHanja: '李仁');
+    final record = FamilySearchRecord.person(p);
+    final note = ((record['notes'] as List).first as Map)['text'] as String;
+    expect(note, contains('전체 이름인지 개인 이름인지 원본 확인 필요'));
+    expect(note, contains('입력된 이름(한글): 이인'));
+    expect(note, contains('입력된 이름(한자): 李仁'));
+    expect(p.nameHangul, '이인');
+    expect(p.nameHanja, '李仁');
+  });
+  test('겹침이 없는 이름에는 중복 확인 주석을 만들지 않는다', () {
+    final p = Person(id: 'p', surnameHangul: '이', nameHangul: '격');
+    expect(FamilySearchRecord.person(p).toString(), isNot(contains('입력된 이름(한글)')));
+  });
   test('명시하지 않은 관계는 배우자 메모에서 추정하지 않는다', () {
     final people = [Person(id: 'a', spouseHangul: '조씨'), Person(id: 'b')];
     expect(FamilySearchRecord.document(people)['relationships'], isEmpty);
