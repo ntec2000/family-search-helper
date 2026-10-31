@@ -141,10 +141,14 @@ class DbService {
     final issues = ParentChildReview.validateReviewedBatch(pending);
     if (issues.isNotEmpty) throw StateError(issues.join('; '));
     await db.transaction((txn) async {
-      final rows = await txn.query('persons', columns: ['id']);
+      final rows = await txn.query('persons', columns: ['id', 'gender']);
       final knownIds = <String>{
         ...rows.map((row) => row['id'] as String),
         ...ids,
+      };
+      final knownGenders = <String, String>{
+        for (final row in rows) row['id'] as String: (row['gender'] as String?) ?? 'U',
+        for (final person in pending) person.id: person.gender,
       };
       for (final person in pending) {
         final errors = PersonRelationValidator.validate(
@@ -155,6 +159,7 @@ class DbService {
           sonsInLawIds: person.sonsInLawIds,
           inLawsIds: person.inLawsIds,
           knownPersonIds: knownIds,
+          knownPersonGenders: knownGenders,
         );
         if (errors.isNotEmpty) {
           throw StateError('인물 ${person.id}: ${errors.join('; ')}');
@@ -176,10 +181,14 @@ class DbService {
     final issues = ParentChildReview.validateReviewedBatch(pending);
     if (issues.isNotEmpty) throw StateError(issues.join('; '));
     await db.transaction((txn) async {
-      final rows = await txn.query('persons', columns: ['id']);
+      final rows = await txn.query('persons', columns: ['id', 'gender']);
       final knownIds = <String>{
         ...rows.map((row) => row['id'] as String),
         ...ids,
+      };
+      final knownGenders = <String, String>{
+        for (final row in rows) row['id'] as String: (row['gender'] as String?) ?? 'U',
+        for (final person in pending) person.id: person.gender,
       };
       for (final person in pending) {
         final errors = PersonRelationValidator.validate(
@@ -190,6 +199,7 @@ class DbService {
           sonsInLawIds: person.sonsInLawIds,
           inLawsIds: person.inLawsIds,
           knownPersonIds: knownIds,
+          knownPersonGenders: knownGenders,
         );
         if (errors.isNotEmpty) {
           throw StateError('인물 ${person.id}: ${errors.join('; ')}');

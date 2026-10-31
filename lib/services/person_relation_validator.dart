@@ -12,6 +12,7 @@ class PersonRelationValidator {
     Iterable<String> sonsInLawIds = const [],
     Iterable<String> inLawsIds = const [],
     required Set<String> knownPersonIds,
+    Map<String, String> knownPersonGenders = const {},
   }) {
     final errors = <String>[];
     final id = personId.trim();
@@ -32,6 +33,16 @@ class PersonRelationValidator {
 
     check('아버지', fatherId);
     check('어머니', motherId);
+    void checkParentGender(String label, String? value, String expected) {
+      final target = value?.trim();
+      if (target == null || target.isEmpty ||
+          !knownPersonGenders.containsKey(target)) return;
+      if (knownPersonGenders[target] != expected) {
+        errors.add('$label 관계 대상의 성별을 먼저 확인하세요: $target');
+      }
+    }
+    checkParentGender('아버지', fatherId, 'M');
+    checkParentGender('어머니', motherId, 'F');
     if (fatherId != null &&
         motherId != null &&
         fatherId.trim().isNotEmpty &&
