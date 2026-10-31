@@ -36,7 +36,9 @@ class PersonRelationValidator {
     void checkParentGender(String label, String? value, String expected) {
       final target = value?.trim();
       if (target == null || target.isEmpty ||
-          !knownPersonGenders.containsKey(target)) return;
+          !knownPersonGenders.containsKey(target)) {
+        return;
+      }
       if (knownPersonGenders[target] != expected) {
         errors.add('$label 관계 대상의 성별을 먼저 확인하세요: $target');
       }
