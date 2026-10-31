@@ -16,6 +16,7 @@ import '../services/romanizer.dart';
 import '../services/familysearch_service.dart';
 import '../theme/traditional_theme.dart';
 import '../widgets/couple_export_dialog.dart';
+import '../widgets/familysearch_parent_link_dialog.dart';
 import 'familysearch_login_screen.dart';
 
 class ExportScreen extends StatefulWidget {
@@ -571,6 +572,13 @@ class _State extends State<ExportScreen> {
                   ? '테스트 서버 조회 · 기존 기록과 앱 자료 비교'
                   : '기존 기록과 앱 자료 비교'),
               onTap: _busy ? null : _compareFamilySearchPerson,
+            )),
+            Card(child: ListTile(
+              leading: const Icon(Icons.account_tree_outlined, color: HanjiColors.muk),
+              title: const Text('부모·자녀 연결 준비'),
+              subtitle: const Text('ID와 근거 검토 · 전송 및 연결 기능은 준비 중'),
+              onTap: _busy ? null : () => showDialog<void>(context: context,
+                  builder: (_) => const FamilySearchParentLinkDialog()),
             )),
             if (FamilySearchService.enabled)
               Card(
