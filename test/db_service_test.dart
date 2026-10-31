@@ -174,6 +174,60 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
+  Future<void> openTree(WidgetTester tester, List<Person> people) async {
+    await tester.runAsync(() async {
+      for (final person in people) {
+        await service.upsertPerson(person);
+      }
+    });
+    await tester.pumpWidget(const MaterialApp(home: FamilyTreeScreen()));
+    await tester.runAsync(() => service.listPersons());
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('가계도는 동명이인 자녀 후보를 임의 카드에 연결하지 않는다', (tester) async {
+    final people = [
+      Person(id: 'duplicate-focus', nameHanja: '正明', nameHangul: '정명',
+          gender: 'M', childrenNote: '甲順(갑순)'),
+      Person(id: 'duplicate-a', nameHanja: '甲順', nameHangul: '갑순', gender: 'M'),
+      Person(id: 'duplicate-b', nameHanja: '甲順', nameHangul: '갑순', gender: 'M'),
+    ];
+    await openTree(tester, people);
+    expect(find.byIcon(Icons.touch_app), findsOneWidget);
+    expect(find.text('자녀 후보 · 확인 필요'), findsOneWidget);
+    for (final person in people) {
+      final saved = await tester.runAsync(() => service.getPerson(person.id));
+      expect(saved!.toMap(), person.toMap());
+    }
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('가계도는 같은 한글보다 입력된 한자가 맞는 인물 카드로 이동한다', (tester) async {
+    final right = Person(id: 'hanja-right', nameHanja: '格', nameHangul: '격',
+        gender: 'M', updatedAt: DateTime(2000));
+    final wrong = Person(id: 'hanja-wrong', nameHanja: '珏', nameHangul: '격',
+        gender: 'M', updatedAt: DateTime(2020));
+    await openTree(tester, [
+      Person(id: 'hanja-focus', nameHanja: '正明', nameHangul: '정명',
+          gender: 'M', childrenNote: '格(격)'), right, wrong,
+    ]);
+    await tester.tap(find.text('格\n격'));
+    await tester.runAsync(() => service.getPerson(right.id));
+    await tester.pumpAndSettle();
+    final field = tester.widget<TextField>(find.byWidgetPredicate(
+        (widget) => widget is TextField && widget.decoration?.labelText == '이름 (한자)'));
+    expect(field.controller!.text, '格');
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('가계도 자녀 메모의 같은 이름을 중심 인물 본인에게 연결하지 않는다', (tester) async {
+    await openTree(tester, [Person(id: 'self-focus', gender: 'M',
+        nameHanja: '正明', nameHangul: '정명', childrenNote: '正明(정명)')]);
+    expect(find.byIcon(Icons.touch_app), findsOneWidget);
+    expect(find.text('자녀 후보 · 확인 필요'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('텍스트 배우자는 성씨로 표시하고 자동 모친 표시는 원문 미확인으로 구분한다', (tester) async {
     final person = Person(id: 'spouse-display', gender: 'M',
         nameHanja: '格', nameHangul: '격', spouseHangul: '파평윤씨',
