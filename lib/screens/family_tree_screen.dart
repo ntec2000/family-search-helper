@@ -83,6 +83,7 @@ class _State extends State<FamilyTreeScreen> {
           : HanjaDict.instance.toHangul(f.nameHanja),
       surnameHanja: f.surnameHanja,
       surnameHangul: f.surnameHangul,
+      inferSurnameFromName: false,
     );
     return (np.surnameHanja, np.surnameHangul);
   }
@@ -107,6 +108,7 @@ class _State extends State<FamilyTreeScreen> {
       fallbackSurnameHanja: fbHanja,
       fallbackSurnameHangul: fbHangul,
       isFemale: isFemale,
+      inferSurnameFromName: matched == null,
     );
     final year = Genealogy.yearOf(matched?.birthDateSolar);
     return _ChildSpec(
@@ -192,6 +194,7 @@ class _State extends State<FamilyTreeScreen> {
           : HanjaDict.instance.toHangul(f.nameHanja),
       surnameHanja: f.surnameHanja,
       surnameHangul: f.surnameHangul,
+      inferSurnameFromName: false,
     );
 
     // 배우자(부인)
@@ -315,6 +318,7 @@ class _State extends State<FamilyTreeScreen> {
                     : HanjaDict.instance.toHangul(father.nameHanja),
                 surnameHanja: father.surnameHanja,
                 surnameHangul: father.surnameHangul,
+                inferSurnameFromName: false,
               ),
               female: false,
               onTap: () => _openPerson(father.id),

@@ -50,12 +50,13 @@ class _PersonCardScreenState extends State<PersonCardScreen> {
           ? p.nameRoman
           : Romanizer.romanizeName(_hangulOf(p));
       _roman = TextEditingController(text: roman);
-      // v2.2 성씨 분리 (비어있으면 이름에서 자동 추론)
+      // 저장된 이름에서 성씨를 추측해 편집 필드에 자동 입력하지 않는다.
       final np = Genealogy.split(
           hanja: p.nameHanja,
           hangul: _hangulOf(p),
           surnameHanja: p.surnameHanja,
-          surnameHangul: p.surnameHangul);
+          surnameHangul: p.surnameHangul,
+          inferSurnameFromName: false);
       _surnameHanja = TextEditingController(
           text: p.surnameHanja ?? np.surnameHanja);
       _surnameHangul = TextEditingController(
