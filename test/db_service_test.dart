@@ -212,11 +212,16 @@ void main() {
           gender: 'M', childrenNote: '格(격)'), right, wrong,
     ]);
     await tester.tap(find.text('格\n격'));
+    await tester.pump();
     await tester.runAsync(() => service.getPerson(right.id));
     await tester.pumpAndSettle();
     final field = tester.widget<TextField>(find.byWidgetPredicate(
         (widget) => widget is TextField && widget.decoration?.labelText == '이름 (한자)'));
     expect(field.controller!.text, '格');
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+    await tester.runAsync(() => service.listPersons());
+    await tester.pumpAndSettle();
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
