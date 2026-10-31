@@ -351,6 +351,74 @@ class _State extends State<ExportScreen> {
     setState(() => _status = '확인된 FamilySearch ID를 저장했습니다. 자동 재등록 대상에서 제외됩니다.');
   }
 
+  Future<void> _compareFamilySearchPerson() async {
+    if (_busy) return;
+    final people = await DbService.instance.listPersons();
+    if (!mounted) return;
+    if (people.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('비교할 저장된 인물이 없습니다.')));
+      return;
+    }
+    final person = await showDialog<Person>(context: context, builder: (ctx) =>
+      SimpleDialog(title: const Text('비교할 앱 인물 선택'), children: [
+        for (final p in people)
+          SimpleDialogOption(onPressed: () => Navigator.pop(ctx, p),
+              child: Text('${p.nameHangul.isNotEmpty ? p.nameHangul : p.nameHanja} · ${p.id}')),
+      ]));
+    if (person == null || !mounted) return;
+    final savedId = await DbService.instance.getConfig('fs_person_id_${person.id}');
+    if (!mounted) return;
+    final controller = TextEditingController(text: savedId ?? '');
+    final targetId = await showDialog<String>(context: context, builder: (ctx) => AlertDialog(
+      title: const Text('FamilySearch 인물 ID 입력'),
+      content: TextField(controller: controller,
+          decoration: const InputDecoration(labelText: '인물 ID', hintText: '예: ABCD-123')),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('취소')),
+        FilledButton(onPressed: () {
+          final id = controller.text.trim();
+          if (!RegExp(r'^[A-Za-z0-9-]{4,40}$').hasMatch(id)) return;
+          Navigator.pop(ctx, id);
+        }, child: const Text('조회')),
+      ],
+    ));
+    controller.dispose();
+    if (targetId == null || !mounted) return;
+    if (!FamilySearchService.isConfigured) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('먼저 FamilySearch 연동과 Client ID를 설정하세요.')));
+      return;
+    }
+    if (!FamilySearchService.isLoggedIn) {
+      await Navigator.push(context, MaterialPageRoute(
+          builder: (_) => const FamilySearchLoginScreen()));
+      if (!mounted || !FamilySearchService.isLoggedIn) return;
+    }
+    setState(() { _busy = true; _status = '기존 인물 기록 조회 중...'; });
+    final remote = await FamilySearchService.readPerson(targetId);
+    if (!mounted) return;
+    setState(() { _busy = false; _status = remote == null ? '조회 실패: ID, 로그인 또는 서버 상태를 확인하세요.' : '조회 완료: 기존 기록과 앱 자료를 비교하세요.'; });
+    if (remote == null) return;
+    final pretty = const JsonEncoder.withIndent('  ');
+    await showDialog<void>(context: context, builder: (ctx) => AlertDialog(
+      title: Text('인물 비교 · $targetId'),
+      content: SizedBox(width: 700, child: SingleChildScrollView(child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('조회 결과와 앱 자료를 대조하세요. 이 화면은 기록을 수정하지 않습니다.'),
+          const SizedBox(height: 12),
+          const Text('FamilySearch 기존 기록', style: TextStyle(fontWeight: FontWeight.bold)),
+          SelectableText(pretty.convert(remote)),
+          const SizedBox(height: 12),
+          const Text('앱에서 검토한 자료', style: TextStyle(fontWeight: FontWeight.bold)),
+          SelectableText(pretty.convert(FamilySearchRecord.person(person))),
+        ],
+      ))),
+      actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('닫기'))],
+    ));
+  }
+
   Future<void> _syncFamilySearch() async {
     if (_busy) return;
     final approved = await showDialog<bool>(
@@ -496,6 +564,14 @@ class _State extends State<ExportScreen> {
             const Text('② FamilySearch 직접 등록',
                 style: TextStyle(fontWeight: FontWeight.bold, color: HanjiColors.ju)),
             const SizedBox(height: 8),
+            Card(child: ListTile(
+              leading: const Icon(Icons.compare_arrows, color: HanjiColors.muk),
+              title: const Text('인물 ID로 기존 기록 비교'),
+              subtitle: const Text(FamilySearchService.useSandbox
+                  ? '테스트 서버 조회 · 기존 기록과 앱 자료 비교'
+                  : '기존 기록과 앱 자료 비교'),
+              onTap: _busy ? null : _compareFamilySearchPerson,
+            )),
             if (FamilySearchService.enabled)
               Card(
                 child: ListTile(

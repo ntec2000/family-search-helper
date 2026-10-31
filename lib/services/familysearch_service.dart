@@ -103,6 +103,17 @@ class FamilySearchService {
     return _get('/platform/users/current');
   }
 
+  /// 사용자가 입력한 인물 ID의 현재 기록을 조회한다. 조회만 수행한다.
+  static Future<Map<String, dynamic>?> readPerson(String id) async {
+    final value = id.trim();
+    if (!RegExp(r'^[A-Za-z0-9-]{4,40}$').hasMatch(value)) return null;
+    final result = await _get('/platform/tree/persons/${Uri.encodeComponent(value)}');
+    final persons = result?['persons'];
+    if (persons is! List || persons.length != 1 || persons.first is! Map ||
+        (persons.first as Map)['id'] != value) return null;
+    return result;
+  }
+
   /// 인물 등록 (gx JSON 포맷)
   /// FamilySearch GEDCOM-X 표준 사용.
   static Future<String?> createPerson(Person p) async {
