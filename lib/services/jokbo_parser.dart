@@ -156,7 +156,7 @@ class JokboParser {
   }
 
   static final _personBoundary = RegExp(
-      r'(?<!\S)(?=[子女男](?!坐|向|孫|女|男)\s*[一-鿿])|^(?=[系繼]\s*子\s*(?![生卒字配墓忌父祖])[一-鿿])');
+      r'(?<!\S)(?=[子女男]\s*(?!坐|向|孫|女|男)[一-鿿])|^(?=[系繼]\s*子\s*(?![生卒字配墓忌父祖])[一-鿿])');
 
   static List<String> _splitByPerson(String text) {
     // 子 가 干支(甲子·壬子 등)의 일부일 때는 분리하지 않는다(앞 글자가 天干이면 제외)
