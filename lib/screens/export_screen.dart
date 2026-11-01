@@ -271,7 +271,7 @@ class _State extends State<ExportScreen> {
     return buf.toString();
   }
   void _previewText() async {
-    final list = await DbService.instance.listPersons();
+    final list = await DbService.instance.listPersons(creationOrder: true);
     final text = _buildText(list);
     if (!mounted) return;
     showDialog(

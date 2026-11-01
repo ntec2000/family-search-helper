@@ -216,13 +216,16 @@ class DbService {
     });
   }
 
-  Future<List<Person>> listPersons({String? search}) async {
+  Future<List<Person>> listPersons({String? search, bool creationOrder = false}) async {
+    // 텍스트 내보내기는 생성 순서를 사용한다. 같은 시각이면 저장 순서를 보존한다.
+    // 이는 인물의 출생순서나 가족관계를 뜻하지 않는다.
+    final order = creationOrder ? 'created_at ASC, rowid ASC' : 'updated_at DESC';
     final rows = search == null || search.isEmpty
-        ? await db.query('persons', orderBy: 'updated_at DESC')
+        ? await db.query('persons', orderBy: order)
         : await db.query('persons',
             where: 'name_hangul LIKE ? OR name_hanja LIKE ?',
             whereArgs: ['%$search%', '%$search%'],
-            orderBy: 'updated_at DESC');
+            orderBy: order);
     return rows.map(Person.fromMap).toList();
   }
 
