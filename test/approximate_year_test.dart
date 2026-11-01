@@ -4,6 +4,13 @@ import 'package:family_search_helper/services/lunar_service.dart';
 import 'package:family_search_helper/services/familysearch_record.dart';
 
 void main() {
+  test('1700년 이전 임진년은 근거 기준에 맞춰 제안하고 모호하면 남긴다', () {
+    expect(LunarService.approximateYear('壬辰年 生', referenceYear: 1600), 'about 1592');
+    expect(LunarService.approximateYear('壬辰年 生', referenceYear: 1622), isNull);
+    expect(LunarService.approximateYear('壬辰年 生'), isNull);
+    expect(LunarService.estimateYearsFromInput('임진년'), contains(1592));
+  });
+
   test('간지와 근거 연도로 about 연도를 제안한다', () {
     expect(LunarService.approximateYear('庚戌生', referenceYear: 1852),
         'about 1850');

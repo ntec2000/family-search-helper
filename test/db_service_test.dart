@@ -110,6 +110,66 @@ void main() {
     expect(await service.getConfig('ocr_source:${person.id}'), 'OCR 원문 전체');
   });
 
+  testWidgets('추정 연도는 약 서기로 표시하고 간지와 미선택 상태는 보존한다', (tester) async {
+    final people = [
+      Person(id: 'approx-son', nameHanja: '格', nameHangul: '격', gender: 'M',
+          surnameHangul: '이', birthDateSolar: 'about 1592', birthDateLunar: '壬辰年 生'),
+      Person(id: 'approx-daughter', gender: 'F', surnameHangul: '이',
+          deathDateSolar: 'about 1652', deathDateLunar: '壬辰卒'),
+      Person(id: 'unselected-year', nameHanja: '核', nameHangul: '핵', gender: 'M',
+          birthDateLunar: '壬辰生'),
+    ];
+    await tester.runAsync(() => service.upsertPersonsAtomically(people));
+    await tester.pumpWidget(const MaterialApp(home: ExportScreen()));
+    await tester.ensureVisible(find.text('텍스트 (수동 입력용)'));
+    await tester.tap(find.text('텍스트 (수동 입력용)'));
+    await tester.runAsync(() => service.listPersons());
+    await tester.pumpAndSettle();
+    final text = tester.widget<SelectableText>(find.byType(SelectableText)).data!;
+    expect(text, contains('출생      : 약 1592년 (about 1592)'));
+    expect(text, contains('사망      : 약 1652년 (about 1652)'));
+    expect(text, contains('壬辰年 生 (임진년)'));
+    expect(text, contains('추정 서기 미선택 · 기준 연도 검토 필요'));
+    for (final person in people) {
+      final persisted = await tester.runAsync(() => service.getPerson(person.id));
+      expect(persisted!.toMap(), person.toMap());
+    }
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
+  testWidgets('가족 참고는 저장된 부친과 아들 딸을 표시하며 같은 성이나 순서로 연결하지 않는다', (tester) async {
+    final people = [
+      Person(id: 'ref-father', gender: 'M', nameHangul: '기준', surnameHangul: '이',
+          childrenIds: ['ref-person']),
+      Person(id: 'ref-person', gender: 'M', nameHanja: '昃', nameHangul: '측',
+          surnameHangul: '이', fatherId: 'ref-father', childrenIds: ['ref-son', 'ref-daughter']),
+      Person(id: 'ref-son', gender: 'M', nameHanja: '格', nameHangul: '격',
+          surnameHangul: '이', fatherId: 'ref-person'),
+      Person(id: 'ref-daughter', gender: 'F', surnameHangul: '이', relation: '첫째딸',
+          spouseHangul: '권두', fatherId: 'ref-person'),
+      Person(id: 'ref-unlinked', gender: 'M', nameHangul: '병직', surnameHangul: '이'),
+    ];
+    await tester.runAsync(() => service.upsertPersonsAtomically(people));
+    await tester.pumpWidget(const MaterialApp(home: ExportScreen()));
+    await tester.ensureVisible(find.text('텍스트 (수동 입력용)'));
+    await tester.tap(find.text('텍스트 (수동 입력용)'));
+    await tester.runAsync(() => service.listPersons());
+    await tester.pumpAndSettle();
+    final text = tester.widget<SelectableText>(find.byType(SelectableText)).data!;
+    final personText = text.split('2. 昃 (이름: 이측)').last.split('3. 格').first;
+    expect(personText, contains('참고 아버지 : 이기준 (ID: ref-father)'));
+    expect(personText, contains('참고 아들 : 이격 (ID: ref-son)'));
+    expect(personText, contains('참고 딸 : 이씨 (첫째딸, 남편: 권두, ID: ref-daughter)'));
+    expect(personText, isNot(contains('이병직')));
+    expect(text, contains('참고 아버지 : 미연결 · 원문/관계 검토 필요'));
+    expect(text, contains('참고 아들 : 미연결 · 자녀 없음으로 확정하지 않음'));
+    for (final person in people) {
+      final persisted = await tester.runAsync(() => service.getPerson(person.id));
+      expect(persisted!.toMap(), person.toMap());
+    }
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('텍스트는 최근 수정순 대신 생성순으로 내보내고 딸 순번과 원문을 보존한다', (tester) async {
     final start = DateTime(2026, 1, 1);
     final people = [
