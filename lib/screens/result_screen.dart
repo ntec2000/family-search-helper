@@ -6,6 +6,7 @@ import '../models/person.dart';
 import '../services/hanja_dict.dart';
 import '../services/db_service.dart';
 import '../services/lunar_service.dart';
+import '../services/ganzhi_year_label.dart';
 import '../services/parent_child_review.dart';
 import '../services/surname_review.dart';
 import '../services/family_name_candidates.dart';
@@ -272,7 +273,7 @@ class _ResultScreenState extends State<ResultScreen> {
                 Text('족보 원문: ${source ?? "없음"}'),
                 Text('세대: ${person.sega?.toString() ?? "미상"}'),
                 if (candidates.isNotEmpty)
-                  Text('가능한 간지 연도 (1700~2100): ${candidates.join(', ')}'),
+                  Text('가능한 간지 연도 (1000~2100): ${candidates.join(', ')}'),
                 TextField(
                   controller: controller,
                   keyboardType: TextInputType.number,
@@ -293,7 +294,7 @@ class _ResultScreenState extends State<ResultScreen> {
                         (value) => refresh(() => selectedYear = value),
                   ),
                 const SizedBox(height: 12),
-                Text('후보: ${proposal ?? "간지·기준 연도를 확인하세요"}'),
+                Text('후보: ${proposal == null ? "간지·기준 연도를 확인하세요" : GanzhiYearLabel.displayDate(proposal, null)}'),
                 const Text('60갑자는 반복됩니다. 추정 연도는 확정값이 아닙니다. 같은 거리의 후보가 둘이면 연도를 제안하지 않습니다.'),
               ],
             )),

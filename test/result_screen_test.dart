@@ -209,6 +209,31 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('1600년 기준 임진년 출생 후보를 약 1592년으로 검토한다', (tester) async {
+    tester.view.physicalSize = const Size(1200, 1100);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final person = Person(id: 'old-year', gender: 'M', nameHanja: '格',
+        surnameHangul: '이', nameHangul: '격', birthDateLunar: '壬辰年 生');
+    await tester.pumpWidget(MaterialApp(home: ResultScreen(
+        rawText: '子格 壬辰年 生', persons: [person], imagePath: 'missing-test-image')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('인물 작업 메뉴 · 인물 아님 제외').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('만세력 출생 연도 추정'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).last, '1600');
+    await tester.pumpAndSettle();
+    expect(find.textContaining('후보: 약 1592년 (about 1592)'), findsOneWidget);
+    await tester.tap(find.text('승인'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('출생 서기 about 1592'), findsOneWidget);
+    expect(person.birthDateSolar, isNull);
+    expect(person.birthDateLunar, '壬辰年 生');
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('사망 간지 연도를 검토해 추정하고 출생 기록은 바꾸지 않는다', (tester) async {
     tester.view.physicalSize = const Size(1200, 1100);
     tester.view.devicePixelRatio = 1;
@@ -224,7 +249,7 @@ void main() {
     await tester.tap(find.text('만세력 사망 연도 추정'));
     await tester.pumpAndSettle();
     expect(find.text('사망 연도 추정 검토'), findsOneWidget);
-    expect(find.textContaining('가능한 간지 연도 (1700~2100):'), findsOneWidget);
+    expect(find.textContaining('가능한 간지 연도 (1000~2100):'), findsOneWidget);
     expect(find.textContaining('1920'), findsOneWidget);
     await tester.enterText(find.byType(TextField).last, '1920');
     await tester.pumpAndSettle();
@@ -259,7 +284,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('1910').last);
     await tester.pumpAndSettle();
-    expect(find.textContaining('후보: about 1910'), findsOneWidget);
+    expect(find.textContaining('후보: 약 1910년 (about 1910)'), findsOneWidget);
     await tester.tap(find.text('승인'));
     await tester.pumpAndSettle();
     expect(find.textContaining('사망 서기 about 1910'), findsOneWidget);

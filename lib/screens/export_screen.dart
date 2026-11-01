@@ -6,6 +6,7 @@ import '../models/person.dart';
 import '../services/db_service.dart';
 import '../services/gedcom_export.dart';
 import '../services/ganzhi_year_label.dart';
+import '../services/family_reference_text.dart';
 import '../services/female_name_display.dart';
 import '../services/spouse_parent_text.dart';
 import '../services/gender_label.dart';
@@ -108,6 +109,7 @@ class _State extends State<ExportScreen> {
     const div = '────────────────────';
     final dict = HanjaDict.instance;
     final buf = StringBuffer();
+    final familyReferences = FamilyReferenceText(list);
     buf.writeln('가족역사기록 (FamilySearch 입력용 정리)');
     buf.writeln('총 ${list.length}명');
     buf.writeln();
@@ -131,16 +133,16 @@ class _State extends State<ExportScreen> {
             ? '  이름      : $femaleName${p.nameHangul.trim().isNotEmpty && p.nameHanja.trim().isNotEmpty ? ' ${p.nameHanja}' : ''}'
             : '  이름      : (이름 없음 → $femaleName)');
         buf.writeln('  성별      : 여');
-        if ((p.birthDateSolar ?? p.birthDateLunar ?? '').isNotEmpty) {
-          buf.writeln('  출생      : ${p.birthDateSolar ?? p.birthDateLunar}');
+        if (GanzhiYearLabel.displayDate(p.birthDateSolar, p.birthDateLunar).isNotEmpty) {
+          buf.writeln('  출생      : ${GanzhiYearLabel.displayDate(p.birthDateSolar, p.birthDateLunar)}');
         }
-        final birthGanzhi = GanzhiYearLabel.fromDate(p.birthDateLunar);
-        if (birthGanzhi != null) buf.writeln('  출생 참고 : ${p.birthDateLunar} ($birthGanzhi)');
-        if ((p.deathDateSolar ?? p.deathDateLunar ?? '').isNotEmpty) {
-          buf.writeln('  사망      : ${p.deathDateSolar ?? p.deathDateLunar}');
+        final birthGanzhi = GanzhiYearLabel.reference(p.birthDateSolar, p.birthDateLunar);
+        if (birthGanzhi != null) buf.writeln('  출생 참고 : $birthGanzhi');
+        if (GanzhiYearLabel.displayDate(p.deathDateSolar, p.deathDateLunar).isNotEmpty) {
+          buf.writeln('  사망      : ${GanzhiYearLabel.displayDate(p.deathDateSolar, p.deathDateLunar)}');
         }
-        final deathGanzhi = GanzhiYearLabel.fromDate(p.deathDateLunar);
-        if (deathGanzhi != null) buf.writeln('  사망 참고 : ${p.deathDateLunar} ($deathGanzhi)');
+        final deathGanzhi = GanzhiYearLabel.reference(p.deathDateSolar, p.deathDateLunar);
+        if (deathGanzhi != null) buf.writeln('  사망 참고 : $deathGanzhi');
         if ((p.spouseBirth ?? '').isNotEmpty) {
           final label = GanzhiYearLabel.fromDate(p.spouseBirth);
           buf.writeln('  남편 출생 : ${p.spouseBirth}${label == null ? '' : ' ($label)'}');
@@ -162,7 +164,13 @@ class _State extends State<ExportScreen> {
         for (final parent in SpouseParentText.lines(p)) {
           buf.writeln('  $parent');
         }
+        for (final line in familyReferences.lines(p)) {
+          buf.writeln('  $line');
+        }
         if ((p.note ?? '').isNotEmpty) buf.writeln('  특이사항  : ${p.note}');
+        if ((p.reasonStatement ?? '').isNotEmpty) {
+          buf.writeln('  근거      : ${p.reasonStatement}');
+        }
         buf.writeln();
         continue;
       }
@@ -192,17 +200,17 @@ class _State extends State<ExportScreen> {
       }
       if (p.ja != null) buf.writeln('  字(자)    : ${_kh(p.ja)}');
       if (p.ho != null) buf.writeln('  號(호)    : ${_kh(p.ho)}');
-      buf.writeln('  출생      : ${p.birthDateSolar ?? p.birthDateLunar ?? '알 수 없음'}');
-      final birthGanzhi = GanzhiYearLabel.fromDate(p.birthDateLunar);
-      if (birthGanzhi != null) buf.writeln('  출생 참고 : ${p.birthDateLunar} ($birthGanzhi)');
+      buf.writeln('  출생      : ${GanzhiYearLabel.displayDate(p.birthDateSolar, p.birthDateLunar, fallback: '알 수 없음')}');
+      final birthGanzhi = GanzhiYearLabel.reference(p.birthDateSolar, p.birthDateLunar);
+      if (birthGanzhi != null) buf.writeln('  출생 참고 : $birthGanzhi');
       buf.writeln('  출생지    : ${p.birthPlace?.trim().isNotEmpty == true ? p.birthPlace : '알 수 없음'}');
-      final deathDate = p.deathDateSolar ?? p.deathDateLunar ?? '';
+      final deathDate = GanzhiYearLabel.displayDate(p.deathDateSolar, p.deathDateLunar);
       if (deathDate.isNotEmpty) {
         buf.writeln('  사망      : $deathDate');
         buf.writeln('  사망지    : ${p.deathPlace?.trim().isNotEmpty == true ? p.deathPlace : '알 수 없음'}');
       }
-      final deathGanzhi = GanzhiYearLabel.fromDate(p.deathDateLunar);
-      if (deathGanzhi != null) buf.writeln('  사망 참고 : ${p.deathDateLunar} ($deathGanzhi)');
+      final deathGanzhi = GanzhiYearLabel.reference(p.deathDateSolar, p.deathDateLunar);
+      if (deathGanzhi != null) buf.writeln('  사망 참고 : $deathGanzhi');
       if (p.burialPlace != null) {
         final ori = p.burialOrientation != null ? ' (${p.burialOrientation})' : '';
         buf.writeln('  매장      : ${_kh(p.burialPlace)}$ori');
@@ -257,6 +265,9 @@ class _State extends State<ExportScreen> {
       }
       if ((p.spouseMaternalGrandfather ?? '').isNotEmpty) {
         buf.writeln('  처외조    : ${_kh(p.spouseMaternalGrandfather)}');
+      }
+      for (final line in familyReferences.lines(p)) {
+        buf.writeln('  $line');
       }
       if (p.childrenNote != null) buf.writeln('  자녀      : ${p.childrenNote}');
       if (p.sonsInLawNote != null) buf.writeln('  사위      : ${p.sonsInLawNote}');

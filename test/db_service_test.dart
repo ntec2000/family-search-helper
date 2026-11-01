@@ -115,7 +115,8 @@ void main() {
       Person(id: 'approx-son', nameHanja: '格', nameHangul: '격', gender: 'M',
           surnameHangul: '이', birthDateSolar: 'about 1592', birthDateLunar: '壬辰年 生'),
       Person(id: 'approx-daughter', gender: 'F', surnameHangul: '이',
-          deathDateSolar: 'about 1652', deathDateLunar: '壬辰卒'),
+          deathDateSolar: 'about 1652', deathDateLunar: '壬辰卒',
+          reasonStatement: '검토자가 입력한 기준 연도로 추정'),
       Person(id: 'unselected-year', nameHanja: '核', nameHangul: '핵', gender: 'M',
           birthDateLunar: '壬辰生'),
     ];
@@ -128,6 +129,7 @@ void main() {
     final text = tester.widget<SelectableText>(find.byType(SelectableText)).data!;
     expect(text, contains('출생      : 약 1592년 (about 1592)'));
     expect(text, contains('사망      : 약 1652년 (about 1652)'));
+    expect(text, contains('근거      : 검토자가 입력한 기준 연도로 추정'));
     expect(text, contains('壬辰年 生 (임진년)'));
     expect(text, contains('추정 서기 미선택 · 기준 연도 검토 필요'));
     for (final person in people) {
@@ -156,10 +158,11 @@ void main() {
     await tester.runAsync(() => service.listPersons());
     await tester.pumpAndSettle();
     final text = tester.widget<SelectableText>(find.byType(SelectableText)).data!;
-    final personText = text.split('2. 昃 (이름: 이측)').last.split('3. 格').first;
-    expect(personText, contains('참고 아버지 : 이기준 (ID: ref-father)'));
-    expect(personText, contains('참고 아들 : 이격 (ID: ref-son)'));
-    expect(personText, contains('참고 딸 : 이씨 (첫째딸, 남편: 권두, ID: ref-daughter)'));
+    final personText = text.split('────────────────────')
+        .firstWhere((section) => section.contains('(이름: 이측)'));
+    expect(personText, contains('참고 아버지 : 이기준 (앱 ID: ref-father)'));
+    expect(personText, contains('참고 아들 : 이격 (앱 ID: ref-son)'));
+    expect(personText, contains('참고 딸 : 이씨 (첫째딸, 남편: 권두, 앱 ID: ref-daughter)'));
     expect(personText, isNot(contains('이병직')));
     expect(text, contains('참고 아버지 : 미연결 · 원문/관계 검토 필요'));
     expect(text, contains('참고 아들 : 미연결 · 자녀 없음으로 확정하지 않음'));

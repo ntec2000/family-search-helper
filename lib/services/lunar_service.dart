@@ -31,7 +31,7 @@ class LunarService {
   /// 干支(예: "乙卯")로부터 가능한 양력 연도 목록 추정
   /// 60갑자는 60년 주기. 시작연도 ~ 현재까지 일치하는 연도들 반환.
   static List<int> estimateYearsFromGanzhi(String ganzhi,
-      {int from = 1700, int to = 2100}) {
+      {int from = 1000, int to = 2100}) {
     final results = <int>[];
     for (int y = from; y <= to; y++) {
       final l = Solar.fromYmd(y, 6, 15).getLunar();
@@ -52,7 +52,7 @@ class LunarService {
   /// 기준 연도는 확인된 조상 기록 또는 사용자가 검토한 세대 추정값이어야 한다.
   /// 60년마다 반복되므로 정확한 날짜로 확정하지 않고 about 표기로 반환한다.
   static String? approximateYear(String rawGanzhi, {int? referenceYear,
-      int from = 1700, int to = 2100, int maxDistance = 45}) {
+      int from = 1000, int to = 2100, int maxDistance = 45}) {
     if (referenceYear == null) return null;
     final gz = explicitYearGanzhi(rawGanzhi);
     if (gz == null) return null;
@@ -141,7 +141,7 @@ class LunarService {
 
   /// 한글/한자 혼용 간지 입력 → 추정 양력 연도 목록 (#8)
   static List<int> estimateYearsFromInput(String input,
-      {int from = 1700, int to = 2100}) {
+      {int from = 1000, int to = 2100}) {
     final gz = normalizeGanzhi(input);
     if (gz == null) return const [];
     return estimateYearsFromGanzhi(gz, from: from, to: to);
