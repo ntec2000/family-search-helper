@@ -209,6 +209,39 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('간지 없는 인물도 같은 기준의 세대 차이로 역산하고 근거를 검토한다', (tester) async {
+    tester.view.physicalSize = const Size(1200, 1500);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final person = Person(id: 'generation-p', gender: 'M', nameHangul: '갑', sega: 7);
+    await tester.pumpWidget(MaterialApp(home: ResultScreen(
+        rawText: '子甲 七世', persons: [person], imagePath: 'missing-test-image')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('인물 작업 메뉴 · 인물 아님 제외').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('만세력 출생 연도 추정'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('세대 차이로 출생 연도 추정'));
+    await tester.pumpAndSettle();
+    Finder field(String label) => find.byWidgetPredicate((widget) =>
+        widget is TextField && widget.decoration?.labelText == label);
+    await tester.enterText(field('기준 인물의 확인된 출생 서기'), '1650');
+    await tester.enterText(field('기준 인물의 世 번호'), '10');
+    await tester.enterText(field('기준 인물·출처'), '검증용 A 출생 기록');
+    await tester.pumpAndSettle();
+    expect(find.textContaining('후보: 약 1560년'), findsNothing);
+    await tester.tap(find.text('같은 시조·같은 世 계산 기준임을 확인했습니다'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('후보: 약 1560년 (about 1560)'), findsOneWidget);
+    expect(find.textContaining('세대 차이 -3 × 30년'), findsOneWidget);
+    await tester.tap(find.text('승인'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('서기 about 1560'), findsOneWidget);
+    expect(person.birthDateSolar, isNull);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('1600년 기준 임진년 출생 후보를 약 1592년으로 검토한다', (tester) async {
     tester.view.physicalSize = const Size(1200, 1100);
     tester.view.devicePixelRatio = 1;

@@ -41,6 +41,27 @@ void main() {
           personGeneration: 32), 'about 1880');
     });
 
+    test('확인된 후손 출생년에서 윗세대도 역산한다', () {
+      expect(LunarService.approximateYearByGeneration(
+          ancestorBirthYear: 1650, ancestorGeneration: 10,
+          personGeneration: 7), 'about 1560');
+      expect(LunarService.approximateYearByGeneration(
+          ancestorBirthYear: 1650, ancestorGeneration: 10,
+          personGeneration: 7, yearsPerGeneration: 28), 'about 1566');
+      expect(LunarService.approximateYearByGeneration(
+          ancestorBirthYear: 1650, ancestorGeneration: 10,
+          personGeneration: 13), 'about 1740');
+    });
+
+    test('유효한 서기 범위를 벗어나는 세대 추정은 제안하지 않는다', () {
+      expect(LunarService.approximateYearByGeneration(
+          ancestorBirthYear: 0, ancestorGeneration: 10,
+          personGeneration: 10), isNull);
+      expect(LunarService.approximateYearByGeneration(
+          ancestorBirthYear: 20, ancestorGeneration: 10,
+          personGeneration: 7), isNull);
+    });
+
     test('기준 조상 연도나 세대 정보가 없으면 공란', () {
       expect(LunarService.approximateYearByGeneration(
           ancestorBirthYear: null,
