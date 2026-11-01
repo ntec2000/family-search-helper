@@ -110,6 +110,43 @@ void main() {
     expect(await service.getConfig('ocr_source:${person.id}'), 'OCR 원문 전체');
   });
 
+  testWidgets('텍스트는 최근 수정순 대신 생성순으로 내보내고 딸 순번과 원문을 보존한다', (tester) async {
+    final start = DateTime(2026, 1, 1);
+    final people = [
+      Person(id: 'order-son', gender: 'M', nameHanja: '格', nameHangul: '격',
+          surnameHangul: '이', createdAt: start,
+          updatedAt: start, rawText: '子格'),
+      Person(id: 'order-first', gender: 'F', surnameHangul: '이',
+          relation: '첫째딸', createdAt: start.add(const Duration(seconds: 1)),
+          updatedAt: start.add(const Duration(days: 1)), rawText: '女金甲'),
+      Person(id: 'order-second', gender: 'F', surnameHangul: '이',
+          relation: '둘째딸', createdAt: start.add(const Duration(seconds: 1)),
+          updatedAt: start.add(const Duration(days: 2)), rawText: '女金乙'),
+      Person(id: 'order-explicit', gender: 'F', surnameHangul: '이',
+          relation: '열째딸', createdAt: start.add(const Duration(seconds: 2)),
+          updatedAt: start.add(const Duration(days: 3)), rawText: '女十金丙'),
+    ];
+    await tester.runAsync(() => service.upsertPersonsAtomically(people));
+    await tester.pumpWidget(const MaterialApp(home: ExportScreen()));
+    await tester.ensureVisible(find.text('텍스트 (수동 입력용)'));
+    await tester.tap(find.text('텍스트 (수동 입력용)'));
+    await tester.runAsync(() => service.listPersons());
+    await tester.pumpAndSettle();
+    final text = tester.widget<SelectableText>(find.byType(SelectableText)).data!;
+    expect(text, contains('1. 格 (이름: 이격)'));
+    expect(text, contains('2. 첫째딸 (이름: 이씨)'));
+    expect(text, contains('3. 둘째딸 (이름: 이씨)'));
+    expect(text, contains('4. 열째딸 (이름: 이씨)'));
+    final saved = await tester.runAsync(() => service.listPersons());
+    expect(saved!.map((p) => p.id),
+        ['order-explicit', 'order-second', 'order-first', 'order-son']);
+    for (final person in people) {
+      final persisted = await tester.runAsync(() => service.getPerson(person.id));
+      expect(persisted!.toMap(), person.toMap());
+    }
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets('텍스트 미리보기는 이름 독음을 성씨로 추측하거나 이름을 지우지 않는다', (tester) async {
     final people = [
       Person(id: 'name-wood', gender: 'M', nameHanja: '木', nameHangul: '목'),
