@@ -73,7 +73,7 @@ class LunarService {
     return 'about ${candidates.first}';
   }
 
-  /// 기준 조상 출생 연도와 世 차이로 출생 연도를 느슨하게 추정한다.
+  /// 기준 인물의 출생 연도와 같은 기준의 世 차이로 양방향 추정한다.
   /// 世와 世孫의 기산 방식이 확인되지 않았다면 호출하지 않는다.
   static String? approximateYearByGeneration({
     required int? ancestorBirthYear,
@@ -84,12 +84,13 @@ class LunarService {
     if (ancestorBirthYear == null || ancestorGeneration == null ||
         personGeneration == null || ancestorGeneration <= 0 ||
         personGeneration <= 0 || yearsPerGeneration < 20 ||
-        yearsPerGeneration > 40 ||
-        personGeneration < ancestorGeneration) {
+        yearsPerGeneration > 40 || ancestorBirthYear <= 0 ||
+        ancestorBirthYear > 9999) {
       return null;
     }
     final year = ancestorBirthYear +
         (personGeneration - ancestorGeneration) * yearsPerGeneration;
+    if (year <= 0 || year > 9999) return null;
     return 'about $year';
   }
 

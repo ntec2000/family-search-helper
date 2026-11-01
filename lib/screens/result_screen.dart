@@ -253,6 +253,12 @@ class _ResultScreenState extends State<ResultScreen> {
       return;
     }
     final controller = TextEditingController();
+    final anchorGeneration = TextEditingController();
+    final targetGeneration = TextEditingController(text: person.sega?.toString() ?? '');
+    final generationLength = TextEditingController(text: '30');
+    final anchorSource = TextEditingController();
+    var byGeneration = false;
+    var sameBasis = false;
     final ganzhi = LunarService.explicitYearGanzhi(source ?? '');
     final candidates = ganzhi == null ? <int>[] : LunarService.estimateYearsFromInput(ganzhi);
     int? selectedYear;
@@ -260,9 +266,21 @@ class _ResultScreenState extends State<ResultScreen> {
       final route = DialogRoute<String>(
         context: context,
         builder: (ctx) => StatefulBuilder(builder: (ctx, refresh) {
-          final reference = int.tryParse(controller.text.trim());
+          final anchorYear = int.tryParse(controller.text.trim());
+          final anchorSega = int.tryParse(anchorGeneration.text.trim());
+          final targetSega = int.tryParse(targetGeneration.text.trim());
+          final interval = int.tryParse(generationLength.text.trim());
+          final model = byGeneration && sameBasis &&
+                  anchorSource.text.trim().isNotEmpty && interval != null
+              ? LunarService.approximateYearByGeneration(
+                  ancestorBirthYear: anchorYear, ancestorGeneration: anchorSega,
+                  personGeneration: targetSega, yearsPerGeneration: interval)
+              : null;
+          final reference = byGeneration
+              ? int.tryParse((model ?? '').replaceFirst('about ', '')) : anchorYear;
           final proposal = reference == null ? null : selectedYear != null
               ? 'about $selectedYear'
+              : ganzhi == null ? (byGeneration ? model : null)
               : LunarService.approximateYear(source ?? '', referenceYear: reference);
           return AlertDialog(
             title: Text('$label 연도 추정 검토'),
@@ -274,15 +292,66 @@ class _ResultScreenState extends State<ResultScreen> {
                 Text('세대: ${person.sega?.toString() ?? "미상"}'),
                 if (candidates.isNotEmpty)
                   Text('가능한 간지 연도 (1000~2100): ${candidates.join(', ')}'),
+                if (!death)
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('세대 차이로 출생 연도 추정'),
+                    value: byGeneration,
+                    onChanged: (value) => refresh(() {
+                      byGeneration = value;
+                      sameBasis = false;
+                      selectedYear = null;
+                    }),
+                  ),
                 TextField(
                   controller: controller,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: '근거가 있는 기준 서기 연도',
-                    hintText: '예: 1850',
+                  decoration: InputDecoration(
+                    labelText: byGeneration ? '기준 인물의 확인된 출생 서기' : '근거가 있는 기준 서기 연도',
+                    hintText: '예: 1650',
                   ),
-                  onChanged: (_) => refresh(() {}),
+                  onChanged: (_) => refresh(() => selectedYear = null),
                 ),
+                if (byGeneration) ...[
+                  TextField(
+                    controller: anchorGeneration,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: '기준 인물의 世 번호'),
+                    onChanged: (_) => refresh(() => selectedYear = null),
+                  ),
+                  TextField(
+                    controller: targetGeneration,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: '대상 인물의 世 번호'),
+                    onChanged: (_) => refresh(() => selectedYear = null),
+                  ),
+                  TextField(
+                    controller: generationLength,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: '가정한 세대 간격 (20~40년)'),
+                    onChanged: (_) => refresh(() => selectedYear = null),
+                  ),
+                  TextField(
+                    controller: anchorSource,
+                    decoration: const InputDecoration(labelText: '기준 인물·출처'),
+                    onChanged: (_) => refresh(() => selectedYear = null),
+                  ),
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('같은 시조·같은 世 계산 기준임을 확인했습니다'),
+                    value: sameBasis,
+                    onChanged: (value) => refresh(() {
+                      sameBasis = value ?? false;
+                      selectedYear = null;
+                    }),
+                  ),
+                  const Text('시조를 1世로 세어 후손으로 갈수록 번호가 커지는 기준입니다. 世孫·代孫 표기를 자동 환산하지 않습니다.'),
+                  if (model != null) ...[
+                    Text('세대 계산: $anchorYear + 세대 차이 ${targetSega! - anchorSega!} × $interval년 = ${GanzhiYearLabel.displayDate(model, null)}'),
+                    if (ganzhi != null) const Text('이 계산값 근처의 간지 후보를 대조합니다. 가장 가까운 후보도 확정 연도는 아닙니다.'),
+                  ],
+                  const Text('세대 간격은 가정값입니다. 세대가 멀어질수록 오차가 누적되며 ±5년 등의 정확도를 보장하지 않습니다. 과거 합격년·묘비 건립년은 출생년으로 넣지 마세요.'),
+                ],
                 if (candidates.isNotEmpty)
                   DropdownButtonFormField<int>(
                     initialValue: selectedYear,
@@ -323,12 +392,18 @@ class _ResultScreenState extends State<ResultScreen> {
         }
         person.reasonStatement = [
           if (person.reasonStatement?.isNotEmpty == true) person.reasonStatement!,
-          '$label 간지 ${source ?? ""}, 검토자가 입력한 기준 연도 ${controller.text.trim()}년에서 ${selectedYear == null ? "추정" : "후보 직접 선택"}: $approved',
+          if (byGeneration)
+            '출생 세대 추정: 기준 ${anchorSource.text.trim()}, 출생 ${controller.text.trim()}년, 기준 ${anchorGeneration.text.trim()}世 → 대상 ${targetGeneration.text.trim()}世, 세대 간격 ${generationLength.text.trim()}년 가정, 동일 世 기준 확인. 원문 ${source ?? "없음"}, ${selectedYear == null ? "계산/간지 대조" : "간지 후보 직접 선택"}: $approved. 누적 오차 미확정.'
+          else
+            '$label 간지 ${source ?? ""}, 검토자가 입력한 기준 연도 ${controller.text.trim()}년에서 ${selectedYear == null ? "추정" : "후보 직접 선택"}: $approved',
         ].join('\n');
         _relationshipsReviewed = false;
       });
     } finally {
-      controller.dispose();
+      for (final input in [controller, anchorGeneration, targetGeneration,
+          generationLength, anchorSource]) {
+        input.dispose();
+      }
     }
   }
 
@@ -1119,7 +1194,7 @@ class _PersonList extends StatelessWidget {
                 }
               },
               itemBuilder: (_) => [
-                if (!saved && p.birthDateLunar?.isNotEmpty == true)
+                if (!saved)
                   const PopupMenuItem(value: 'estimate',
                     child: ListTile(leading: Icon(Icons.calendar_month),
                       title: Text('만세력 출생 연도 추정'))),

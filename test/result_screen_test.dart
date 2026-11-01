@@ -231,6 +231,7 @@ void main() {
     await tester.enterText(field('기준 인물·출처'), '검증용 A 출생 기록');
     await tester.pumpAndSettle();
     expect(find.textContaining('후보: 약 1560년'), findsNothing);
+    await tester.ensureVisible(find.text('같은 시조·같은 世 계산 기준임을 확인했습니다'));
     await tester.tap(find.text('같은 시조·같은 世 계산 기준임을 확인했습니다'));
     await tester.pumpAndSettle();
     expect(find.textContaining('후보: 약 1560년 (about 1560)'), findsOneWidget);
