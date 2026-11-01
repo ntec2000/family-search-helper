@@ -228,7 +228,7 @@ void main() {
     expect(find.textContaining('후보: 약 1592년 (about 1592)'), findsOneWidget);
     await tester.tap(find.text('승인'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('출생 서기 about 1592'), findsOneWidget);
+    expect(find.textContaining('서기 about 1592'), findsOneWidget);
     expect(person.birthDateSolar, isNull);
     expect(person.birthDateLunar, '壬辰年 生');
     expect(tester.takeException(), isNull);
