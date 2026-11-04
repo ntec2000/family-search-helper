@@ -18,6 +18,11 @@ void main() {
     img.fillRect(image, x1: 302, y1: 45, x2: 314, y2: 64, color: black);
     final rows = genealogyOcrRows(Uint8List.fromList(img.encodePng(image)));
     expect(rows, hasLength(2));
+    // 기존 본문 범위 x=26..300을 유지해야 확대 배율이 바뀌지 않는다.
+    // 이 이미지의 테두리는 x=294에 있어 본문과 여백의 경계가 서로 다르다.
+    final body = img.decodeJpg(rows.first.body)!;
+    expect(body.width, 1800);
+    expect(body.height, 759);
     final first = img.decodePng(rows.first.generationMargin!)!;
     final second = img.decodePng(rows.last.generationMargin!)!;
     expect(first.any((pixel) => img.getLuminance(pixel) < 180), isTrue);

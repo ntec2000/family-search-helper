@@ -50,7 +50,7 @@ List<GenealogyOcrRow> genealogyOcrRows(Uint8List bytes) {
     if (height < image.height * .045) continue;
     final frame = _rightFrame(image, top, height);
     var crop = img.copyCrop(image, x: left, y: top,
-        width: (frame == null ? right : frame + 1) - left, height: height);
+        width: right - left, height: height);
     if (crop.width < 1800) {
       crop = img.copyResize(crop, width: 1800,
           interpolation: img.Interpolation.linear);
