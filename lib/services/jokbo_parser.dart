@@ -80,6 +80,28 @@ class JokboParser {
     return persons;
   }
 
+  /// Comparison results supply names for review without merging person fields.
+  static List<Person> reviewAlternativeNames(Iterable<String> texts,
+      Iterable<Person> primary, {String? clanHanja, String? clanHangul}) {
+    String key(Person person) {
+      final name = person.gender == 'F' ? person.spouseHanja ?? '' : person.nameHanja;
+      return name.trim().isEmpty ? '' : '${person.gender}:${name.trim()}';
+    }
+
+    final seen = primary.map(key).toSet();
+    final candidates = <Person>[];
+    for (final text in texts.toSet()) {
+      final parsed = parse(text, clanHanjaOverride: clanHanja,
+          clanHangulOverride: clanHangul, numberDaughters: false);
+      for (final person in parsed) {
+        final identity = key(person);
+        if (identity.isEmpty || !seen.add(identity)) continue;
+        candidates.add(person);
+      }
+    }
+    return candidates;
+  }
+
   /// Accept one complete label, never an isolated numeral or a 世孫 label.
   static int? readGenerationLabel(String? raw) {
     final label = (raw ?? '').replaceAll(RegExp(r'\s+'), '');

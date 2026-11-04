@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:family_search_helper/services/ocr_service.dart';
+import 'package:family_search_helper/services/jokbo_parser.dart';
 
 void main() {
   OcrResult result(String text) => OcrResult(text: text, rawBlocks: []);
@@ -42,6 +43,19 @@ void main() {
     expect(whole.alternatives, ['子格']);
     final combined = OcrService.useSegmentedOrWhole(whole, ['子格'], []);
     expect(combined.alternatives, ['子聖甲', '子格']);
+  });
+
+  test('비교 OCR은 전체 판독의 새 이름만 검토 후보로 보존한다', () {
+    final whole = OcrService.retainWholePageAlternatives(
+        result('子格'), result('子格 子承烈'));
+    final combined = OcrService.useSegmentedOrWhole(
+        whole, ['子格'], ['子萬']);
+    final people = JokboParser.parseRegions(combined.regionTexts);
+    final candidates = JokboParser.reviewAlternativeNames(
+        combined.wholePageAlternatives, people, clanHangul: '이');
+    expect(people.map((person) => person.nameHanja), ['格']);
+    expect(candidates.map((person) => person.nameHanja), ['承烈']);
+    expect(candidates.single.rawText, '子承烈');
   });
 
   test('같은 전체 페이지 OCR은 비교 원문에 중복하지 않는다', () {

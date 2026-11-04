@@ -156,6 +156,10 @@ class OcrService {
           ...selected.alternatives,
           if (other.text.trim().isNotEmpty && other.text != selected.text) other.text,
           ...other.alternatives,
+        ], wholePageAlternatives: [
+          ...selected.wholePageAlternatives,
+          if (other.text.trim().isNotEmpty && other.text != selected.text) other.text,
+          ...other.wholePageAlternatives,
         ], regionTexts: selected.regionTexts, generationLabels: selected.generationLabels);
   }
 
@@ -165,6 +169,7 @@ class OcrService {
     // 구획과 전체 인식은 원문 탭에서 함께 보존한다. 파싱은 구획 결과를 사용한다.
     return OcrResult(text: regions.join('\n'), rawBlocks: wholePage.rawBlocks,
         alternatives: [wholePage.text, ...wholePage.alternatives, ...rawColumns],
+        wholePageAlternatives: [wholePage.text, ...wholePage.wholePageAlternatives],
         regionTexts: regions, generationLabels: generationLabels);
   }
 
@@ -196,8 +201,9 @@ class OcrResult {
   final String text;
   final List<TextBlock> rawBlocks;
   final List<String> alternatives;
+  final List<String> wholePageAlternatives;
   final List<String> regionTexts;
   final List<String?>? generationLabels;
   OcrResult({required this.text, required this.rawBlocks,
-      this.alternatives = const [], this.regionTexts = const [], this.generationLabels});
+      this.alternatives = const [], this.wholePageAlternatives = const [], this.regionTexts = const [], this.generationLabels});
 }

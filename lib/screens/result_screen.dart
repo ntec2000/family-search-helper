@@ -20,6 +20,7 @@ class ResultScreen extends StatefulWidget {
   final List<Person> persons;
   final String imagePath;
   final List<String> unparsedRegions;
+  final List<Person> comparisonNames;
   final String? sourceDocumentPath;
   final int? sourcePageNumber;
   const ResultScreen(
@@ -27,6 +28,7 @@ class ResultScreen extends StatefulWidget {
       required this.rawText,
       required this.persons,
       this.unparsedRegions = const [],
+      this.comparisonNames = const [],
       this.sourceDocumentPath,
       this.sourcePageNumber,
       required this.imagePath});
@@ -591,10 +593,17 @@ class _ResultScreenState extends State<ResultScreen> {
     }
   }
 
-  Future<void> _addPerson({String? sourceRegion}) async {
+  Future<void> _addPerson({String? sourceRegion, Person? comparison}) async {
     if (_saved || _saving) return;
     final candidate = Person(id: 'manual_${DateTime.now().microsecondsSinceEpoch}',
         sourceImagePath: widget.imagePath,
+        nameHanja: comparison?.nameHanja ?? '',
+        nameHangul: comparison?.nameHangul ?? '',
+        surnameHanja: comparison?.surnameHanja,
+        surnameHangul: comparison?.surnameHangul,
+        spouseHanja: comparison?.gender == 'F' ? comparison?.spouseHanja : null,
+        spouseHangul: comparison?.gender == 'F' ? comparison?.spouseHangul : null,
+        gender: comparison?.gender ?? 'U',
         rawText: sourceRegion,
         sourceDocumentPath: widget.sourceDocumentPath,
         sourcePageNumber: widget.sourcePageNumber,
@@ -741,26 +750,45 @@ class _ResultScreenState extends State<ResultScreen> {
     ));
   }
 
+  List<Person> get _comparisonNames => widget.comparisonNames.where((candidate) {
+    return !_persons.any((person) => person.gender == candidate.gender &&
+        (candidate.gender == 'F'
+            ? person.spouseHanja == candidate.spouseHanja
+            : person.nameHanja == candidate.nameHanja));
+  }).toList();
+
+  int get _reviewRegionCount => widget.unparsedRegions.length + _comparisonNames.length;
+
   void _showUnparsedRegions() {
+    final comparisons = _comparisonNames;
     showDialog<void>(context: context, builder: (ctx) => AlertDialog(
-      title: Text('인물 미분류 구획 (${widget.unparsedRegions.length}건)'),
+      title: Text('인물 미분류 구획 (${_reviewRegionCount}건)'),
       content: SizedBox(width: double.maxFinite, child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('이 구획들은 인물이 아닐 수도 있습니다. 원본 이미지와 대조하고 '
-              '인물이 누락됐다면 해당 구획의 인물 추가를 선택하세요.'),
+          const Text('원본 이미지와 대조해 누락 인물을 추가하세요. 비교 OCR 후보에는 '
+              '이미 목록에 있는 인물의 다른 판독이 포함될 수 있습니다.'),
           const SizedBox(height: 8),
           Flexible(child: ListView.builder(shrinkWrap: true,
-            itemCount: widget.unparsedRegions.length, itemBuilder: (_, index) =>
-              ListTile(title: Text('구획 ${index + 1}'),
-                subtitle: SelectableText(widget.unparsedRegions[index]),
+            itemCount: widget.unparsedRegions.length + comparisons.length,
+            itemBuilder: (_, index) {
+              final offset = index - widget.unparsedRegions.length;
+              final candidate = offset < 0 ? null : comparisons[offset];
+              final source = candidate == null
+                  ? widget.unparsedRegions[index] : candidate.rawText ?? '';
+              final title = candidate == null ? '구획 ${index + 1}'
+                  : '비교 OCR 후보 · ${candidate.gender == 'F'
+                      ? '女 ${candidate.spouseHanja ?? ''}' : candidate.nameHanja}';
+              return ListTile(title: Text(title),
+                subtitle: SelectableText(source),
                 trailing: TextButton(
                   onPressed: _saved || _saving ? null : () {
                     Navigator.pop(ctx);
-                    _addPerson(sourceRegion: widget.unparsedRegions[index]);
+                    _addPerson(sourceRegion: source, comparison: candidate);
                   },
                   child: const Text('인물 추가'),
-                )))),
+                ));
+            })),
         ],
       )),
       actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('닫기'))],
@@ -774,7 +802,7 @@ class _ResultScreenState extends State<ResultScreen> {
       appBar: AppBar(
         title: Text('인식 결과 (${_persons.length}명)'),
         actions: [
-          if (widget.unparsedRegions.isNotEmpty)
+          if (_reviewRegionCount > 0)
             IconButton(icon: const Icon(Icons.find_in_page_outlined),
               tooltip: '인물 미분류 구획', onPressed: _showUnparsedRegions),
           IconButton(icon: const Icon(Icons.people_outline),
@@ -834,11 +862,11 @@ class _ResultScreenState extends State<ResultScreen> {
                     const Text('1단계 · 인물 정보 수정 → 2단계 · 가족관계 검토 → 3단계 · 저장',
                         style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600,
                             color: HanjiColors.muk)),
-                    if (widget.unparsedRegions.isNotEmpty)
+                    if (_reviewRegionCount > 0)
                       TextButton.icon(
                         onPressed: _showUnparsedRegions,
                         icon: const Icon(Icons.find_in_page_outlined),
-                        label: Text('미분류 구획 ${widget.unparsedRegions.length}건 확인'),
+                        label: Text('미분류 구획 ${_reviewRegionCount}건 확인'),
                       ),
                     Row(children: [
                       Expanded(child: OutlinedButton(

@@ -209,6 +209,32 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('비교 OCR 이름은 원문과 함께 편집하고 취소하면 목록에 넣지 않는다', (tester) async {
+    tester.view.physicalSize = const Size(1200, 1100);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(MaterialApp(home: ResultScreen(
+      rawText: '子承烈 辛丑生', persons: [], imagePath: 'missing-test-image',
+      comparisonNames: [Person(id: 'comparison', gender: 'M', nameHanja: '承烈',
+          birthDateLunar: '辛丑生', rawText: '子承烈 辛丑生')],
+    )));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('인물 미분류 구획'));
+    await tester.pumpAndSettle();
+    expect(find.text('비교 OCR 후보 · 承烈'), findsOneWidget);
+    await tester.tap(find.text('인물 추가').last);
+    await tester.pumpAndSettle();
+    final name = tester.widget<TextField>(find.widgetWithText(TextField, '한자 이름'));
+    expect(name.controller!.text, '承烈');
+    final birth = tester.widget<TextField>(
+        find.widgetWithText(TextField, '출생 · 간지/음력 원문'));
+    expect(birth.controller!.text, isEmpty);
+    await tester.tap(find.text('취소').last);
+    await tester.pumpAndSettle();
+    expect(find.text('인식 결과 (0명)'), findsOneWidget);
+  });
+
   testWidgets('간지 없는 인물도 같은 기준의 세대 차이로 역산하고 근거를 검토한다', (tester) async {
     tester.view.physicalSize = const Size(1200, 1500);
     tester.view.devicePixelRatio = 1;

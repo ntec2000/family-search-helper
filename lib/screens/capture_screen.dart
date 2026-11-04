@@ -329,6 +329,9 @@ class _CaptureScreenState extends State<CaptureScreen> {
         clanHangulOverride: _surnameHangul,
         generationLabels: ocr.generationLabels,
       );
+      final comparisonNames = JokboParser.reviewAlternativeNames(
+          ocr.wholePageAlternatives, persons,
+          clanHanja: _surnameHanja, clanHangul: _surnameHangul);
       for (final person in persons) {
         person.sourceDocumentPath = _sourceDocumentPath;
         person.sourcePageNumber = _sourcePageNumber;
@@ -347,6 +350,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
               rawText: [ocr.text, ...ocr.alternatives.map((text) =>
                   '\n[OCR 비교 결과 · 전체/세로 열]\n$text')].join('\n'),
               persons: persons, unparsedRegions: unparsedRegions,
+              comparisonNames: comparisonNames,
               imagePath: _sourcePath ?? path,
               sourceDocumentPath: _sourceDocumentPath,
               sourcePageNumber: _sourcePageNumber),
