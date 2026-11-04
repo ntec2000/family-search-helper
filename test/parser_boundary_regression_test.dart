@@ -263,4 +263,12 @@ void main() {
     expect(unresolved, containsAll(['安東人', '全州人']));
   });
 
+  test('224쪽 기일의 월일은 보존하고 사망 연도는 추정하지 않는다', () {
+    final person = JokboParser.parse('子核 字君實 丁酉生 忌三月五日 墓白石面鶴洞').single;
+    expect(person.nameHanja, '核');
+    expect(person.deathDateLunar, '忌 三月五日 (연도 미상)');
+    expect(person.deathDateSolar, isNull);
+    expect(person.rawText, contains('忌三月五日'));
+  });
+
 }
