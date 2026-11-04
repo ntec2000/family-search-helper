@@ -327,6 +327,7 @@ class _CaptureScreenState extends State<CaptureScreen> {
         sourceImagePath: _sourcePath ?? path,
         clanHanjaOverride: _surnameHanja,
         clanHangulOverride: _surnameHangul,
+        generationLabels: ocr.generationLabels,
       );
       for (final person in persons) {
         person.sourceDocumentPath = _sourceDocumentPath;

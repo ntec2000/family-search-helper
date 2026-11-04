@@ -7,6 +7,36 @@ import 'package:family_search_helper/services/ocr_column_text.dart';
 import 'package:family_search_helper/services/jokbo_parser.dart';
 
 void main() {
+  test('가로 행마다 테두리 밖 세대 여백을 따로 보존한다', () {
+    final image = img.Image(width: 320, height: 300);
+    final black = img.ColorRgb8(0, 0, 0);
+    img.fill(image, color: img.ColorRgb8(255, 255, 255));
+    for (final y in [30, 150, 270]) {
+      img.drawLine(image, x1: 25, y1: y, x2: 294, y2: y, color: black);
+    }
+    img.drawLine(image, x1: 294, y1: 30, x2: 294, y2: 270, color: black);
+    img.fillRect(image, x1: 302, y1: 45, x2: 314, y2: 64, color: black);
+    final rows = genealogyOcrRows(Uint8List.fromList(img.encodePng(image)));
+    expect(rows, hasLength(2));
+    final first = img.decodePng(rows.first.generationMargin!)!;
+    final second = img.decodePng(rows.last.generationMargin!)!;
+    expect(first.any((pixel) => img.getLuminance(pixel) < 180), isTrue);
+    expect(second.any((pixel) => img.getLuminance(pixel) < 180), isFalse);
+  });
+
+  test('온전한 여백 표제를 해당 행에만 적용하며 본문과 충돌하면 기록한다', () {
+    final people = JokboParser.parseRegions(
+      ['子昃 丁未生', '子格 壬辰生 子核 丁酉生', '子顯五 22世', '子承烈'],
+      generationLabels: ['二十世', '二\n十\n一\n世', '二十三世', '二十三世孫'],
+    );
+    expect(people.map((person) => person.sega), [20, 21, 21, 22, null]);
+    expect(people[1].rawText, isNot(contains('世')));
+    expect(people[3].note, contains('세대 불일치'));
+    expect(people.every((person) => person.fatherId == null), isTrue);
+    expect(JokboParser.readGenerationLabel('二二世'), isNull);
+    expect(JokboParser.readGenerationLabel('卷二十一世'), isNull);
+  });
+
   test('좁은 세로 열도 오른쪽부터 순서대로 추출한다', () {
     final image = img.Image(width: 320, height: 220);
     img.fill(image, color: img.ColorRgb8(255, 255, 255));

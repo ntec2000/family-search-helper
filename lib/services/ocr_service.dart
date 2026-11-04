@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart' show kIsWeb, compute;
-import 'dart:typed_data';
 import 'image_store.dart';
 import 'ocr_regions.dart';
 import 'ocr_column_text.dart';
+import 'jokbo_parser.dart';
 import 'browser_ocr_stub.dart' if (dart.library.js_interop) 'browser_ocr.dart';
 import 'vertical_reading_order.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
@@ -66,9 +66,9 @@ class OcrService {
     }
     final wholePage = processed == null ? original! : original == null
         ? processed : retainWholePageAlternatives(processed, original);
-    late final List<Uint8List> regions;
+    late final List<GenealogyOcrRow> regions;
     try {
-      regions = await compute(genealogyOcrRegions,
+      regions = await compute(genealogyOcrRows,
           await readImageBytes(originalPath));
     } catch (_) {
       return wholePage;
@@ -76,33 +76,57 @@ class OcrService {
     if (regions.length < 2) return wholePage;
     final texts = <String>[];
     final rawColumns = <String>[];
+    final generationLabels = <String?>[];
     for (var i = 0; i < regions.length; i++) {
+      final row = regions[i];
       onProgress?.call('세대 구획 ${i + 1}/${regions.length} 한자 인식 중...');
       try {
-        final columns = await compute(genealogyOcrColumns, regions[i]);
-        if (columns.isEmpty) {
-          texts.add((await recognize(await storeImageBytes(regions[i]))).text);
-        } else {
+        final columns = await compute(genealogyOcrColumns, row.body);
+        var entries = <String>[];
+        if (columns.isNotEmpty) {
           final columnTexts = await readColumnsOrNull(columns.length, (j) async {
             onProgress?.call('구획 ${i + 1}/${regions.length} · 세로 열 ${j + 1}/${columns.length} 인식 중...');
             return (await recognize(await storeImageBytes(columns[j], extension: 'png'),
                 singleColumn: true)).text;
           });
-          if (columnTexts != null) rawColumns.add(columnTexts.join('\n'));
-          if (columnTexts == null || !hasReadableText(columnTexts)) {
-            // 열 인식 실패 시 부분 결과를 버리고 해당 세대 전체를 다시 읽는다.
-            texts.add((await recognize(await storeImageBytes(regions[i]))).text);
-          } else {
+          if (columnTexts != null && hasReadableText(columnTexts)) {
+            rawColumns.add(columnTexts.join('\n'));
             final headings = await compute(genealogyOcrColumnHeadings, columns);
-            texts.addAll(assembleOcrEntries(columnTexts, headings: headings));
+            entries = assembleOcrEntries(columnTexts, headings: headings);
           }
         }
+        if (JokboParser.parseRegions(entries).isEmpty) {
+          final wholeRow = (await recognize(await storeImageBytes(row.body))).text;
+          // Keep readable column evidence when neither path finds a person.
+          if (entries.isEmpty || JokboParser.parseRegions([wholeRow]).isNotEmpty) {
+            entries = [wholeRow];
+          } else if (wholeRow.trim().isNotEmpty) {
+            rawColumns.add(wholeRow);
+          }
+        }
+        String? label;
+        final margin = row.generationMargin;
+        if (margin != null && hasReadableText(entries)) {
+          try {
+            final marginText = (await recognize(
+                await storeImageBytes(margin, extension: 'png'),
+                singleColumn: true)).text.trim();
+            if (marginText.isNotEmpty) {
+              rawColumns.add('[구획 ${i + 1} 세대 여백] $marginText');
+              label = marginText;
+            }
+          } catch (_) {
+            // A failed margin must not discard the recognized people.
+          }
+        }
+        texts.addAll(entries);
+        generationLabels.addAll(List<String?>.filled(entries.length, label));
       } catch (_) {
-        // 구획 하나가 실패하면 일부 누락된 결과로 전체 원문을 대체하지 않는다.
         return wholePage;
       }
     }
-    return useSegmentedOrWhole(wholePage, texts, rawColumns);
+    return useSegmentedOrWhole(wholePage, texts, rawColumns,
+        generationLabels: generationLabels);
   }
 
   /// 구획 결과가 전부 비었다면 읽힌 전체 페이지 결과를 잃지 않는다.
@@ -132,16 +156,16 @@ class OcrService {
           ...selected.alternatives,
           if (other.text.trim().isNotEmpty && other.text != selected.text) other.text,
           ...other.alternatives,
-        ], regionTexts: selected.regionTexts);
+        ], regionTexts: selected.regionTexts, generationLabels: selected.generationLabels);
   }
 
   static OcrResult useSegmentedOrWhole(OcrResult wholePage,
-      List<String> regions, List<String> rawColumns) {
+      List<String> regions, List<String> rawColumns, {List<String?>? generationLabels}) {
     if (!hasReadableText(regions)) return wholePage;
     // 구획과 전체 인식은 원문 탭에서 함께 보존한다. 파싱은 구획 결과를 사용한다.
     return OcrResult(text: regions.join('\n'), rawBlocks: wholePage.rawBlocks,
         alternatives: [wholePage.text, ...wholePage.alternatives, ...rawColumns],
-        regionTexts: regions);
+        regionTexts: regions, generationLabels: generationLabels);
   }
 
   /// 공백이나 검출 블록 수가 늘어도 한자가 적은 후보를 우선하지 않는다.
@@ -173,6 +197,7 @@ class OcrResult {
   final List<TextBlock> rawBlocks;
   final List<String> alternatives;
   final List<String> regionTexts;
+  final List<String?>? generationLabels;
   OcrResult({required this.text, required this.rawBlocks,
-      this.alternatives = const [], this.regionTexts = const []});
+      this.alternatives = const [], this.regionTexts = const [], this.generationLabels});
 }

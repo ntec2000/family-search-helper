@@ -47,18 +47,51 @@ class JokboParser {
 
   /// 구획 사이에서 이름을 놓쳐도 앞 인물에게 다음 구획의 정보가 붙지 않게 한다.
   static List<Person> parseRegions(List<String> regions, {String? sourceImagePath,
-      String? clanHanjaOverride, String? clanHangulOverride}) {
+      String? clanHanjaOverride, String? clanHangulOverride,
+      List<String?>? generationLabels}) {
+    if (generationLabels != null && generationLabels.length != regions.length) {
+      throw ArgumentError('인물 구획과 세대 표제 수가 다릅니다.');
+    }
     if (regions.isEmpty) return [];
     final hasOverride = (clanHanjaOverride ?? '').trim().isNotEmpty ||
         (clanHangulOverride ?? '').trim().isNotEmpty;
     final clan = hasOverride ? null : detectWorkingSurname(regions);
-    final persons = [for (final region in regions) ...parse(region,
-      sourceImagePath: sourceImagePath,
-      clanHanjaOverride: hasOverride ? clanHanjaOverride : clan?.$1,
-      clanHangulOverride: hasOverride ? clanHangulOverride : clan?.$2,
-      numberDaughters: false, detectLocalClan: false)];
+    final persons = <Person>[];
+    for (var index = 0; index < regions.length; index++) {
+      final entries = parse(regions[index],
+          sourceImagePath: sourceImagePath,
+          clanHanjaOverride: hasOverride ? clanHanjaOverride : clan?.$1,
+          clanHangulOverride: hasOverride ? clanHangulOverride : clan?.$2,
+          numberDaughters: false, detectLocalClan: false);
+      final label = generationLabels?[index];
+      final generation = readGenerationLabel(label);
+      if (generation != null) {
+        for (final person in entries) {
+          final note = person.sega != null && person.sega != generation
+              ? '본문과 여백 세대 불일치 ($label) · 원문 검토 필요'
+              : '여백 세대 표제 ($label) · OCR 후보';
+          person.sega ??= generation;
+          person.note = [if ((person.note ?? '').isNotEmpty) person.note!, note].join(' / ');
+        }
+      }
+      persons.addAll(entries);
+    }
     _numberDaughters(persons);
     return persons;
+  }
+
+  /// Accept one complete label, never an isolated numeral or a 世孫 label.
+  static int? readGenerationLabel(String? raw) {
+    final label = (raw ?? '').replaceAll(RegExp(r'\s+'), '');
+    final match = RegExp(r'^([1-9][0-9]{0,2}|[一二三四五六七八九十]{1,3})世$')
+        .firstMatch(label);
+    if (match == null) return null;
+    final number = match.group(1)!;
+    if (!RegExp(r'^(?:[1-9][0-9]{0,2}|[一二三四五六七八九]|[二三四五六七八九]?十[一二三四五六七八九]?)$')
+        .hasMatch(number)) {
+      return null;
+    }
+    return _segaToInt(number);
   }
 
   /// 서로 다른 표제 후보가 있으면 자동 확정하지 않고 수동 확인을 요청한다.

@@ -3,7 +3,12 @@ import 'package:image/image.dart' as img;
 
 /// 가로 구획선으로 나누어 다른 세대의 열이 서로 섞이지 않게 한다.
 /// shortcut: 직선 구획이 없는 문서는 전체 이미지 OCR과 수동 영역 선택을 사용한다.
-List<Uint8List> genealogyOcrRegions(Uint8List bytes) {
+List<Uint8List> genealogyOcrRegions(Uint8List bytes) =>
+    genealogyOcrRows(bytes).map((row) => row.body).toList();
+
+typedef GenealogyOcrRow = ({Uint8List body, Uint8List? generationMargin});
+
+List<GenealogyOcrRow> genealogyOcrRows(Uint8List bytes) {
   final decoded = img.decodeImage(bytes);
   if (decoded == null) throw const FormatException('이미지를 해독할 수 없습니다.');
   final image = img.bakeOrientation(decoded);
@@ -37,21 +42,54 @@ List<Uint8List> genealogyOcrRegions(Uint8List bytes) {
   }
   if (ruleStart != null) rows.add((ruleStart + ruleEnd) ~/ 2);
   if (rows.length < 3 || rows.length > 16) return [];
-  final regions = <Uint8List>[];
+  final regions = <GenealogyOcrRow>[];
   for (var i = 0; i < rows.length - 1; i++) {
     // 허용 폭의 아래 끝에서 자르면 선 바로 아래 子/女 표제가 잘린다.
     final top = rows[i] + 2;
     final height = rows[i + 1] - top - 2;
     if (height < image.height * .045) continue;
+    final frame = _rightFrame(image, top, height);
     var crop = img.copyCrop(image, x: left, y: top,
-        width: right - left, height: height);
+        width: (frame == null ? right : frame + 1) - left, height: height);
     if (crop.width < 1800) {
       crop = img.copyResize(crop, width: 1800,
           interpolation: img.Interpolation.linear);
     }
-    regions.add(Uint8List.fromList(img.encodeJpg(crop, quality: 96)));
+    regions.add((
+      body: Uint8List.fromList(img.encodeJpg(crop, quality: 96)),
+      generationMargin: frame == null ? null : _generationMargin(image, frame, top, height),
+    ));
   }
   return regions;
+}
+
+/// A ruled frame separates the 世 label from the person columns.
+int? _rightFrame(img.Image image, int top, int height) {
+  for (var x = (image.width * .97).floor(); x >= image.width * .8; x--) {
+    var dark = 0;
+    for (var y = top; y < top + height; y++) {
+      if (img.getLuminance(image.getPixel(x, y)) < 180) dark++;
+    }
+    if (dark >= height * .75) return x;
+  }
+  return null;
+}
+
+Uint8List? _generationMargin(img.Image image, int frame, int top, int height) {
+  final left = frame + 3;
+  if (image.width - left < 8) return null;
+  final margin = img.copyCrop(image, x: left, y: top,
+      width: image.width - left, height: height);
+  final resized = height < 720 ? img.copyResize(margin, height: 720,
+      interpolation: img.Interpolation.linear) : margin;
+  for (final pixel in resized) {
+    final value = img.getLuminance(pixel) < 205 ? 0 : 255;
+    pixel.setRgb(value, value, value);
+  }
+  return Uint8List.fromList(img.encodePng(img.copyExpandCanvas(resized,
+      newWidth: resized.width + 32, newHeight: resized.height + 32,
+      position: img.ExpandCanvasPosition.center,
+      backgroundColor: img.ColorRgb8(255, 255, 255))));
 }
 
 /// 구획의 흰 세로 간격으로 열을 나누고 테두리 바깥의 글자는 분리한다.
