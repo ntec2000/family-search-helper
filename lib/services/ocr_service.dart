@@ -61,19 +61,16 @@ class OcrService {
     } catch (_) {
       // 원본 형식이 ML Kit에서 거부되면 전처리 결과를 사용한다.
     }
-    if (processed == null && original == null) {
-      throw StateError('OCR 입력을 읽을 수 없습니다');
-    }
-    final wholePage = processed == null ? original! : original == null
+    final wholePage = processed == null ? original : original == null
         ? processed : retainWholePageAlternatives(processed, original);
     late final List<GenealogyOcrRow> regions;
     try {
       regions = await compute(genealogyOcrRows,
           await readImageBytes(originalPath));
     } catch (_) {
-      return wholePage;
+      return useSegmentedOrWhole(wholePage, [], []);
     }
-    if (regions.length < 2) return wholePage;
+    if (regions.length < 2) return useSegmentedOrWhole(wholePage, [], []);
     final texts = <String>[];
     final rawColumns = <String>[];
     final generationLabels = <String?>[];
@@ -96,7 +93,8 @@ class OcrService {
           }
         }
         if (JokboParser.parseRegions(entries).isEmpty) {
-          final wholeRow = (await recognize(await storeImageBytes(row.body))).text;
+          final wholeRow = (await recognize(await storeImageBytes(row.body),
+              singleColumn: wholePage == null)).text;
           // Keep readable column evidence when neither path finds a person.
           if (entries.isEmpty || JokboParser.parseRegions([wholeRow]).isNotEmpty) {
             entries = [wholeRow];
@@ -122,7 +120,8 @@ class OcrService {
         texts.addAll(entries);
         generationLabels.addAll(List<String?>.filled(entries.length, label));
       } catch (_) {
-        return wholePage;
+        if (wholePage != null) return wholePage;
+        // A failed row cannot replace previously recognized rows.
       }
     }
     return useSegmentedOrWhole(wholePage, texts, rawColumns,
@@ -163,13 +162,21 @@ class OcrService {
         ], regionTexts: selected.regionTexts, generationLabels: selected.generationLabels);
   }
 
-  static OcrResult useSegmentedOrWhole(OcrResult wholePage,
+  static OcrResult useSegmentedOrWhole(OcrResult? wholePage,
       List<String> regions, List<String> rawColumns, {List<String?>? generationLabels}) {
-    if (!hasReadableText(regions)) return wholePage;
+    if (!hasReadableText(regions)) {
+      if (wholePage != null) return wholePage;
+      throw StateError('OCR 입력을 읽을 수 없습니다');
+    }
     // 구획과 전체 인식은 원문 탭에서 함께 보존한다. 파싱은 구획 결과를 사용한다.
-    return OcrResult(text: regions.join('\n'), rawBlocks: wholePage.rawBlocks,
-        alternatives: [wholePage.text, ...wholePage.alternatives, ...rawColumns],
-        wholePageAlternatives: [wholePage.text, ...wholePage.wholePageAlternatives],
+    return OcrResult(text: regions.join('\n'), rawBlocks: wholePage?.rawBlocks ?? [],
+        alternatives: [
+          if (wholePage != null) ...[wholePage.text, ...wholePage.alternatives],
+          ...rawColumns,
+        ],
+        wholePageAlternatives: [
+          if (wholePage != null) ...[wholePage.text, ...wholePage.wholePageAlternatives],
+        ],
         regionTexts: regions, generationLabels: generationLabels);
   }
 

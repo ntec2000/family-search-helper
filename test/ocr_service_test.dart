@@ -27,6 +27,15 @@ void main() {
     expect(OcrService.useSegmentedOrWhole(whole, [], []), same(whole));
   });
 
+  test('전체 OCR 실패 시 읽힌 구획과 세대 표제를 보존한다', () {
+    final fallback = OcrService.useSegmentedOrWhole(
+        null, ['子格'], [], generationLabels: ['二十一世']);
+    expect(fallback.regionTexts, ['子格']);
+    expect(fallback.generationLabels, ['二十一世']);
+    expect(fallback.wholePageAlternatives, isEmpty);
+    expect(() => OcrService.useSegmentedOrWhole(null, [], []), throwsStateError);
+  });
+
   test('구획 인식이 있으면 전체 OCR도 비교 원문으로 유지한다', () {
     final whole = result('子格 字君平');
     final combined = OcrService.useSegmentedOrWhole(
