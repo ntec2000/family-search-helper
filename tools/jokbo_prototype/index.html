@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="ko">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>우리의 족보 · OCR 검수</title>
+<style>
+:root{color-scheme:dark;font:16px system-ui;background:#070a17;color:#f4f6fc}
+body{max-width:1100px;margin:auto;padding:1rem}h1,h2{color:#ff9b58}
+section{background:#0b1329;border:1px solid #35405a;padding:1rem;margin:1rem 0;border-radius:.6rem}
+button,input,select,textarea{font:inherit;padding:.5rem;background:#141e35;color:inherit;border:1px solid #6d7890;border-radius:.3rem}
+button{cursor:pointer;margin:.25rem}.primary{background:#ff914d;color:#101525;font-weight:bold}
+textarea{width:100%;box-sizing:border-box}th,td{padding:.35rem;text-align:left}
+td input{min-width:6rem;width:100%;box-sizing:border-box}td:last-child select{max-width:12rem}
+.scroll{overflow:auto}#tree li{margin:.45rem 0}#status{min-height:1.4em}
+#print{display:none}
+@page{size:A4 portrait;margin:15mm}
+@media print{
+  :root{color-scheme:light;background:white;color:black}body{padding:0}
+  body>*{display:none!important}#print{display:block!important}
+  #print article{writing-mode:vertical-rl;text-orientation:mixed;width:100%;height:260mm;break-after:page}
+  #print article:last-child{break-after:auto}
+}
+</style>
+<h1>우리의 족보</h1>
+<p>세로쓰기 이미지 OCR · 인물 검수 · 가계도</p>
+<section>
+  <h2>이미지 읽기</h2>
+  <form id="upload">
+    <label for="image">족보 이미지 (JPG, PNG · 최대 12 MiB)</label>
+    <input id="image" type="file" accept="image/jpeg,image/png" required>
+    <button id="scan" class="primary">OCR 실행</button>
+  </form>
+  <label for="source">OCR 원문 선택</label>
+  <select id="source"></select>
+  <label for="raw">OCR 원문</label>
+  <textarea id="raw" rows="5" readonly></textarea>
+</section>
+<section>
+  <h2>인물 검수</h2>
+  <p>OCR 값은 검수 후보입니다. 관계는 각 행에서 직접 지정하세요.</p>
+  <div class="scroll"><table><thead><tr>
+    <th>세대</th><th>한자 이름</th><th>한글 이름</th><th>생몰</th><th>상세</th><th>부모</th><th>관리</th>
+  </tr></thead><tbody id="rows"></tbody></table></div>
+  <button id="add">인물 추가</button><button id="save" class="primary">브라우저에 저장</button>
+  <p id="status" role="status"></p>
+</section>
+<section>
+  <h2>가계도</h2><div id="tree"></div>
+  <button id="print-button">A4 세로쓰기 인쇄</button>
+</section>
+<div id="print"></div>
+<script>
+'use strict';
+const key = 'jokbo-prototype-v1';
+const get = id => document.getElementById(id);
+const fields = [
+  ['generation','세대'], ['name_hanja','한자 이름'], ['name_korean','한글 이름'],
+  ['birth_death','생몰'], ['details','상세']
+];
+const status = message => { get('status').textContent = message; };
+let people = [];
+let transcripts = [];
+function label(person, index) {
+  const name = [person.name_korean, person.name_hanja].filter(Boolean).join(' / ');
+  return [person.generation && person.generation + '세', name || '이름 미상', '#' + (index + 1)]
+    .filter(Boolean).join(' · ');
+}
+function canLink(childId, parentId) {
+  const byId = new Map(people.map(person => [person.id, person]));
+  const visited = new Set([childId]);
+  while (parentId) {
+    if (visited.has(parentId) || !byId.has(parentId)) return false;
+    visited.add(parentId);
+    parentId = byId.get(parentId).parentId;
+  }
+  return true;
+}
+function renderTree() {
+  const tree = get('tree');
+  const groups = new Map();
+  for (const [index, person] of people.entries()) {
+    const parent = person.parentId || '';
+    if (!groups.has(parent)) groups.set(parent, []);
+    groups.get(parent).push([person, index]);
+  }
+  tree.textContent = people.length ? '' : '표시할 인물이 없습니다.';
+  const queue = [['', tree]];
+  for (let i = 0; i < queue.length; i++) {
+    const [parent, container] = queue[i];
+    const children = groups.get(parent);
+    if (!children) continue;
+    const list = document.createElement('ul');
+    container.append(list);
+    for (const [person, index] of children) {
+      const item = document.createElement('li');
+      item.textContent = label(person, index);
+      list.append(item);
+      queue.push([person.id, item]);
+    }
+  }
+}
+function refreshParents() {
+  for (const [index, row] of Array.from(get('rows').rows).entries()) {
+    const child = people[index];
+    const select = row.querySelector('select');
+    select.replaceChildren(new Option('미연결', ''));
+    people.forEach((parent, i) => {
+      if (canLink(child.id, parent.id)) select.add(new Option(label(parent, i), parent.id));
+    });
+    select.value = child.parentId;
+  }
+}
+function render() {
+  const source = get('source');
+  const selected = source.value;
+  source.replaceChildren(...transcripts.map(item => new Option(item.name, item.id)));
+  source.value = selected || transcripts.at(-1)?.id || '';
+  showTranscript();
+  get('rows').replaceChildren();
+  people.forEach((person, index) => {
+    const row = get('rows').insertRow();
+    for (const [field, title] of fields) {
+      const input = document.createElement('input');
+      input.setAttribute('aria-label', (index + 1) + '번 ' + title);
+      input.value = person[field] || '';
+      input.addEventListener('input', () => {
+        person[field] = input.value;
+        refreshParents();
+        renderTree();
+      });
+      row.insertCell().append(input);
+    }
+    const select = document.createElement('select');
+    select.setAttribute('aria-label', (index + 1) + '번 부모');
+    select.addEventListener('change', () => {
+      if (canLink(person.id, select.value)) person.parentId = select.value;
+      refreshParents();
+      renderTree();
+    });
+    row.insertCell().append(select);
+    const remove = document.createElement('button');
+    remove.textContent = '삭제';
+    remove.addEventListener('click', () => {
+      const linked = people.some(other => other.parentId === person.id);
+      if (!confirm(linked ? '이 인물과 연결된 자녀의 부모 관계도 해제할까요?' : '이 인물을 삭제할까요?')) return;
+      people = people.filter(other => other.id !== person.id);
+      people.forEach(other => { if (other.parentId === person.id) other.parentId = ''; });
+      render();
+    });
+    row.insertCell().append(remove);
+  });
+  refreshParents();
+  renderTree();
+}
+function showTranscript() {
+  get('raw').value = transcripts.find(item => item.id === get('source').value)?.raw || '';
+}
+get('source').onchange = showTranscript;
+function newPerson(candidate = {}) {
+  return {...candidate, id: crypto.randomUUID(), parentId: ''};
+}
+get('add').onclick = () => { people.push(newPerson()); render(); };
+get('upload').onsubmit = async event => {
+  event.preventDefault();
+  const image = get('image').files[0];
+  if (!image) return;
+  get('scan').disabled = true;
+  status('로컬에서 OCR 실행 중…');
+  try {
+    const response = await fetch('/ocr', {method:'POST', body:image});
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error);
+    const id = crypto.randomUUID();
+    transcripts.push({id, name:image.name, raw:result.raw});
+    people.push(...result.candidates.map(candidate => newPerson({...candidate, sourceId:id})));
+    render();
+    get('source').value = id;
+    showTranscript();
+    status(result.candidates.length ? '검수 후보 ' + result.candidates.length + '건을 추가했습니다.'
+      : '명시된 이름 표식을 찾지 못했습니다. 원문을 보고 인물을 직접 추가할 수 있습니다.');
+  } catch (error) {
+    status('OCR 실패 · ' + error.message);
+  } finally { get('scan').disabled = false; }
+};
+get('save').onclick = () => {
+  try {
+    localStorage.setItem(key, JSON.stringify({people, transcripts}));
+    status('현재 인물, 부모 연결, OCR 원문을 저장했습니다.');
+  } catch (error) { status('저장 실패 · ' + error.message); }
+};
+get('print-button').onclick = () => {
+  if (!people.length) { status('인쇄할 인물이 없습니다.'); return; }
+  const target = get('print');
+  target.replaceChildren();
+  const byId = new Map(people.map((person, index) => [person.id, label(person, index)]));
+  people.forEach((person, index) => {
+    const page = document.createElement('article');
+    const heading = document.createElement('h2');
+    heading.textContent = label(person, index);
+    page.append(heading);
+    [person.birth_death, person.details, person.parentId && '부모 ' + byId.get(person.parentId)]
+      .filter(Boolean).forEach(value => {
+        const paragraph = document.createElement('p');
+        paragraph.textContent = value;
+        page.append(paragraph);
+      });
+    target.append(page);
+  });
+  window.print();
+};
+try {
+  const saved = JSON.parse(localStorage.getItem(key) || 'null');
+  if (saved && Array.isArray(saved.people)) {
+    people = saved.people;
+    transcripts = Array.isArray(saved.transcripts) ? saved.transcripts : [];
+    people.forEach(person => {
+      if (!canLink(person.id, person.parentId)) person.parentId = '';
+    });
+  }
+} catch (error) { status('저장 데이터 읽기 실패 · ' + error.message); }
+render();
+</script>
+</html>
