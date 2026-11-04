@@ -12,6 +12,11 @@ button{cursor:pointer;margin:.25rem}.primary{background:#ff914d;color:#101525;fo
 textarea{width:100%;box-sizing:border-box}th,td{padding:.35rem;text-align:left}
 td input{min-width:6rem;width:100%;box-sizing:border-box}td:last-child select{max-width:12rem}
 .scroll{overflow:auto}#tree li{margin:.45rem 0}#status{min-height:1.4em}
+.review{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);gap:1rem}
+.preview{overflow:auto;max-height:65vh;background:#eee;border-radius:.3rem}
+.preview img{display:block;width:100%;height:auto}
+.preview[hidden]{display:none}
+@media(max-width:820px){.review{grid-template-columns:minmax(0,1fr)}}
 #print{display:none}
 @page{size:A4 portrait;margin:15mm}
 @media print{
@@ -23,6 +28,7 @@ td input{min-width:6rem;width:100%;box-sizing:border-box}td:last-child select{ma
 </style>
 <h1>우리의 족보</h1>
 <p>세로쓰기 이미지 OCR · 인물 검수 · 가계도</p>
+<div class="review">
 <section>
   <h2>이미지 읽기</h2>
   <form id="upload">
@@ -30,6 +36,15 @@ td input{min-width:6rem;width:100%;box-sizing:border-box}td:last-child select{ma
     <input id="image" type="file" accept="image/jpeg,image/png" required>
     <button id="scan" class="primary">OCR 실행</button>
   </form>
+  <div id="preview-controls" hidden>
+    <p id="preview-name"></p>
+    <button id="zoom-out" aria-label="원본 축소">−</button>
+    <button id="zoom-fit">폭 맞춤</button>
+    <button id="zoom-in" aria-label="원본 확대">+</button>
+    <output id="zoom-level"></output>
+  </div>
+  <div id="preview" class="preview" hidden><img id="original" alt="선택한 족보 원본 이미지"></div>
+  <p>선택한 이미지는 이 화면에서 미리 봅니다. 아래 OCR 원문은 별도로 선택할 수 있습니다.</p>
   <label for="source">OCR 원문 선택</label>
   <select id="source"></select>
   <label for="raw">OCR 원문</label>
@@ -44,6 +59,7 @@ td input{min-width:6rem;width:100%;box-sizing:border-box}td:last-child select{ma
   <button id="add">인물 추가</button><button id="save" class="primary">브라우저에 저장</button>
   <p id="status" role="status"></p>
 </section>
+</div>
 <section>
   <h2>가계도</h2><div id="tree"></div>
   <button id="print-button">A4 세로쓰기 인쇄</button>
@@ -60,6 +76,29 @@ const fields = [
 const status = message => { get('status').textContent = message; };
 let people = [];
 let transcripts = [];
+let previewUrl;
+let zoom = 100;
+function setZoom(value) {
+  zoom = Math.max(50, Math.min(400, value));
+  get('original').style.width = zoom + '%';
+  get('zoom-level').textContent = zoom + '%';
+}
+get('image').onchange = () => {
+  const file = get('image').files[0];
+  const preview = get('preview');
+  const image = get('original');
+  if (previewUrl) URL.revokeObjectURL(previewUrl);
+  previewUrl = file ? URL.createObjectURL(file) : undefined;
+  preview.hidden = get('preview-controls').hidden = !previewUrl;
+  if (previewUrl) image.src = previewUrl;
+  else image.removeAttribute('src');
+  get('preview-name').textContent = file?.name || '';
+  preview.scrollTo(0, 0);
+  setZoom(100);
+};
+get('zoom-out').onclick = () => setZoom(zoom - 25);
+get('zoom-fit').onclick = () => setZoom(100);
+get('zoom-in').onclick = () => setZoom(zoom + 25);
 function label(person, index) {
   const name = [person.name_korean, person.name_hanja].filter(Boolean).join(' / ');
   return [person.generation && person.generation + '세', name || '이름 미상', '#' + (index + 1)]
@@ -164,7 +203,7 @@ get('upload').onsubmit = async event => {
   event.preventDefault();
   const image = get('image').files[0];
   if (!image) return;
-  get('scan').disabled = true;
+  get('scan').disabled = get('image').disabled = true;
   status('로컬에서 OCR 실행 중…');
   try {
     const response = await fetch('/ocr', {method:'POST', body:image});
@@ -180,7 +219,7 @@ get('upload').onsubmit = async event => {
       : '명시된 이름 표식을 찾지 못했습니다. 원문을 보고 인물을 직접 추가할 수 있습니다.');
   } catch (error) {
     status('OCR 실패 · ' + error.message);
-  } finally { get('scan').disabled = false; }
+  } finally { get('scan').disabled = get('image').disabled = false; }
 };
 get('save').onclick = () => {
   try {
