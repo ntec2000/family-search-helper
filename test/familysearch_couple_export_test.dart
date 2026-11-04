@@ -60,6 +60,32 @@ void main() {
           throwsStateError);
     }
   });
+  test('기일과 묘소 정보만으로는 사망을 확정하지 않는다', () {
+    final record = FamilySearchRecord.person(Person(
+      id: 'memorial-with-place',
+      deathDateLunar: '  忌 三月五日',
+      burialPlace: '선산',
+    ));
+    expect(record.containsKey('living'), isFalse);
+    final facts = record['facts'] as List;
+    expect(facts.where((fact) => fact['type'] == 'http://gedcomx.org/Death'), isEmpty);
+    expect(facts.where((fact) => fact['type'] == 'http://gedcomx.org/Burial').length, 1);
+    expect(record['notes'].toString(), contains('기일 원문'));
+  });
+
+  test('기일이 있어도 별도의 명시적 사망일은 보존한다', () {
+    final record = FamilySearchRecord.person(Person(
+      id: 'confirmed-death',
+      deathDateSolar: '1901',
+      deathDateLunar: '忌 三月五日',
+    ));
+    expect(record['living'], isFalse);
+    final facts = record['facts'] as List;
+    final death = facts.singleWhere((fact) => fact['type'] == 'http://gedcomx.org/Death');
+    expect(death['date']['original'], '1901');
+    expect(record['notes'].toString(), contains('기일 원문'));
+  });
+
   test('기일만 있으면 사망 사실 대신 메모로 내보낸다', () {
     final record = FamilySearchRecord.person(
       Person(id: 'memorial', deathDateLunar: '忌 三月五日 (연도 미상)'),
