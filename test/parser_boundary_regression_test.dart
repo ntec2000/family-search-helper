@@ -253,4 +253,14 @@ void main() {
     expect(person.birthDateSolar, isNull);
   });
 
+  test('224쪽의 본관만 남은 구획은 인물이나 배우자로 확정하지 않는다', () {
+    const regions = ['子顯五 字行之 庚午生', '安東人', '全州人',
+      '子承勳 出系顯龍后'];
+    final people = JokboParser.parseRegions(regions);
+    expect(people.map((p) => p.nameHanja), ['顯五', '承勳']);
+    expect(people.every((p) => p.spouseHanja == null), isTrue);
+    final unresolved = JokboParser.unparsedRegions(regions);
+    expect(unresolved, containsAll(['安東人', '全州人']));
+  });
+
 }
