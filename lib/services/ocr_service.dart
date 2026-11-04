@@ -14,7 +14,10 @@ class OcrService {
 
   /// 이미지 경로에서 한자 텍스트 추출.
   /// 세로쓰기 족보의 경우, 블록 → 줄 → 단어 순으로 위→아래/우→좌 정렬.
-  static Future<OcrResult> recognize(String imagePath, {bool singleColumn = false}) async {
+  static Future<OcrResult> recognize(String imagePath, {
+    bool singleColumn = false,
+    bool fullPage = false,
+  }) async {
     if (kIsWeb) {
       return OcrResult(text: await recognizeInBrowser(imagePath, singleColumn: singleColumn), rawBlocks: []);
     }
@@ -26,6 +29,7 @@ class OcrService {
     final lines = [for (final block in result.blocks) ...block.lines];
     final order = verticalReadingOrder(
       lines.map((line) => line.boundingBox).toList(),
+      splitRows: fullPage,
     );
     final orderedBlocks = [for (final index in order) lines[index]];
 
@@ -46,7 +50,7 @@ class OcrService {
   }) async {
     OcrResult? processed;
     try {
-      processed = await recognize(processedPath);
+      processed = await recognize(processedPath, fullPage: true);
     } catch (_) {
       // 손상된 전처리본이어도 원본 인식은 계속 시도한다.
     }
@@ -57,7 +61,7 @@ class OcrService {
 
     OcrResult? original;
     try {
-      original = await recognize(originalPath);
+      original = await recognize(originalPath, fullPage: true);
     } catch (_) {
       // 원본 형식이 ML Kit에서 거부되면 전처리 결과를 사용한다.
     }
