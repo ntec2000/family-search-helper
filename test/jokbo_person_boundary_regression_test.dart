@@ -24,6 +24,16 @@ void main() {
     expect(people[1].fatherId, isNull);
   });
 
+  test('천간 글자로 끝나는 이름과 다음 子 표제를 합치지 않는다', () {
+    const source = '子聖甲\n子顯五 甲 子 年 十 一 月 十 日 生';
+    final people = JokboParser.parse(source);
+    expect(people.map((person) => person.nameHanja), ['聖甲', '顯五']);
+    expect(people.first.rawText?.trim(), '子聖甲');
+    expect(people.first.birthDateLunar, isNull);
+    expect(people.last.rawText?.trim(), '子顯五 甲 子 年 十 一 月 十 日 生');
+    expect(people.last.birthDateLunar, '甲子年 十一月十日 生');
+  });
+
   test('unrecognized OCR region is retained for human review', () {
     const unknown = '判讀不能 原文確認必要';
     final people = JokboParser.parseRegions(

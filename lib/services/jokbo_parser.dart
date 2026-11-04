@@ -30,6 +30,14 @@ class JokboParser {
   static const _gan = '甲乙丙丁戊己庚辛壬癸';
   static const _ji = '子丑寅卯辰巳午未申酉戌亥';
 
+  // 공백 뒤의 子는 다음 인물 표제일 수 있다. 날짜 문맥이 있을 때만
+  // 떨어진 천간·지지를 간지로 처리한다.
+  static const _monthChars = '正冬臘閏零一二三四五六七八九十百○0-9';
+  static final _spacedGanzhi = RegExp(
+      '([$_gan])\\s+([$_ji])(?=\\s*(?:[年生卒]|'
+      '[$_monthChars](?:\\s*[$_monthChars])*\\s*月))');
+  static final _spacedMarriageGanzhi = RegExp('娶\\s*([$_gan])\\s+([$_ji])');
+
   /// 처가 직계(父·祖·曾祖) 이름 앞에 붙는 관직명·품계 — 이름에서 제거.
   /// 同知는 관직 또는 이름일 수 있어 원문 후보를 남기고 검토하도록 안내한다.
   static const _titles = <String>[
@@ -254,8 +262,8 @@ class JokboParser {
     var s = buf.toString();
     // 세로 OCR은 간지와 날짜 숫자를 글자별로 나누기도 한다. 원문은
     // Person.rawText에 보존하고, 파싱용 문자열에서만 구조 토큰을 복원한다.
-    s = s.replaceAllMapped(
-        RegExp('([$_gan])\\s+([$_ji])'), (m) => '${m[1]}${m[2]}');
+    s = s.replaceAllMapped(_spacedGanzhi, (m) => '${m[1]}${m[2]}');
+    s = s.replaceAllMapped(_spacedMarriageGanzhi, (m) => '娶${m[1]}${m[2]}');
     s = s.replaceAllMapped(
         RegExp('([$_gan][$_ji])\\s*年'), (m) => '${m[1]}年');
     s = s.replaceAllMapped(
@@ -274,7 +282,12 @@ class JokboParser {
     // 인물 시작 표지는 독립 토큰일 때만 인정한다.
     // 子坐午向의 子, 본문 속 女/男 및 간지의 子를 인물로 오인하지 않는다.
     // OCR가 공백 없이 붙여 놓은 애매한 후보는 자동 분리하지 않고 원문에 남긴다.
+    final dateBranchOffsets = {
+      for (final match in _spacedGanzhi.allMatches(text)) match.end - 1,
+      for (final match in _spacedMarriageGanzhi.allMatches(text)) match.end - 1,
+    };
     final boundaries = _personBoundary.allMatches(text).where((match) {
+      if (dateBranchOffsets.contains(match.start)) return false;
       // 系 子처럼 떨어진 글자를 두 번째 인물 표제로 다시 분리하지 않는다.
       if (!text.substring(match.start).startsWith('子')) return true;
       return !RegExp(r'[系繼]\s+$').hasMatch(text.substring(0, match.start));
