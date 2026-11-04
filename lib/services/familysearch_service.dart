@@ -143,11 +143,11 @@ class FamilySearchService {
     }
     // Without a confirmed death record, do not upload a possibly living person
     // as deceased. A manual review workflow is required for uncertain cases.
-    if ((p.deathDateSolar ?? '').trim().isEmpty &&
-        (p.deathDateLunar ?? '').trim().isEmpty) {
+    final record = FamilySearchRecord.person(p);
+    if (record['living'] != false) {
       return null;
     }
-    final body = {'persons': [FamilySearchRecord.person(p)]};
+    final body = {'persons': [record]};
     final result = await _post('/platform/tree/persons', body);
     if (result == null) return null;
     final persons = (result['persons'] as List?) ?? [];

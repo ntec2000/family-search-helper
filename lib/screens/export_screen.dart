@@ -586,8 +586,7 @@ class _State extends State<ExportScreen> {
         nameless++;
         continue;
       }
-      if ((p.deathDateSolar ?? '').trim().isEmpty &&
-          (p.deathDateLunar ?? '').trim().isEmpty) {
+      if (FamilySearchRecord.person(p)['living'] != false) {
         skipped++;
         continue;
       }
