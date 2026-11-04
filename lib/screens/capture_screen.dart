@@ -383,14 +383,53 @@ class _CaptureScreenState extends State<CaptureScreen> {
     if (_busy) return;
     if (!_surnameConfirmed && !await _chooseWorkingSurname()) return;
     if (!mounted) return;
-    final person = Person(id: 'manual_${DateTime.now().microsecondsSinceEpoch}',
-        surnameHanja: _surnameHanja.isEmpty ? null : _surnameHanja,
-        surnameHangul: _surnameHangul,
-        sourceImagePath: _sourcePath ?? _previewPath,
-        sourceDocumentPath: _sourceDocumentPath,
-        sourcePageNumber: _sourcePageNumber);
+    var draft = '';
+    final input = await showDialog<String>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(builder: (_, refresh) => AlertDialog(
+        title: const Text('족보 판독문 직접 입력'),
+        content: SizedBox(width: 540, child: TextField(
+          minLines: 4,
+          maxLines: 10,
+          decoration: const InputDecoration(
+            labelText: '판독문',
+            hintText: '한 사람씩 한 줄에 입력하세요. 예: 子格 21世 壬辰生',
+          ),
+          onChanged: (value) => refresh(() => draft = value),
+        )),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('취소')),
+          TextButton(onPressed: () => Navigator.pop(ctx, ''),
+              child: const Text('한 사람 직접 입력')),
+          FilledButton(
+            onPressed: draft.trim().isEmpty ? null : () => Navigator.pop(ctx, draft),
+            child: const Text('판독문 검토'),
+          ),
+        ],
+      )),
+    );
+    if (input == null || !mounted) return;
+    final imagePath = _sourcePath ?? _previewPath;
+    final lines = input.split(RegExp(r'\r?\n')).where((line) => line.trim().isNotEmpty).toList();
+    final persons = input.isEmpty
+        ? [Person(id: 'manual_${DateTime.now().microsecondsSinceEpoch}',
+            surnameHanja: _surnameHanja.isEmpty ? null : _surnameHanja,
+            surnameHangul: _surnameHangul, sourceImagePath: imagePath)]
+        : JokboParser.parseRegions(lines, sourceImagePath: imagePath,
+            clanHanjaOverride: _surnameHanja, clanHangulOverride: _surnameHangul);
+    for (final person in persons) {
+      person.sourceDocumentPath = _sourceDocumentPath;
+      person.sourcePageNumber = _sourcePageNumber;
+      if (input.isNotEmpty) {
+        person.reasonStatement = [
+          if (_sourceLabel != null) '출처: $_sourceLabel',
+          '사용자 입력 판독문 · 원본 대조 필요',
+        ].join(' · ');
+      }
+    }
     await Navigator.push(context, MaterialPageRoute(builder: (_) => ResultScreen(
-        rawText: '', persons: [person], imagePath: _sourcePath ?? _previewPath ?? '',
+        rawText: input, persons: persons, imagePath: imagePath ?? '',
+        unparsedRegions: JokboParser.unparsedRegions(lines),
         sourceDocumentPath: _sourceDocumentPath, sourcePageNumber: _sourcePageNumber)));
   }
 
@@ -425,7 +464,11 @@ class _CaptureScreenState extends State<CaptureScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(hasPreview ? '이미지 확인' : '족보 이미지 입력'),
-        actions: [TextButton.icon(
+        actions: [
+          if (!hasPreview)
+            IconButton(tooltip: '직접 입력', icon: const Icon(Icons.edit),
+                onPressed: _busy ? null : _manualEntry),
+          TextButton.icon(
           onPressed: _busy ? null : () => _chooseWorkingSurname(),
           icon: const Icon(Icons.drive_file_rename_outline),
           label: Text(_surnameConfirmed ? '성씨: $_surnameHangul' : '성씨 입력'),
