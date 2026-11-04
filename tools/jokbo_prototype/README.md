@@ -20,4 +20,15 @@ python tools/jokbo_prototype/parser_engine.py
 
 `21世 諱 格 壬辰年生`은 세대 21, 한자 이름 格, 생몰 원문 壬辰年生으로 표시합니다. 다른 줄의 문구, 미확인 날짜와 관계는 원문을 보고 입력합니다. 이미지 원본은 사용자가 보관합니다. OCR 원문과 편집본은 **브라우저에 저장**을 누르면 현재 브라우저 프로필에 남습니다. 브라우저의 사이트 데이터를 지우면 삭제됩니다.
 
-모델 출처와 라이선스는 [SOURCE.txt](../../web/ocr-models/SOURCE.txt)에 있습니다. Microsoft Store 제품의 내부 기술은 확인하지 않았습니다.
+Tesseract 모델 출처와 라이선스는 [SOURCE.txt](../../web/ocr-models/SOURCE.txt)에 있습니다.
+
+## RapidOCR 비교 모드
+
+세대 띠 **한 구획씩 잘라** 입력하는 실험 모드입니다. 사진 방향을 보정하고 반시계 방향으로 회전해 인식한 뒤, 같은 세로 열의 글줄 조각을 모읍니다. 여러 세대 띠가 섞인 전체 페이지는 먼저 잘라야 합니다.
+
+```sh
+python -m pip install rapidocr==3.9.2 onnxruntime pillow
+python tools/jokbo_prototype/parser_engine.py --engine rapidocr
+```
+
+첫 판독에 모델 파일이 캐시에 없다면 RapidOCR가 모델을 내려받습니다. 판독은 로컬에서 실행합니다. 기본 실행 명령은 Tesseract를 사용합니다.

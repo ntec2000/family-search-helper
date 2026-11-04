@@ -1,4 +1,7 @@
-"""Local-only OCR and review prototype. Run with Python 3 and Tesseract 5."""
+"""Local-only OCR and review prototype."""
+import argparse
+import io
+from functools import lru_cache
 import json
 import re
 import subprocess
@@ -36,9 +39,70 @@ def parse_candidates(raw):
     return candidates
 
 
-def recognize(image):
+def order_rotated_lines(boxes, texts):
+    """Group fragments of a rotated single band, then read right to left."""
+    fragments = []
+    for points, text in zip(boxes, texts):
+        xs, ys = zip(*points)
+        if max(ys) > min(ys) and text.strip():
+            fragments.append((min(ys), max(ys), min(xs), text))
+    fragments.sort(key=lambda item: (item[0] + item[1]) / 2)
+    lines = []
+    for top, bottom, left, text in fragments:
+        for line in lines:
+            line_top, line_bottom, parts = line
+            overlap = min(bottom, line_bottom) - max(top, line_top)
+            if overlap >= min(bottom - top, line_bottom - line_top) / 2:
+                parts.append((left, text))
+                break
+        else:
+            lines.append((top, bottom, [(left, text)]))
+    return "\n".join(" ".join(text for _, text in sorted(parts))
+                     for _, _, parts in lines)
+
+
+@lru_cache(maxsize=1)
+def rapid_engine():
+    from rapidocr import ModelType, OCRVersion, RapidOCR
+
+    return RapidOCR(params={
+        "Det.ocr_version": OCRVersion.PPOCRV5,
+        "Det.model_type": ModelType.MOBILE,
+        "Rec.ocr_version": OCRVersion.PPOCRV6,
+        "Rec.model_type": ModelType.SMALL,
+    })
+
+
+def recognize_rapid(image):
+    try:
+        import numpy as np
+        from PIL import Image, ImageOps, UnidentifiedImageError
+    except ImportError as error:
+        raise RuntimeError("RapidOCR 실행에는 rapidocr, onnxruntime, pillow가 필요합니다.") from error
+    try:
+        with Image.open(io.BytesIO(image)) as original:
+            turned = ImageOps.exif_transpose(original).convert("RGB")
+            turned = turned.transpose(Image.Transpose.ROTATE_90)
+    except (UnidentifiedImageError, OSError, Image.DecompressionBombError) as error:
+        raise ValueError("이미지 파일을 읽지 못했습니다.") from error
+    try:
+        # RapidOCR accepts an OpenCV-style BGR array.
+        output = rapid_engine()(np.ascontiguousarray(np.asarray(turned)[:, :, ::-1]))
+    except ImportError as error:
+        raise RuntimeError("RapidOCR 실행에는 rapidocr, onnxruntime, pillow가 필요합니다.") from error
+    except Exception as error:
+        raise RuntimeError("RapidOCR 판독에 실패했습니다. 모델 설치와 로그를 확인하세요.") from error
+    if output.boxes is None or not output.txts:
+        return ""
+    return order_rotated_lines(output.boxes, output.txts)
+
+
+def recognize(image, engine="tesseract"):
     if not image.startswith((b"\x89PNG\r\n\x1a\n", b"\xff\xd8\xff")):
         raise ValueError("JPG 또는 PNG 이미지를 선택하세요.")
+    if engine == "rapidocr":
+        raw = recognize_rapid(image)
+        return {"raw": raw, "candidates": parse_candidates(raw)}
     try:
         result = subprocess.run(
             ["tesseract", "stdin", "stdout", "--tessdata-dir", str(MODEL_DIR),
@@ -56,6 +120,8 @@ def recognize(image):
 
 
 class Handler(BaseHTTPRequestHandler):
+    ocr_engine = "tesseract"
+
     def respond(self, status, body, kind="application/json"):
         self.send_response(status)
         self.send_header("Content-Type", f"{kind}; charset=utf-8")
@@ -85,7 +151,7 @@ class Handler(BaseHTTPRequestHandler):
             if not 0 < size <= LIMIT:
                 raise ValueError("12 MiB 이하 이미지를 선택하세요.")
             self.connection.settimeout(10)
-            self.send_json(200, recognize(self.rfile.read(size)))
+            self.send_json(200, recognize(self.rfile.read(size), self.ocr_engine))
         except ValueError as error:
             self.send_json(400, {"error": str(error)})
         except RuntimeError as error:
@@ -95,6 +161,9 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
+    cli = argparse.ArgumentParser(description=__doc__)
+    cli.add_argument("--engine", choices=("tesseract", "rapidocr"), default="tesseract")
+    Handler.ocr_engine = cli.parse_args().engine
     with HTTPServer(("127.0.0.1", PORT), Handler) as server:
         print(ORIGIN, flush=True)
         server.serve_forever()
