@@ -13,7 +13,9 @@ class FamilySearchRecord {
       return null;
     }
     final birthDate = firstNonBlank(person.birthDateSolar, person.birthDateLunar);
-    final deathDate = firstNonBlank(person.deathDateSolar, person.deathDateLunar);
+    final lunarDeath = person.deathDateLunar;
+    final memorialOnly = lunarDeath?.trimLeft().startsWith('忌') == true;
+    final deathDate = firstNonBlank(person.deathDateSolar, memorialOnly ? null : lunarDeath);
     final surnameHangul = person.surnameHangul ?? '';
     final surnameHanja = person.surnameHanja ?? '';
     String given(String full, String surname) => surname.isNotEmpty &&
@@ -59,7 +61,7 @@ class FamilySearchRecord {
         '배우자': person.spouseHanja, '배우자 한글': person.spouseHangul,
         '배우자 본관': person.spouseBongwan,
         '출생 원문(간지·음력)': person.birthDateLunar,
-        '사망 원문(간지·음력)': person.deathDateLunar,
+        (memorialOnly ? '기일 원문' : '사망 원문(간지·음력)'): lunarDeath,
         '배우자 출생': person.spouseBirth, '배우자 사망': person.spouseDeath,
         '배우자 부친': person.spouseFather, '배우자 모친': person.spouseMother,
         '배우자 조부': person.spouseGrandfather,

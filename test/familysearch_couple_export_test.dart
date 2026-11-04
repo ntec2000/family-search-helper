@@ -60,4 +60,13 @@ void main() {
           throwsStateError);
     }
   });
+  test('기일만 있으면 사망 사실 대신 메모로 내보낸다', () {
+    final record = FamilySearchRecord.person(
+      Person(id: 'memorial', deathDateLunar: '忌 三月五日 (연도 미상)'),
+    );
+    expect(record['facts'], isEmpty);
+    expect(record.containsKey('living'), isFalse);
+    expect(record['notes'].toString(), contains('기일 원문: 忌 三月五日'));
+  });
+
 }
