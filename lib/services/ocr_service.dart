@@ -92,8 +92,10 @@ class OcrService {
           });
           if (columnTexts != null && hasReadableText(columnTexts)) {
             rawColumns.add(columnTexts.join('\n'));
-            final headings = await compute(genealogyOcrColumnHeadings, columns);
-            entries = assembleOcrEntries(columnTexts, headings: headings);
+            final layouts = await compute(genealogyOcrColumnLayouts, columns);
+            entries = assembleOcrEntries(columnTexts,
+                headings: layouts.map((layout) => layout.heading).toList(),
+                startsLow: layouts.map((layout) => layout.startsLow).toList());
           }
         }
         if (JokboParser.parseRegions(entries).isEmpty) {

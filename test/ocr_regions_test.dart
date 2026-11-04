@@ -324,4 +324,21 @@ void main() {
       expect(genealogyOcrColumns(regions[1]).length, greaterThan(4));
     });
   }
+  test('세대 띠 아래의 女 표시는 독립 인물 후보에서 보류한다', () {
+    Uint8List column(int top) {
+      final image = img.Image(width: 84, height: 224);
+      img.fill(image, color: img.ColorRgb8(255, 255, 255));
+      img.fillRect(image, x1: 24, y1: top, x2: 50, y2: top + 12,
+          color: img.ColorRgb8(0, 0, 0));
+      return Uint8List.fromList(img.encodePng(image));
+    }
+
+    final layouts = genealogyOcrColumnLayouts([column(20), column(115), column(20)]);
+    expect(layouts.map((layout) => layout.startsLow), [false, true, false]);
+    final entries = assembleOcrEntries(['子格', '女金某', '女權某'],
+        headings: layouts.map((layout) => layout.heading).toList(),
+        startsLow: layouts.map((layout) => layout.startsLow).toList());
+    expect(entries, ['子格', '女權某']);
+  });
+
 }

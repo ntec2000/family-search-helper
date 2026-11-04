@@ -142,14 +142,35 @@ List<Uint8List> genealogyOcrColumns(Uint8List bytes) {
   return columns;
 }
 
-/// shortcut: 큰 표제/작은 주석의 두 글자 크기를 쓰는 구획용이며 자유 배치는 수동 검토한다.
-List<bool> genealogyOcrColumnHeadings(List<Uint8List> columns) {
-  final headings = <bool>[];
-  for (final bytes in columns) {
+typedef GenealogyColumnLayout = ({bool heading, bool startsLow});
+
+/// 빈 윗부분이 충분히 큰 열은 독립 표제보다 이어지는 기록일 가능성이 높다.
+List<GenealogyColumnLayout> genealogyOcrColumnLayouts(List<Uint8List> columns) {
+  return columns.map((bytes) {
     final image = img.decodeImage(bytes);
     if (image == null) throw const FormatException('열 이미지를 해독할 수 없습니다.');
-    // 열에 추가한 흰 여백 24px은 글자 크기 판단에서 제외한다.
-    headings.add(image.width - 24 > (image.height - 24) * .19);
-  }
-  return headings;
+    // 열 이미지 생성 시 더한 상하좌우 여백을 제외한다.
+    final width = image.width - 24;
+    final height = image.height - 24;
+    final earlyEnd = 12 + (height * .32).floor();
+    var earlyInk = 0;
+    var lateInk = 0;
+    for (var y = 12; y < image.height - 12; y++) {
+      var dark = 0;
+      for (var x = 12; x < image.width - 12; x++) {
+        if (img.getLuminance(image.getPixel(x, y)) < 180) dark++;
+      }
+      if (dark < (width * .08).ceil()) continue;
+      if (y < earlyEnd) {
+        earlyInk++;
+      } else {
+        lateInk++;
+      }
+    }
+    final startsLow = earlyInk == 0 && lateInk >= 3;
+    return (heading: !startsLow && width > height * .19, startsLow: startsLow);
+  }).toList();
 }
+
+List<bool> genealogyOcrColumnHeadings(List<Uint8List> columns) =>
+    genealogyOcrColumnLayouts(columns).map((layout) => layout.heading).toList();
