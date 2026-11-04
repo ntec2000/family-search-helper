@@ -215,7 +215,7 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(MaterialApp(home: ResultScreen(
-      rawText: '子承烈 辛丑生', persons: [], imagePath: 'missing-test-image',
+      rawText: '子承烈 辛丑生', persons: const [], imagePath: 'missing-test-image',
       comparisonNames: [Person(id: 'comparison', gender: 'M', nameHanja: '承烈',
           birthDateLunar: '辛丑生', rawText: '子承烈 辛丑生')],
     )));

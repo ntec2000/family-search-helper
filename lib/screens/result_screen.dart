@@ -762,7 +762,7 @@ class _ResultScreenState extends State<ResultScreen> {
   void _showUnparsedRegions() {
     final comparisons = _comparisonNames;
     showDialog<void>(context: context, builder: (ctx) => AlertDialog(
-      title: Text('인물 미분류 구획 (${_reviewRegionCount}건)'),
+      title: Text('인물 미분류 구획 ($_reviewRegionCount건)'),
       content: SizedBox(width: double.maxFinite, child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -866,7 +866,7 @@ class _ResultScreenState extends State<ResultScreen> {
                       TextButton.icon(
                         onPressed: _showUnparsedRegions,
                         icon: const Icon(Icons.find_in_page_outlined),
-                        label: Text('미분류 구획 ${_reviewRegionCount}건 확인'),
+                        label: Text('미분류 구획 $_reviewRegionCount건 확인'),
                       ),
                     Row(children: [
                       Expanded(child: OutlinedButton(
