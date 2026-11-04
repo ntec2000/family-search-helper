@@ -238,4 +238,19 @@ void main() {
     }
   });
 
+  test('224쪽 생몰 원문과 처가 동지 표기를 분리해 검토한다', () {
+    const raw = '子昃 字良甫 丁未生 庚申八月三日卒 配原州邊氏 壬戌生 '
+        '甲子十月二十八日卒 父國聖 祖同知 曾祖判官尙 外祖文化柳承春';
+    final person = JokboParser.parse(raw).single;
+    expect(person.deathDateLunar, contains('庚申'));
+    expect(person.deathDateLunar, contains('八月三日'));
+    expect(person.spouseDeath, contains('甲子'));
+    expect(person.spouseDeath, contains('十月二十八日'));
+    expect(person.spouseGrandfather, '同知');
+    expect(person.note, contains('이름 또는 관직 여부 원문 확인 필요'));
+    expect(person.spouseGreatGrandfather, '尙');
+    expect(person.rawText, contains('曾祖判官尙'));
+    expect(person.birthDateSolar, isNull);
+  });
+
 }

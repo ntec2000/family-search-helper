@@ -36,3 +36,8 @@ Request → identify target → check previous progress → inspect only related
 
 ## Report (short)
 Changed files | commit SHA | executed tests and results | remaining issues | next step.
+
+## 사용자 요청: 공통 실행 원칙
+- 이어서 작업할 때 최신 작업 브랜치와 검증 상태를 먼저 확인하고, 이미 구현된 내용과 관련 파일만 살펴 중복 분석을 줄인다.
+- 샘플의 사용자 해석과 원문 판독이 충돌하면 두 내용을 구분하여 보존하고, 날짜·이름·관계는 자동 확정하지 않는다.
+- 변경은 작은 단위로 수행하며 원본 이미지·OCR·기존 확정 데이터 및 개인정보를 보존한다. 테스트와 빌드 결과는 실제 확인된 범위만 보고한다.

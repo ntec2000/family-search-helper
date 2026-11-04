@@ -31,7 +31,7 @@ class JokboParser {
   static const _ji = '子丑寅卯辰巳午未申酉戌亥';
 
   /// 처가 직계(父·祖·曾祖) 이름 앞에 붙는 관직명·품계 — 이름에서 제거.
-  /// 단, 同知 는 본 족보에서 이름(예: 변동지)으로 쓰이므로 제외한다.
+  /// 同知는 관직 또는 이름일 수 있어 원문 후보를 남기고 검토하도록 안내한다.
   static const _titles = <String>[
     '判官', '通政', '通訓', '嘉善', '嘉靖', '折衝', '僉知', '僉正', '僉樞',
     '副護軍', '副司果', '司果', '主簿', '參奉', '縣監', '郡守', '牧使', '府使',
@@ -548,6 +548,10 @@ class JokboParser {
       person.spouseGrandfather = gf == null ? null : _stripTitle(gf);
       final fa = grab(RegExp(r'父\s*([一-鿿]{1,4}?)(?=\s|$|[·祖配生卒忌墓]|曾祖|外祖)'));
       person.spouseFather = fa == null ? null : _stripTitle(fa);
+      // 同知는 이름 후보이거나 관직 표기일 수 있어 원문 확인이 필요하다.
+      if ([fa, gf, gGf].contains('同知')) {
+        addNote('처가 조상의 同知: 이름 또는 관직 여부 원문 확인 필요');
+      }
     }
 
     // 娶 (결혼) — 干支年
