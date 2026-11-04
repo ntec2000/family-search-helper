@@ -11,6 +11,7 @@ void main() {
     await tester.pumpAndSettle();
     const source = '子格 21世 壬辰生\n子核 21世 丁酉生';
     await tester.enterText(find.byType(TextField), source);
+    await tester.pump();
     await tester.tap(find.text('판독문 검토'));
     await tester.pumpAndSettle();
     final result = tester.widget<ResultScreen>(find.byType(ResultScreen));
