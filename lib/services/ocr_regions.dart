@@ -174,3 +174,14 @@ List<GenealogyColumnLayout> genealogyOcrColumnLayouts(List<Uint8List> columns) {
 
 List<bool> genealogyOcrColumnHeadings(List<Uint8List> columns) =>
     genealogyOcrColumnLayouts(columns).map((layout) => layout.heading).toList();
+
+/// Magnify only the top of a vertical column, where the person marker appears.
+Uint8List genealogyOcrNameCrop(Uint8List bytes) {
+  final image = img.decodeImage(bytes);
+  if (image == null) throw const FormatException('열 이미지를 해독할 수 없습니다.');
+  final height = (12 + (image.width - 24) * 4).clamp(1, image.height);
+  final crop = img.copyCrop(image, x: 0, y: 0, width: image.width, height: height);
+  final enlarged = img.copyResize(crop, width: crop.width * 2,
+      interpolation: img.Interpolation.linear);
+  return Uint8List.fromList(img.encodePng(enlarged));
+}

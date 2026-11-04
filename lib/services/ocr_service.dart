@@ -78,6 +78,7 @@ class OcrService {
     final texts = <String>[];
     final rawColumns = <String>[];
     final generationLabels = <String?>[];
+    var nameRetriesLeft = 2;
     for (var i = 0; i < regions.length; i++) {
       final row = regions[i];
       onProgress?.call('세대 구획 ${i + 1}/${regions.length} 한자 인식 중...');
@@ -93,6 +94,25 @@ class OcrService {
           if (columnTexts != null && hasReadableText(columnTexts)) {
             rawColumns.add(columnTexts.join('\n'));
             final layouts = await compute(genealogyOcrColumnLayouts, columns);
+            for (var j = 0; j < columns.length && nameRetriesLeft > 0; j++) {
+              if (layouts[j].startsLow || !_barePersonMarker.hasMatch(columnTexts[j].trim())) {
+                continue;
+              }
+              nameRetriesLeft--;
+              try {
+                final crop = await compute(genealogyOcrNameCrop, columns[j]);
+                final retry = await recognize(
+                    await storeImageBytes(crop, extension: 'png'),
+                    singleColumn: true);
+                if (retry.text.trim().isNotEmpty) {
+                  rawColumns.add('[구획 ${i + 1} · 열 ${j + 1} 인명 재판독] ${retry.text.trim()}');
+                }
+                final candidate = recoverBareName(columnTexts[j], retry.text);
+                if (candidate != null) columnTexts[j] = candidate;
+              } catch (_) {
+                // A retry failure does not discard the first pass.
+              }
+            }
             entries = assembleOcrEntries(columnTexts,
                 headings: layouts.map((layout) => layout.heading).toList(),
                 startsLow: layouts.map((layout) => layout.startsLow).toList());
@@ -132,6 +152,23 @@ class OcrService {
     }
     return useSegmentedOrWhole(wholePage, texts, rawColumns,
         generationLabels: generationLabels);
+  }
+
+  static final _barePersonMarker = RegExp(r'^[子女男]$');
+  static final _shortPersonName = RegExp(r'^[子女男][一-鿿]{1,3}$');
+  static final _detailMarker = RegExp(r'[子女男字號墓配生卒父祖系繼坐向忌]');
+
+  /// Only restore missing text. Keep already recognized names unchanged.
+  static String? recoverBareName(String first, String retry) {
+    final marker = first.trim();
+    final candidate = retry.trim().replaceAll(RegExp(r'[ \t]+'), '');
+    if (!_barePersonMarker.hasMatch(marker) ||
+        !_shortPersonName.hasMatch(candidate) ||
+        !candidate.startsWith(marker) ||
+        _detailMarker.hasMatch(candidate.substring(1))) {
+      return null;
+    }
+    return candidate;
   }
 
   /// 구획 결과가 전부 비었다면 읽힌 전체 페이지 결과를 잃지 않는다.

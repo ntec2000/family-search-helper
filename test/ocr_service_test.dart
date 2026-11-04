@@ -5,6 +5,14 @@ import 'package:family_search_helper/services/jokbo_parser.dart';
 void main() {
   OcrResult result(String text) => OcrResult(text: text, rawBlocks: []);
 
+  test('재판독은 같은 표식의 누락 인명만 후보로 복구한다', () {
+    expect(OcrService.recoverBareName('子', '子 格'), '子格');
+    expect(OcrService.recoverBareName('子格', '子昃'), isNull);
+    expect(OcrService.recoverBareName('女', '子格'), isNull);
+    expect(OcrService.recoverBareName('子', '子字君平'), isNull);
+    expect(OcrService.recoverBareName('子', '子格\n子昃'), isNull);
+  });
+
   test('빈 세로열만 있으면 세대 구획을 다시 인식한다', () {
     expect(OcrService.hasReadableText(['', ' \n ']), isFalse);
     expect(OcrService.hasReadableText(['', '子格']), isTrue);
