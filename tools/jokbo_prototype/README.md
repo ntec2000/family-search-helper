@@ -32,3 +32,5 @@ python tools/jokbo_prototype/parser_engine.py --engine rapidocr
 ```
 
 첫 판독에 모델 파일이 캐시에 없다면 RapidOCR가 모델을 내려받습니다. 판독은 로컬에서 실행합니다. 기본 실행 명령은 Tesseract를 사용합니다.
+
+원본 미리보기에서 **한 글자 영역 지정**을 누르고 왼쪽 위와 오른쪽 아래를 차례로 선택하면, **RapidOCR 재판독**으로 선택한 영역만 읽을 수 있습니다. 위 설치 명령의 의존성이 필요하며, 서버를 기본 Tesseract 모드로 시작해도 이 버튼은 RapidOCR을 사용합니다. 후보 칸에서 글자를 복사해 검수 표에 직접 입력합니다.

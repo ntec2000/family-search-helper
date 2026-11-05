@@ -16,6 +16,9 @@ td input{min-width:6rem;width:100%;box-sizing:border-box}td:last-child select{ma
 .preview{overflow:auto;max-height:65vh;background:#eee;border-radius:.3rem}
 .preview img{display:block;width:100%;height:auto}
 .preview[hidden]{display:none}
+#original.selecting{cursor:crosshair}
+#glyph-crop{display:block;max-width:9rem;max-height:9rem;background:white}
+#glyph-crop[hidden]{display:none}
 @media(max-width:820px){.review{grid-template-columns:minmax(0,1fr)}}
 #print{display:none}
 @page{size:A4 portrait;margin:15mm}
@@ -44,6 +47,14 @@ td input{min-width:6rem;width:100%;box-sizing:border-box}td:last-child select{ma
     <output id="zoom-level"></output>
   </div>
   <div id="preview" class="preview" hidden><img id="original" alt="선택한 족보 원본 이미지"></div>
+  <div id="glyph-tools" hidden>
+    <button id="pick-glyph">한 글자 영역 지정</button>
+    <button id="read-glyph" disabled>RapidOCR 재판독</button>
+    <p id="glyph-status" role="status"></p>
+    <canvas id="glyph-crop" hidden></canvas>
+    <label for="glyph-result">재판독 후보</label>
+    <input id="glyph-result" readonly>
+  </div>
   <p>선택한 이미지는 이 화면에서 미리 봅니다. 아래 OCR 원문은 별도로 선택할 수 있습니다.</p>
   <label for="source">OCR 원문 선택</label>
   <select id="source"></select>
@@ -89,7 +100,8 @@ get('image').onchange = () => {
   const image = get('original');
   if (previewUrl) URL.revokeObjectURL(previewUrl);
   previewUrl = file ? URL.createObjectURL(file) : undefined;
-  preview.hidden = get('preview-controls').hidden = !previewUrl;
+  preview.hidden = get('preview-controls').hidden = get('glyph-tools').hidden = !previewUrl;
+  clearGlyphSelection();
   if (previewUrl) image.src = previewUrl;
   else image.removeAttribute('src');
   get('preview-name').textContent = file?.name || '';
@@ -99,6 +111,81 @@ get('image').onchange = () => {
 get('zoom-out').onclick = () => setZoom(zoom - 25);
 get('zoom-fit').onclick = () => setZoom(100);
 get('zoom-in').onclick = () => setZoom(zoom + 25);
+let firstCorner = null;
+const original = get('original');
+const crop = get('glyph-crop');
+const glyphStatus = message => { get('glyph-status').textContent = message; };
+function clearGlyphSelection() {
+  firstCorner = null;
+  original.classList.remove('selecting');
+  crop.hidden = true;
+  get('read-glyph').disabled = true;
+  get('glyph-result').value = '';
+  glyphStatus('');
+}
+get('pick-glyph').onclick = () => {
+  if (!original.naturalWidth) return;
+  clearGlyphSelection();
+  original.classList.add('selecting');
+  glyphStatus('한 글자의 왼쪽 위와 오른쪽 아래를 차례로 누르세요.');
+};
+original.onclick = event => {
+  if (!original.classList.contains('selecting')) return;
+  const bounds = original.getBoundingClientRect();
+  const x = Math.max(0, Math.min(original.naturalWidth,
+    Math.round((event.clientX - bounds.left) / bounds.width * original.naturalWidth)));
+  const y = Math.max(0, Math.min(original.naturalHeight,
+    Math.round((event.clientY - bounds.top) / bounds.height * original.naturalHeight)));
+  if (!firstCorner) {
+    firstCorner = {x, y};
+    glyphStatus('오른쪽 아래를 누르세요.');
+    return;
+  }
+  const width = x - firstCorner.x;
+  const height = y - firstCorner.y;
+  if (width < 3 || height < 3) {
+    firstCorner = null;
+    glyphStatus('왼쪽 위와 오른쪽 아래를 다시 누르세요.');
+    return;
+  }
+  const scale = 256 / Math.max(width, height);
+  const scaledWidth = Math.max(1, Math.round(width * scale));
+  const scaledHeight = Math.max(1, Math.round(height * scale));
+  crop.width = scaledWidth + 32;
+  crop.height = scaledHeight + 32;
+  const context = crop.getContext('2d');
+  context.fillStyle = 'white';
+  context.fillRect(0, 0, crop.width, crop.height);
+  context.drawImage(original, firstCorner.x, firstCorner.y, width, height,
+    16, 16, scaledWidth, scaledHeight);
+  firstCorner = null;
+  original.classList.remove('selecting');
+  crop.hidden = false;
+  get('read-glyph').disabled = false;
+  glyphStatus('획이 모두 보이는지 확인하고 재판독을 누르세요.');
+};
+get('read-glyph').onclick = async () => {
+  const button = get('read-glyph');
+  const pick = get('pick-glyph');
+  const imageInput = get('image');
+  if (imageInput.disabled || crop.hidden) return;
+  button.disabled = pick.disabled = imageInput.disabled = get('scan').disabled = true;
+  get('glyph-result').value = '';
+  glyphStatus('한 글자 재판독 중…');
+  try {
+    const body = await new Promise(resolve => crop.toBlob(resolve, 'image/png'));
+    if (!body) throw new Error('선택 영역을 만들지 못했습니다.');
+    const response = await fetch('/ocr/glyph', {method:'POST', body});
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error);
+    get('glyph-result').value = result.raw;
+    glyphStatus(result.raw ? '원본과 비교한 뒤 필요한 글자를 복사하세요.' : '판독된 글자가 없습니다.');
+  } catch (error) {
+    glyphStatus('재판독 실패 · ' + error.message);
+  } finally {
+    button.disabled = pick.disabled = imageInput.disabled = get('scan').disabled = false;
+  }
+};
 function label(person, index) {
   const name = [person.name_korean, person.name_hanja].filter(Boolean).join(' / ');
   return [person.generation && person.generation + '세', name || '이름 미상', '#' + (index + 1)]

@@ -73,7 +73,7 @@ def rapid_engine():
     })
 
 
-def recognize_rapid(image):
+def recognize_rapid(image, *, glyph=False):
     try:
         import numpy as np
         from PIL import Image, ImageOps, UnidentifiedImageError
@@ -82,12 +82,17 @@ def recognize_rapid(image):
     try:
         with Image.open(io.BytesIO(image)) as original:
             turned = ImageOps.exif_transpose(original).convert("RGB")
-            turned = turned.transpose(Image.Transpose.ROTATE_90)
+            if not glyph:
+                turned = turned.transpose(Image.Transpose.ROTATE_90)
     except (UnidentifiedImageError, OSError, Image.DecompressionBombError) as error:
         raise ValueError("이미지 파일을 읽지 못했습니다.") from error
     try:
         # RapidOCR accepts an OpenCV-style BGR array.
-        output = rapid_engine()(np.ascontiguousarray(np.asarray(turned)[:, :, ::-1]))
+        pixels = np.ascontiguousarray(np.asarray(turned)[:, :, ::-1])
+        if glyph:
+            output = rapid_engine()(pixels, use_det=False, use_cls=False, use_rec=True)
+            return "".join(output.txts or ())
+        output = rapid_engine()(pixels)
     except ImportError as error:
         raise RuntimeError("RapidOCR 실행에는 rapidocr, onnxruntime, pillow가 필요합니다.") from error
     except Exception as error:
@@ -140,7 +145,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_error(404)
 
     def do_POST(self):
-        if self.path != "/ocr":
+        if self.path not in ("/ocr", "/ocr/glyph"):
             self.send_error(404)
             return
         if self.headers.get("Host") != f"127.0.0.1:{PORT}" or self.headers.get("Origin") != ORIGIN:
@@ -151,7 +156,14 @@ class Handler(BaseHTTPRequestHandler):
             if not 0 < size <= LIMIT:
                 raise ValueError("12 MiB 이하 이미지를 선택하세요.")
             self.connection.settimeout(10)
-            self.send_json(200, recognize(self.rfile.read(size), self.ocr_engine))
+            image = self.rfile.read(size)
+            if self.path == "/ocr/glyph":
+                if not image.startswith(b"\x89PNG\r\n\x1a\n"):
+                    raise ValueError("한 글자 영역을 다시 선택하세요.")
+                raw = recognize_rapid(image, glyph=True)
+                self.send_json(200, {"raw": raw})
+            else:
+                self.send_json(200, recognize(image, self.ocr_engine))
         except ValueError as error:
             self.send_json(400, {"error": str(error)})
         except RuntimeError as error:
