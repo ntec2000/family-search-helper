@@ -55,6 +55,7 @@ td input{min-width:6rem;width:100%;box-sizing:border-box}td:last-child select{ma
     <canvas id="glyph-crop" hidden></canvas>
     <label for="glyph-result">재판독 후보</label>
     <input id="glyph-result" readonly>
+    <button id="copy-glyph" disabled>후보 복사</button>
   </div>
   <p>선택한 이미지는 이 화면에서 미리 봅니다. 아래 OCR 원문은 별도로 선택할 수 있습니다.</p>
   <label for="source">OCR 원문 선택</label>
@@ -123,6 +124,7 @@ function clearGlyphSelection() {
   get('cancel-glyph').hidden = true;
   get('read-glyph').disabled = true;
   get('glyph-result').value = '';
+  get('copy-glyph').disabled = true;
   glyphStatus('');
 }
 get('pick-glyph').onclick = () => {
@@ -189,6 +191,7 @@ get('read-glyph').onclick = async () => {
   if (imageInput.disabled || crop.hidden) return;
   button.disabled = pick.disabled = imageInput.disabled = get('scan').disabled = true;
   get('glyph-result').value = '';
+  get('copy-glyph').disabled = true;
   glyphStatus('한 글자 재판독 중…');
   try {
     const body = await new Promise(resolve => crop.toBlob(resolve, 'image/png'));
@@ -197,11 +200,24 @@ get('read-glyph').onclick = async () => {
     const result = await response.json();
     if (!response.ok) throw new Error(result.error);
     get('glyph-result').value = result.raw;
+    get('copy-glyph').disabled = !result.raw;
     glyphStatus(result.raw ? '원본과 비교한 뒤 필요한 글자를 복사하세요.' : '판독된 글자가 없습니다.');
   } catch (error) {
     glyphStatus('재판독 실패 · ' + error.message);
   } finally {
     button.disabled = pick.disabled = imageInput.disabled = get('scan').disabled = false;
+  }
+};
+get('copy-glyph').onclick = async () => {
+  const input = get('glyph-result');
+  if (!input.value) return;
+  try {
+    await navigator.clipboard.writeText(input.value);
+    glyphStatus('후보를 복사했습니다. 원본을 대조하고 검수 표에 직접 붙여 넣으세요.');
+  } catch (_) {
+    input.focus();
+    input.select();
+    glyphStatus('자동 복사를 사용할 수 없습니다. 선택된 후보를 직접 복사하세요.');
   }
 };
 function label(person, index) {
