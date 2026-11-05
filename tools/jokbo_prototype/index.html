@@ -131,8 +131,14 @@ get('pick-glyph').onclick = () => {
   }
   clearGlyphSelection();
   original.classList.add('selecting');
-  glyphStatus('한 글자의 왼쪽 위와 오른쪽 아래를 차례로 누르세요.');
+  glyphStatus('한 글자의 왼쪽 위와 오른쪽 아래를 차례로 누르세요. 취소: Esc');
 };
+document.addEventListener('keydown', event => {
+  if (event.key !== 'Escape' || !original.classList.contains('selecting')) return;
+  clearGlyphSelection();
+  get('pick-glyph').focus();
+  glyphStatus('영역 지정을 취소했습니다.');
+});
 original.onclick = event => {
   if (!original.classList.contains('selecting')) return;
   const bounds = original.getBoundingClientRect();
