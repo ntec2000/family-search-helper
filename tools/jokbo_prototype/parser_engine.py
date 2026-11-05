@@ -237,7 +237,7 @@ class Handler(BaseHTTPRequestHandler):
                 raw = data["raw"]
                 self.send_json(200, {"raw": raw, "candidates": parse_candidates(raw, data.get("surname", ""))})
             elif route == "/ocr/glyph":
-                if not image.startswith(b"\x89PNG\r\n\x1a\n"):
+                if not image.startswith((b"\x89PNG\r\n\x1a\n", b"\xff\xd8\xff")):
                     raise ValueError("한 글자 영역을 다시 선택하세요.")
                 raw = recognize_rapid(image, glyph=True)
                 self.send_json(200, {"raw": raw})

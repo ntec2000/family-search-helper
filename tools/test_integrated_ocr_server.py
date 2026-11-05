@@ -50,10 +50,11 @@ class IntegratedServerTests(unittest.TestCase):
 
     def test_same_origin_glyph_endpoint(self):
         with patch.object(engine, "recognize_rapid", return_value="核") as ocr:
-            status, body, _ = self.request("POST", "/api/ocr/glyph", b"\x89PNG\r\n\x1a\n")
-            self.assertEqual(status, 200)
-            self.assertEqual(json.loads(body)["raw"], "核")
-            self.assertEqual(ocr.call_args.kwargs, {"glyph":True})
+            for image in (b"\x89PNG\r\n\x1a\n", b"\xff\xd8\xff"):
+                status, body, _ = self.request("POST", "/api/ocr/glyph", image)
+                self.assertEqual(status, 200)
+                self.assertEqual(json.loads(body)["raw"], "核")
+                self.assertEqual(ocr.call_args.kwargs, {"glyph":True})
         self.assertEqual(self.request("POST", "/api/ocr/glyph", b"x", origin="https://example.com")[0], 403)
 
     def test_full_page_endpoint(self):
