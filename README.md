@@ -13,6 +13,12 @@
 
 `tools/jokbo_prototype`은 별도 OCR 검증 도구입니다. 해당 폴더의 Python 실행본은 정식 앱의 배포본이 아닙니다. 외부 족보 프로그램은 기능 연구 자료로 참고하며 제품 이름과 화면은 가족역사 기록 도우미를 기준으로 개발합니다.
 
+## PC 통합 웹 실행
+
+GitHub Actions의 `family-history-integrated-web` 아티팩트를 내려받아 압축을 푼 뒤 `start_integrated_web.cmd`를 실행합니다. Python 3.12 이상이 필요합니다. 첫 실행 시 RapidOCR 3.10.0과 모델을 내려받고, 정식 Flutter 웹 앱을 http://127.0.0.1:8765/ 에서 엽니다.
+
+정식 웹 앱의 OCR 요청은 같은 PC의 RapidOCR 서버로 전달됩니다. 별도로 호스팅한 웹에서는 기존 브라우저 Tesseract를 사용합니다. Android는 기존 ML Kit를 사용합니다. 이미지 확인 화면의 **한 글자 영역 재판독**은 선택 영역만 읽고 후보 복사 기능을 제공합니다. 모바일과 PC에서 같은 인물 검수·관계 검토 화면을 사용하며 저장소의 기기 간 동기화는 별도입니다.
+
 ## 핵심 원칙
 
 ✅ **완전 독립 실행** — 설치된 전화기에서 모든 기능이 자체 구동 (외부 서버 의존 0)
@@ -89,3 +95,4 @@ flutter build apk --release
 - Unihan: © Unicode, Inc. (Unicode License)
 - ML Kit / Flutter: Apache 2.0 / BSD
 - lunar: MIT
+

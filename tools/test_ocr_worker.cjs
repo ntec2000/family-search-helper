@@ -8,6 +8,7 @@ const source = fs.readFileSync(path.join(__dirname, '../web/ocr.js'), 'utf8');
 
 function setup({failPage = false} = {}) {
   const created = [];
+  const parameters = [];
   const context = vm.createContext({
     URL,
     document: {baseURI: 'https://example.test/app/'},
@@ -16,14 +17,14 @@ function setup({failPage = false} = {}) {
         created.push({language, options});
         if (failPage && language.includes('+kor')) throw Error('page model unavailable');
         return {
-          async setParameters() {},
+          async setParameters(value) { parameters.push(value); },
           async recognize() { return {data: {text: language}}; },
         };
       },
     },
   });
   vm.runInContext(source, context);
-  return {recognize: context.jokboRecognize, created};
+  return {recognize: context.jokboRecognize, glyph: context.jokboRecognizeGlyph, created, parameters};
 }
 
 test('failed page initialization does not block the bundled column model', async () => {
@@ -41,4 +42,47 @@ test('column-first OCR loads one worker and reuses it for later columns', async 
   assert.equal(created[0].language, 'chi_tra_vert');
   assert.match(created[0].options.workerPath, /tesseract\.js@7\.0\.0/);
   assert.match(created[0].options.corePath, /tesseract\.js-core@7\.0\.0/);
+});
+
+
+test('glyph fallback restores vertical page mode for the next column', async () => {
+  const {recognize, glyph, created, parameters} = setup();
+  await glyph('single-glyph');
+  await recognize('column', true);
+  assert.equal(created.length, 1);
+  assert.equal(parameters.at(-2).tessedit_pageseg_mode, '10');
+  assert.equal(parameters.at(-1).tessedit_pageseg_mode, '5');
+});
+
+test('loopback service receives glyph bytes and shares capability lookup', async () => {
+  const requests = [];
+  const context = vm.createContext({
+    URL, AbortSignal, location: {hostname:'127.0.0.1'},
+    fetch: async (url, options) => {
+      requests.push([url, options]);
+      if (url === '/api/ocr/capabilities') {
+        return {ok:true, json:async()=>({engine:'rapidocr'})};
+      }
+      if (url.startsWith('blob:')) return {ok:true, blob:async()=> 'image-bytes'};
+      return {ok:true, json:async()=>({raw:'核'})};
+    },
+  });
+  vm.runInContext(source, context);
+  assert.equal(await context.jokboRecognizeGlyph('blob:crop'), '核');
+  assert.equal(await context.jokboRecognize('blob:page'), '核');
+  assert.equal(requests.filter(([url])=>url==='/api/ocr/capabilities').length, 1);
+  assert.equal(requests.find(([url])=>url==='/api/ocr/glyph')[1].body, 'image-bytes');
+});
+
+test('a configured local engine error is shown to the user', async () => {
+  const context = vm.createContext({
+    URL, AbortSignal, location: {hostname:'127.0.0.1'},
+    fetch: async url => {
+      if (url === '/api/ocr/capabilities') return {ok:true,json:async()=>({engine:'rapidocr'})};
+      if (url.startsWith('blob:')) return {ok:true,blob:async()=> 'image-bytes'};
+      return {ok:false,json:async()=>({error:'model unavailable'})};
+    },
+  });
+  vm.runInContext(source, context);
+  await assert.rejects(context.jokboRecognizeGlyph('blob:crop'), /model unavailable/);
 });

@@ -226,6 +226,43 @@ class _CaptureScreenState extends State<CaptureScreen> {
     }
   }
 
+  Future<void> _readGlyph() async {
+    final path = _previewPath;
+    if (path == null || _busy) return;
+    final cropped = await Navigator.push<String?>(
+      context, MaterialPageRoute(builder: (_) => CropScreen(imagePath: path)));
+    if (cropped == null || cropped.isEmpty || !mounted) return;
+    setState(() { _busy = true; _status = '선택한 글자 판독 중...'; });
+    try {
+      final candidate = (await OcrService.recognizeGlyph(cropped)).trim();
+      if (!mounted) return;
+      await showDialog<void>(context: context, builder: (ctx) => AlertDialog(
+        title: const Text('한 글자 재판독 후보'),
+        content: SelectableText(candidate.isEmpty
+            ? '글자를 읽지 못했습니다. 획 전체가 포함되도록 영역을 다시 선택하세요.'
+            : '$candidate\n\n원본과 대조한 뒤 필요한 글자를 복사해 검수 화면에 입력하세요.'),
+        actions: [
+          if (candidate.isNotEmpty)
+            TextButton(onPressed: () async {
+              await Clipboard.setData(ClipboardData(text: candidate));
+              if (ctx.mounted) Navigator.pop(ctx);
+            }, child: const Text('후보 복사')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('닫기')),
+        ],
+      ));
+    } catch (error) {
+      if (!mounted) return;
+      await showDialog<void>(context: context, builder: (ctx) => AlertDialog(
+        title: const Text('재판독 실패'),
+        content: Text('$error'),
+        actions: [TextButton(onPressed: () => Navigator.pop(ctx),
+            child: const Text('확인'))],
+      ));
+    } finally {
+      if (mounted) setState(() { _busy = false; _status = ''; });
+    }
+  }
+
   Future<void> _pickPdf() async {
     if (_busy) return;
     final selection = await FilePicker.platform.pickFiles(
@@ -572,6 +609,13 @@ class _CaptureScreenState extends State<CaptureScreen> {
                       ],
                     ),
                     const SizedBox(height: 8),
+                    SizedBox(width: double.infinity, child: OutlinedButton.icon(
+                      onPressed: _readGlyph,
+                      icon: const Icon(Icons.find_in_page_outlined, color: HanjiColors.hanji),
+                      label: const Text('한 글자 영역 재판독',
+                          style: TextStyle(color: HanjiColors.hanji)),
+                    )),
+                    const SizedBox(height: 8),
                     SizedBox(
                       width: double.infinity,
                       child: FilledButton.icon(
@@ -719,3 +763,4 @@ class _SourceSelect extends StatelessWidget {
     );
   }
 }
+

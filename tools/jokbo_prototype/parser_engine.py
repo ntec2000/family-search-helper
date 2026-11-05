@@ -2,6 +2,9 @@
 import argparse
 import threading
 import webbrowser
+import mimetypes
+import importlib.util
+from importlib.metadata import version, PackageNotFoundError
 import io
 from functools import lru_cache
 import json
@@ -9,7 +12,7 @@ import re
 import subprocess
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
-from urllib.parse import unquote
+from urllib.parse import unquote, urlsplit
 
 HERE = Path(__file__).resolve().parent
 MODEL_DIR = HERE.parents[1] / "web" / "ocr-models"
@@ -169,6 +172,7 @@ def recognize(image, engine="tesseract", surname=""):
 
 class Handler(BaseHTTPRequestHandler):
     ocr_engine = "tesseract"
+    web_root = None
 
     def respond(self, status, body, kind="application/json"):
         self.send_response(status)
@@ -182,13 +186,36 @@ class Handler(BaseHTTPRequestHandler):
         self.respond(status, json.dumps(payload, ensure_ascii=False).encode("utf-8"))
 
     def do_GET(self):
-        if self.path == "/":
+        route = unquote(urlsplit(self.path).path)
+        if route == "/api/ocr/capabilities":
+            engine = None
+            installed_version = None
+            if self.ocr_engine == "rapidocr" and importlib.util.find_spec("rapidocr"):
+                try:
+                    installed_version = version("rapidocr")
+                    engine = "rapidocr"
+                except PackageNotFoundError:
+                    pass
+            self.send_json(200, {"engine": engine, "version": installed_version,
+                                 "glyph": engine is not None})
+            return
+        if self.web_root is not None:
+            target = (self.web_root / route.lstrip("/")).resolve()
+            if route == "/":
+                target = self.web_root / "index.html"
+            if not target.is_relative_to(self.web_root) or not target.is_file():
+                self.send_error(404)
+                return
+            content_type = mimetypes.guess_type(target.name)[0] or "application/octet-stream"
+            self.respond(200, target.read_bytes(), content_type)
+        elif route == "/":
             self.respond(200, (HERE / "index.html").read_bytes(), "text/html")
         else:
             self.send_error(404)
 
     def do_POST(self):
-        if self.path not in ("/ocr", "/ocr/glyph", "/parse"):
+        route = {"/api/ocr": "/ocr", "/api/ocr/glyph": "/ocr/glyph"}.get(self.path, self.path)
+        if route not in ("/ocr", "/ocr/glyph", "/parse"):
             self.send_error(404)
             return
         if self.headers.get("Host") != f"127.0.0.1:{PORT}" or self.headers.get("Origin") != ORIGIN:
@@ -200,7 +227,7 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError("12 MiB 이하 이미지를 선택하세요.")
             self.connection.settimeout(10)
             image = self.rfile.read(size)
-            if self.path == "/parse":
+            if route == "/parse":
                 try:
                     data = json.loads(image.decode("utf-8-sig"))
                 except (UnicodeDecodeError, json.JSONDecodeError) as error:
@@ -209,7 +236,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError("원문과 성씨를 문자열로 입력하세요.")
                 raw = data["raw"]
                 self.send_json(200, {"raw": raw, "candidates": parse_candidates(raw, data.get("surname", ""))})
-            elif self.path == "/ocr/glyph":
+            elif route == "/ocr/glyph":
                 if not image.startswith(b"\x89PNG\r\n\x1a\n"):
                     raise ValueError("한 글자 영역을 다시 선택하세요.")
                 raw = recognize_rapid(image, glyph=True)
@@ -228,7 +255,13 @@ if __name__ == "__main__":
     cli = argparse.ArgumentParser(description=__doc__)
     cli.add_argument("--engine", choices=("tesseract", "rapidocr"), default="tesseract")
     cli.add_argument("--open-browser", action="store_true")
+    cli.add_argument("--web-build", type=Path,
+                     help="Serve the main Flutter web build with same-origin RapidOCR")
     args = cli.parse_args()
+    if args.web_build is not None:
+        Handler.web_root = args.web_build.resolve()
+        if not (Handler.web_root / "index.html").is_file():
+            cli.error("Flutter 웹 빌드의 index.html을 찾지 못했습니다.")
     Handler.ocr_engine = args.engine
     with HTTPServer(("127.0.0.1", PORT), Handler) as server:
         print(ORIGIN, flush=True)
@@ -238,4 +271,5 @@ if __name__ == "__main__":
             server.serve_forever()
         except KeyboardInterrupt:
             pass
+
 

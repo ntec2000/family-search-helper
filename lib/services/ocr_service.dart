@@ -41,6 +41,12 @@ class OcrService {
     return OcrResult(text: buf.toString(), rawBlocks: result.blocks);
   }
 
+  /// A manually selected glyph is a review candidate, never a saved person.
+  static Future<String> recognizeGlyph(String imagePath) async {
+    if (kIsWeb) return recognizeGlyphInBrowser(imagePath);
+    return (await recognize(imagePath, singleColumn: true)).text;
+  }
+
   /// 원본과 전처리본을 모두 시도해 한자 정보가 더 많은 결과를 선택한다.
   /// shortcut: 검출량 비교는 정확도 측정이 아니므로 저장 전 원문 검토가 필요하다.
   static Future<OcrResult> recognizeBest(
@@ -257,3 +263,4 @@ class OcrResult {
   OcrResult({required this.text, required this.rawBlocks,
       this.alternatives = const [], this.wholePageAlternatives = const [], this.regionTexts = const [], this.generationLabels});
 }
+
