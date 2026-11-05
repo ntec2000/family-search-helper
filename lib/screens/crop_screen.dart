@@ -35,14 +35,21 @@ class _CropScreenState extends State<CropScreen> {
     try {
       final bytes = await readImageBytes(widget.imagePath);
       final codec = await ui.instantiateImageCodec(bytes);
-      final frame = await codec.getNextFrame();
-      if (mounted) {
-        setState(() {
-          _imgW = frame.image.width;
-          _imgH = frame.image.height;
-        });
+      try {
+        final frame = await codec.getNextFrame();
+        try {
+          if (mounted) {
+            setState(() {
+              _imgW = frame.image.width;
+              _imgH = frame.image.height;
+            });
+          }
+        } finally {
+          frame.image.dispose();
+        }
+      } finally {
+        codec.dispose();
       }
-      frame.image.dispose();
     } catch (_) {
       if (mounted) Navigator.pop(context, null);
     }
