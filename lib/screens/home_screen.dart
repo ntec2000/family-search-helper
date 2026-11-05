@@ -131,7 +131,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('앱 종료'),
-        content: const Text('가족역사기록 도우미를 종료하시겠습니까?'),
+        content: const Text('가족역사 기록 도우미를 종료하시겠습니까?'),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -157,11 +157,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   /// v2.5 — 앱 공유 기능. 앱 소개와 설치 안내를 공유 시트로 전달한다.
   Future<void> _shareApp() async {
     const msg =
-        '가족역사기록 도우미 (Family Search Helper)\n'
+        '가족역사 기록 도우미 (Family Search Helper)\n'
         '족보(族譜)의 한자를 인식하여 가족역사 정보를 추출하고 FamilySearch에 입력하도록 돕는 앱입니다.\n'
         '개발: Peter S. Choi · 문의: ntec21c@gmail.com\n'
         '배포처(APK): https://github.com/ntec2000/family-search-helper/releases';
-    await Share.share(msg, subject: '가족역사기록 도우미 (Family Search Helper)');
+    await Share.share(msg, subject: '가족역사 기록 도우미 (Family Search Helper)');
   }
 
   void _openMenu(String route) {
@@ -186,7 +186,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('가족역사기록 도우미'),
+        title: const Text('가족역사 기록 도우미'),
         actions: [
           IconButton(
             icon: const Icon(Icons.person_add_alt_1),
@@ -267,7 +267,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         heroTag: 'compose',
         onPressed: _startCompose,
         icon: const Icon(Icons.menu_book),
-        label: const Text('족보작성'),
+        label: const Text('기록 추출'),
       ),
     );
   }
@@ -291,7 +291,7 @@ class _Banner extends StatelessWidget {
         children: [
         Text('등록된 인물 $count명',
             style: const TextStyle(color: HanjiColors.muk, fontSize: 14)),
-        const Text('族譜 → FamilySearch',
+        const Text('원문 대조 · 가족관계 검토',
             style: TextStyle(color: HanjiColors.mukSoft, fontSize: 12, letterSpacing: 1)),
       ]),
     );
@@ -310,7 +310,7 @@ class _EmptyState extends StatelessWidget {
           children: [
             Icon(Icons.menu_book_outlined, size: 80, color: HanjiColors.mukSoft),
             SizedBox(height: 16),
-            Text('族譜', style: TextStyle(fontSize: 36, color: HanjiColors.muk, letterSpacing: 8)),
+            Text('가족의 기록을 정리하세요', style: TextStyle(fontSize: 24, color: HanjiColors.muk, fontWeight: FontWeight.w700)),
             SizedBox(height: 8),
             Text('족보 이미지·PDF를 선택하거나 카메라로 촬영하세요.\n분석 → 내용 수정 → 가족관계 검토 → 최종 저장\n원문과 대조한 인물만 저장합니다.',
                 textAlign: TextAlign.center,

@@ -1,11 +1,17 @@
-# 가족역사기록 도우미 (Family Search Helper)
+# 가족역사 기록 도우미 (Family History Record Helper)
 
-> 족보(族譜)의 한자를 카메라로 인식하여 가족역사기록서 작성을 돕는 Android 앱.
+> 족보 이미지·PDF에서 기록을 추출하고, 원문 대조와 가족관계 검토를 거쳐 가족역사 기록으로 정리하는 Flutter 앱. Android와 웹이 같은 화면·파서·기록 모델을 사용합니다.
 > The Church of Jesus Christ of Latter-day Saints 가족역사사업(Family History Work) 지원.
 
 **개발자**: Peter Choi
 **참조**: [FamilySearch Korea](https://www.familysearch.org/ko/korea/)
 **패키지**: `com.peterchoi.familysearchhelper`
+
+## 앱과 웹의 공통 제품
+
+정식 앱의 진입점은 `lib/main.dart`입니다. Android는 `flutter build apk --debug`, 웹은 `flutter build web --release`로 빌드합니다. 두 실행 환경의 로컬 저장소는 각각 독립적이며, 기기 간 자동 동기화는 별도 구현이 필요합니다.
+
+`tools/jokbo_prototype`은 별도 OCR 검증 도구입니다. 해당 폴더의 Python 실행본은 정식 앱의 배포본이 아닙니다. 외부 족보 프로그램은 기능 연구 자료로 참고하며 제품 이름과 화면은 가족역사 기록 도우미를 기준으로 개발합니다.
 
 ## 핵심 원칙
 

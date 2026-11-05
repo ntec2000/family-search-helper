@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
 
-/// 전통 한지·먹 컬러 팔레트 (모던 리프레시)
+/// Shared record-review palette for the mobile app and Flutter web.
 class HanjiColors {
-  static const hanji = Color(0xFFF6EFDD);
-  static const hanjiLight = Color(0xFFFCF7EA);
-  static const hanjiDark = Color(0xFFEADFC2);
-  static const muk = Color(0xFF211A14);
-  static const mukLight = Color(0xFF3D2E22);
-  static const mukSoft = Color(0xFF6B5A48);
-  static const ju = Color(0xFFB23A2E);
-  static const juSoft = Color(0xFFCD5B4F);
-  static const cheong = Color(0xFF5D7E6F);
-  static const hwang = Color(0xFFC9A14A);
-  static const gold = Color(0xFFB89150);
+  static const hanji = Color(0xFFF3F7F5);
+  static const hanjiLight = Color(0xFFFFFFFF);
+  static const hanjiDark = Color(0xFFD9E4DE);
+  static const muk = Color(0xFF20372F);
+  static const mukLight = Color(0xFF344D43);
+  static const mukSoft = Color(0xFF536B60);
+  static const ju = Color(0xFF176B57);
+  static const juSoft = Color(0xFF5BB59A);
+  static const cheong = Color(0xFF357F73);
+  static const hwang = Color(0xFF9A7734);
+  static const gold = Color(0xFF8D703B);
 }
 
 class TraditionalTheme {
-  static const _radius = 16.0;
+  static const _radius = 10.0;
 
   static ThemeData light() {
     final base = ThemeData.light(useMaterial3: true);
@@ -43,12 +43,12 @@ class TraditionalTheme {
         foregroundColor: HanjiColors.muk,
         elevation: 0,
         scrolledUnderElevation: 0.5,
-        centerTitle: true,
+        centerTitle: false,
         titleTextStyle: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.w700,
           color: HanjiColors.muk,
-          letterSpacing: 1.5,
+          letterSpacing: 0,
           fontFamily: 'JokboHanja',
         ),
       ),
@@ -164,7 +164,7 @@ class TraditionalTheme {
         primary: HanjiColors.hanji,
         secondary: HanjiColors.juSoft,
       ),
-      scaffoldBackgroundColor: const Color(0xFF1A1410),
+      scaffoldBackgroundColor: const Color(0xFF12221C),
     );
   }
 }

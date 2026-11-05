@@ -8,7 +8,7 @@ class FamilySearchHelperApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: '가족역사기록 도우미',
+      title: '가족역사 기록 도우미',
       debugShowCheckedModeBanner: false,
       theme: TraditionalTheme.light(),
       darkTheme: TraditionalTheme.dark(),
