@@ -14,6 +14,8 @@ import '../services/female_name_display.dart';
 import '../theme/traditional_theme.dart';
 import '../widgets/surname_input_dialog.dart';
 import 'person_card_screen.dart';
+import 'crop_screen.dart';
+import '../services/ocr_service.dart';
 
 class ResultScreen extends StatefulWidget {
   final String rawText;
@@ -41,6 +43,7 @@ class _ResultScreenState extends State<ResultScreen> {
   late final List<Person> _persons;
   bool _saved = false;
   bool _saving = false;
+  bool _rereading = false;
   bool _largeText = false;
   bool _showReviewGuide = false;
   bool _relationshipsReviewed = false;
@@ -593,6 +596,40 @@ class _ResultScreenState extends State<ResultScreen> {
     }
   }
 
+  Future<void> _rereadRegion() async {
+    if (_rereading || _saving) return;
+    setState(() => _rereading = true);
+    try {
+      final path = await Navigator.push<String>(context, MaterialPageRoute(
+          builder: (_) => CropScreen(imagePath: widget.imagePath)));
+      if (path == null || !mounted) return;
+      final result = await OcrService.recognize(path, singleColumn: true);
+      if (!mounted) return;
+      await showDialog<void>(context: context, builder: (ctx) => AlertDialog(
+        title: const Text('선택 영역 재판독 후보'),
+        content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('원본과 대조하고 필요한 글자만 복사해 인물 내용을 수정하세요. 기존 이름과 관계는 자동 변경하지 않습니다.'),
+            const SizedBox(height: 12),
+            SelectableText(result.text.trim().isEmpty ? '판독된 글자가 없습니다.' : result.text),
+          ])),
+        actions: [
+          if (result.text.trim().isNotEmpty)
+            TextButton(onPressed: () => Clipboard.setData(ClipboardData(text: result.text)),
+                child: const Text('후보 복사')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('닫기')),
+        ],
+      ));
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('선택 영역을 읽지 못했습니다. 원본을 확인하고 다시 시도하세요.')));
+      }
+    } finally {
+      if (mounted) setState(() => _rereading = false);
+    }
+  }
+
   Future<void> _addPerson({String? sourceRegion, Person? comparison}) async {
     if (_saved || _saving) return;
     final candidate = Person(id: 'manual_${DateTime.now().microsecondsSinceEpoch}',
@@ -1018,7 +1055,12 @@ class _ResultScreenState extends State<ResultScreen> {
                 _PersonList(persons: _persons, onEstimate: _reviewApproximateYear, onEstimateDeath: (p) => _reviewApproximateYear(p, death: true), onDelete: _deletePerson, onEdit: _editCandidate, onParent: _chooseParent, onUnlink: _clearParentLinks, saved: _saved || _saving, largeText: _largeText, relationshipMode: _reviewStep == 1, issueIds: _reviewStep == 1 && _showOnlyRelationshipIssues ? _relationshipIssueIds() : null),
                 _TextCompare(hanja: widget.rawText, hangul: hangulText,
                     onAddFromOcr: _saved || _saving ? null : _addPersonFromOcr),
-                Container(
+                Column(children: [
+                  TextButton.icon(
+                    onPressed: _rereading || _saving ? null : _rereadRegion,
+                    icon: const Icon(Icons.document_scanner_outlined),
+                    label: Text(_rereading ? '선택 영역 인식 중...' : '세로열 영역 선택 후 재판독')),
+                  Expanded(child: Container(
                   color: Colors.black,
                   child: InteractiveViewer(
                     transformationController: _imageTransform,
@@ -1029,7 +1071,8 @@ class _ResultScreenState extends State<ResultScreen> {
                     child:
                         SourceImage(widget.imagePath),
                   ),
-                ),
+                )),
+                ]),
               ]),
           )),
           ]),
