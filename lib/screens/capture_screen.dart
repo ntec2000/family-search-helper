@@ -46,6 +46,9 @@ Uint8List _processImageBytes(Uint8List bytes) {
 class CaptureScreen extends StatefulWidget {
   final String? imagePath;
 
+  /// Optional picker injection for testing cancellation and platform errors.
+  final Future<FilePickerResult?> Function()? pdfPicker;
+
   /// v2.7 — [족보작성] 흐름에서 미리 입력받은 성씨(姓).
   final String? surnameHanja;
   final String? surnameHangul;
@@ -53,6 +56,7 @@ class CaptureScreen extends StatefulWidget {
   const CaptureScreen({
     super.key,
     this.imagePath,
+    this.pdfPicker,
     this.surnameHanja,
     this.surnameHangul,
   });
@@ -266,18 +270,26 @@ class _CaptureScreenState extends State<CaptureScreen> {
 
   Future<void> _pickPdf() async {
     if (_busy) return;
-    final selection = await FilePicker.platform.pickFiles(
-        type: FileType.custom, allowedExtensions: ['pdf'], withData: true);
-    if (selection == null || !mounted) return;
-    final file = selection.files.single;
-    final bytes = file.bytes;
-    if (bytes == null || bytes.isEmpty) {
-      setState(() => _status = 'PDF 파일을 읽을 수 없습니다. 다른 파일을 선택하세요.');
-      return;
-    }
-    setState(() { _busy = true; _status = 'PDF 페이지 준비 중...'; });
+    setState(() { _busy = true; _status = 'PDF 파일 선택 중...'; });
     PdfDocument? document;
     try {
+      // Keep the picker inside the guarded operation: web/plugin errors must
+      // release the busy state and leave the previous source untouched.
+      final selection = await (widget.pdfPicker?.call() ??
+          FilePicker.platform.pickFiles(type: FileType.custom,
+              allowedExtensions: ['pdf'], withData: true));
+      if (!mounted) return;
+      if (selection == null) {
+        setState(() => _status = '');
+        return;
+      }
+      final file = selection.files.single;
+      final bytes = file.bytes;
+      if (bytes == null || bytes.isEmpty) {
+        setState(() => _status = 'PDF 파일을 읽을 수 없습니다. 다른 파일을 선택하세요.');
+        return;
+      }
+      setState(() => _status = 'PDF 페이지 준비 중...');
       document = await PdfDocument.openData(bytes);
       if (!mounted) return;
       var selectedPage = 1;
@@ -291,7 +303,10 @@ class _CaptureScreenState extends State<CaptureScreen> {
             actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('취소')),
               FilledButton(onPressed: () => Navigator.pop(ctx, selectedPage), child: const Text('페이지 선택'))],
           )));
-      if (pageNumber == null) return;
+      if (pageNumber == null) {
+        if (mounted) setState(() => _status = '');
+        return;
+      }
       final rendered = await renderPdfPage(document, pageNumber);
       final original = await storeImageBytes(bytes, temporary: false, extension: 'pdf');
       final image = await storeImageBytes(rendered, temporary: false, extension: 'png');
@@ -303,9 +318,13 @@ class _CaptureScreenState extends State<CaptureScreen> {
         });
       }
     } catch (error) {
-      if (mounted) setState(() => _status = 'PDF를 열지 못했습니다. 암호·손상 여부를 확인하세요.\n$error');
+      if (mounted) setState(() => _status = 'PDF를 불러오지 못했습니다. 파일 선택 권한·암호·손상 여부를 확인하세요.\n$error');
     } finally {
-      await document?.close();
+      try {
+        await document?.close();
+      } catch (_) {
+        // Cleanup must not hide an import error or leave input locked.
+      }
       if (mounted) setState(() => _busy = false);
     }
   }
