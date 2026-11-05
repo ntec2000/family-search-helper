@@ -605,7 +605,7 @@ class _ResultScreenState extends State<ResultScreen> {
       if (path == null || !mounted) return;
       final result = await OcrService.recognize(path, singleColumn: true);
       if (!mounted) return;
-      await showDialog<void>(context: context, builder: (ctx) => AlertDialog(
+      final selected = await showDialog<Person>(context: context, builder: (ctx) => AlertDialog(
         title: const Text('선택 영역 재판독 후보'),
         content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -615,11 +615,30 @@ class _ResultScreenState extends State<ResultScreen> {
           ])),
         actions: [
           if (result.text.trim().isNotEmpty)
-            TextButton(onPressed: () => Clipboard.setData(ClipboardData(text: result.text)),
+            TextButton(onPressed: () async {
+              try {
+                await Clipboard.setData(ClipboardData(text: result.text));
+                if (!ctx.mounted) return;
+                ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('후보를 복사했습니다.')));
+              } catch (_) {
+                if (!ctx.mounted) return;
+                ScaffoldMessenger.of(ctx).showSnackBar(const SnackBar(content: Text('복사하지 못했습니다. 후보를 직접 선택해 복사하세요.')));
+              }
+            },
                 child: const Text('후보 복사')),
+          if (!_saved && !_saving && _persons.isNotEmpty)
+            PopupMenuButton<Person>(
+              tooltip: '수정할 인물 선택',
+              onSelected: (person) => Navigator.pop(ctx, person),
+              itemBuilder: (_) => [for (final p in _persons)
+                PopupMenuItem(value: p, child: Text('${p.nameHanja} ${p.nameHangul} · ${p.id}'))],
+              child: const Padding(padding: EdgeInsets.all(12), child: Text('인물 수정'))),
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('닫기')),
         ],
       ));
+      if (selected != null && mounted && !_saved && !_saving) {
+        await _editCandidate(selected);
+      }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
