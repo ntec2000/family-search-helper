@@ -1,5 +1,7 @@
 """Local-only OCR and review prototype."""
 import argparse
+import threading
+import webbrowser
 import io
 from functools import lru_cache
 import json
@@ -175,7 +177,15 @@ class Handler(BaseHTTPRequestHandler):
 if __name__ == "__main__":
     cli = argparse.ArgumentParser(description=__doc__)
     cli.add_argument("--engine", choices=("tesseract", "rapidocr"), default="tesseract")
-    Handler.ocr_engine = cli.parse_args().engine
+    cli.add_argument("--open-browser", action="store_true")
+    args = cli.parse_args()
+    Handler.ocr_engine = args.engine
     with HTTPServer(("127.0.0.1", PORT), Handler) as server:
         print(ORIGIN, flush=True)
-        server.serve_forever()
+        if args.open_browser:
+            threading.Timer(0.5, webbrowser.open, args=(ORIGIN,)).start()
+        try:
+            server.serve_forever()
+        except KeyboardInterrupt:
+            pass
+
