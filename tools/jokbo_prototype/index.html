@@ -70,6 +70,10 @@ td input{min-width:6rem;width:100%;box-sizing:border-box}td:last-child select{ma
     <th>세대</th><th>한자 이름</th><th>한글 이름</th><th>생몰</th><th>상세</th><th>부모</th><th>관리</th>
   </tr></thead><tbody id="rows"></tbody></table></div>
   <button id="add">인물 추가</button><button id="save" class="primary">브라우저에 저장</button>
+  <button id="export-backup">백업 파일 저장</button>
+  <label for="import-backup">백업 복원</label>
+  <input id="import-backup" type="file" accept=".json,application/json">
+  <p>백업에는 인물, 부모 연결, OCR 원문이 포함됩니다. 원본 사진은 따로 보관하세요.</p>
   <p id="status" role="status"></p>
 </section>
 </div>
@@ -353,6 +357,84 @@ get('save').onclick = () => {
     status('현재 인물, 부모 연결, OCR 원문을 저장했습니다.');
   } catch (error) { status('저장 실패 · ' + error.message); }
 };
+function validateBackup(data) {
+  if (!data || data.format !== 'jokbo-review' || data.version !== 1 ||
+      !Array.isArray(data.people) || !Array.isArray(data.transcripts)) {
+    throw new Error('지원하는 족보 백업 파일이 아닙니다.');
+  }
+  const ids = new Set();
+  const sourceIds = new Set();
+  const text = value => typeof value === 'string';
+  for (const item of data.transcripts) {
+    if (!item || !text(item.id) || !item.id.trim() || sourceIds.has(item.id) ||
+        !text(item.name) || !text(item.raw)) {
+      throw new Error('OCR 원문 정보가 올바르지 않습니다.');
+    }
+    sourceIds.add(item.id);
+  }
+  for (const person of data.people) {
+    if (!person || !text(person.id) || !person.id.trim() || ids.has(person.id) ||
+        !text(person.parentId) ||
+        fields.some(([field]) => person[field] != null && !text(person[field])) ||
+        (person.sourceId != null && !sourceIds.has(person.sourceId))) {
+      throw new Error('인물 정보 또는 식별자가 올바르지 않습니다.');
+    }
+    ids.add(person.id);
+  }
+  const parents = new Map(data.people.map(person => [person.id, person.parentId]));
+  const checked = new Set();
+  for (const person of data.people) {
+    let id = person.id;
+    const path = new Set();
+    while (id && !checked.has(id)) {
+      if (!parents.has(id)) throw new Error('연결된 부모가 백업에 없습니다.');
+      if (path.has(id)) throw new Error('부모 관계가 순환합니다.');
+      path.add(id);
+      id = parents.get(id);
+    }
+    path.forEach(id => checked.add(id));
+  }
+  return {people: data.people, transcripts: data.transcripts};
+}
+get('export-backup').onclick = () => {
+  try {
+    const data = {format:'jokbo-review', version:1, people, transcripts};
+    validateBackup(data);
+    const url = URL.createObjectURL(new Blob(
+      [JSON.stringify(data, null, 2)], {type:'application/json;charset=utf-8'}));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'jokbo-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    status('백업 파일 다운로드를 요청했습니다. 다운로드 폴더를 확인하세요.');
+  } catch (error) { status('백업 실패 · ' + error.message); }
+};
+get('import-backup').onchange = async event => {
+  const input = event.target;
+  const file = input.files[0];
+  if (!file) return;
+  input.disabled = true;
+  try {
+    if (file.size > 12 * 1024 * 1024) throw new Error('12 MiB 이하 백업을 선택하세요.');
+    const restored = validateBackup(JSON.parse(await file.text()));
+    if (get('image').disabled) throw new Error('OCR 처리가 끝난 뒤 복원하세요.');
+    if (!confirm('현재 검수 화면을 백업 내용으로 교체하고 브라우저에 저장할까요?')) return;
+    localStorage.setItem(key, JSON.stringify(restored));
+    people = restored.people;
+    transcripts = restored.transcripts;
+    get('source').value = '';
+    clearGlyphSelection();
+    render();
+    status('인물 ' + people.length + '명과 OCR 원문 ' + transcripts.length + '건을 복원했습니다.');
+  } catch (error) { status('복원 실패 · ' + error.message); }
+  finally {
+    input.value = '';
+    input.disabled = false;
+  }
+};
 get('print-button').onclick = () => {
   if (!people.length) { status('인쇄할 인물이 없습니다.'); return; }
   const target = get('print');
@@ -386,3 +468,4 @@ try {
 render();
 </script>
 </html>
+
