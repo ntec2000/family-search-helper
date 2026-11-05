@@ -1,48 +1,15 @@
-name: iOS validation
+name: iOS native build (retired)
 
+# iPhone is served by the shared Flutter web application.
 on:
-  push:
-    branches: [work/jokbo-update-20261024]
-    paths:
-      - 'ios/**'
-      - 'tools/prepare_ios_assets.py'
-      - '.github/workflows/ios-validation.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
 
-concurrency:
-  group: ios-validation-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
-  ios-unsigned:
-    runs-on: macos-15
-    timeout-minutes: 40
+  retired:
+    if: ${{ false }}
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Install Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          flutter-version: '3.41.9'
-          channel: stable
-          cache: true
-      - name: Use CocoaPods for existing ML Kit plugins
-        run: flutter config --no-enable-swift-package-manager
-      - name: Prepare existing brand icon for iOS
-        run: python3 tools/prepare_ios_assets.py
-      - name: Fetch shared Flutter dependencies
-        run: flutter pub get
-      - name: Verify iOS source configuration
-        run: python3 -m unittest discover -s tools -p 'test_ios_configuration.py'
-      - name: Build unsigned iPhone application
-        run: flutter build ios --release --no-codesign
-      - name: Package unsigned build for signing on a Mac
-        run: ditto -c -k --sequesterRsrc --keepParent build/ios/iphoneos/Runner.app build/family-history-ios-unsigned.zip
-      - name: Upload unsigned build (not an installable IPA)
-        uses: actions/upload-artifact@v4
-        with:
-          name: family-history-ios-unsigned
-          path: build/family-history-ios-unsigned.zip
-          if-no-files-found: error
+      - run: echo 'Use the shared web application on iPhone.'
