@@ -176,7 +176,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def respond(self, status, body, kind="application/json"):
         self.send_response(status)
-        self.send_header("Content-Type", f"{kind}; charset=utf-8")
+        self.send_header("Content-Type",
+                         f"{kind}; charset=utf-8" if kind in ("text/html", "application/json") else kind)
         self.send_header("Cache-Control", "no-store")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()

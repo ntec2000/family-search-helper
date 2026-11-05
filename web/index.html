@@ -13,12 +13,12 @@
   <script src="ocr.js" defer></script>
 </head>
 <body>
-  <script src='https://cdn.jsdelivr.net/npm/pdfjs-dist@4.6.82/build/pdf.min.mjs' type='module'></script>
   <script type='module'>
-  var { pdfjsLib } = globalThis;
+  import * as pdfjsLib from 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.6.82/build/pdf.min.mjs';
+  globalThis.pdfjsLib = pdfjsLib;
   pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.6.82/build/pdf.worker.mjs';
 
-  var pdfRenderOptions = {
+  globalThis.pdfRenderOptions = {
     cMapUrl: 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.6.82/cmaps/',
     cMapPacked: true,
   }
@@ -26,3 +26,4 @@
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>
+

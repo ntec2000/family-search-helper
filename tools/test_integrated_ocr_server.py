@@ -19,6 +19,7 @@ class IntegratedServerTests(unittest.TestCase):
         self.root = Path(self.folder.name)
         (self.root / "index.html").write_text("<title>Family History</title>")
         (self.root / "app.js").write_text("window.started=true")
+        (self.root / "module.wasm").write_bytes(b"\x00asm")
         class Handler(engine.Handler):
             web_root = self.root
             ocr_engine = "rapidocr"
@@ -46,6 +47,7 @@ class IntegratedServerTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertIn(b"Family History", body)
         self.assertEqual(self.request("GET", "/app.js?v=1")[0], 200)
+        self.assertEqual(self.request("GET", "/module.wasm")[2], "application/wasm")
         self.assertEqual(self.request("GET", "/%2e%2e/parser_engine.py")[0], 404)
 
     def test_same_origin_glyph_endpoint(self):
