@@ -28,6 +28,16 @@ const {spawn}=require('child_process'),fs=require('fs'),assert=require('assert/s
   await page.locator('#original').click({position:{x:150,y:200}});
   await page.locator('#read-glyph').click();
   await page.waitForFunction(()=>document.querySelector('#glyph-result').value==='核');
+  await page.locator('summary').filter({hasText:'다른 판독기'}).click();
+  await page.locator('#surname').fill('이');
+  await page.locator('#text-draft').fill('二十一世\n子格字君平 壬辰生\n女權龜壽');
+  await page.locator('#parse-text').click();
+  await page.waitForFunction(()=>document.querySelector('#rows').rows.length===2);
+  assert.equal(await page.locator('#rows tr').nth(0).locator('input').nth(1).inputValue(),'格');
+  assert.equal(await page.locator('#rows tr').nth(1).locator('input').nth(2).inputValue(),'이씨');
+  await page.locator('#rows tr').nth(1).getByRole('button',{name:'삭제',exact:true}).click();
+  await page.locator('#rows tr').nth(0).getByRole('button',{name:'삭제',exact:true}).click();
+  await page.locator('#text-draft').fill('');
   await page.locator('#scan').click();
   await page.waitForFunction(()=>document.querySelector('#rows').rows.length===2);
   const parentId=await page.locator('#rows tr').nth(1).locator('select option').nth(1).getAttribute('value');
@@ -43,7 +53,7 @@ const {spawn}=require('child_process'),fs=require('fs'),assert=require('assert/s
   await download.saveAs(path.join(temporary,'jokbo-e2e-backup.json'));
   const data=JSON.parse(fs.readFileSync(path.join(temporary,'jokbo-e2e-backup.json'),'utf8'));
   assert.equal(data.people[1].parentId,data.people[0].id);
-  await page.locator('#rows tr').nth(1).locator('button').click();
+  await page.locator('#rows tr').nth(1).getByRole('button', {name:'삭제',exact:true}).click();
   assert.equal(await page.locator('#rows tr').count(),1);
   await page.locator('#import-backup').setInputFiles(path.join(temporary,'jokbo-e2e-backup.json'));
   await page.waitForFunction(()=>document.querySelector('#rows').rows.length===2);

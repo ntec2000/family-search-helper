@@ -4,7 +4,7 @@ Windows에서 압축을 풀고 **start_windows.cmd**를 실행합니다. Python 
 
 **이미지 선택 → OCR → 원문 대조·이름 수정 → 부모 선택 → 브라우저 저장 → JSON 백업** 순서로 사용합니다. 인쇄 버튼에서 A4 세로쓰기 PDF도 만들 수 있습니다.
 
-일반 OCR은 세대 띠 한 구획씩 잘라 올려야 합니다. 자동 인물 후보 추출은 줄 앞의 諱 또는 휘 표식이 있는 경우를 지원합니다. 다른 형식은 원문을 보며 직접 인물을 추가합니다. 한 글자 영역 지정으로 흐린 인명을 다시 판독할 수 있습니다.
+일반 OCR은 세대 띠 한 구획씩 잘라 올려야 합니다. 자동 인물 후보 추출은 줄 앞의 諱·휘·子·男·女 표식과 아라비아·한자 세대 표기를 지원합니다. 이름 없는 딸과 사위 후보는 별도로 표시합니다. 다른 형식은 원문을 보며 직접 인물을 추가합니다. 한 글자 영역 지정으로 흐린 인명을 다시 판독할 수 있습니다.
 
 이 배포본은 Python 로컬 웹 검수 도구입니다. Flutter 앱과 데이터가 자동 연동되지 않으며, FamilySearch 전송 기능은 포함하지 않습니다. JSON 백업에 사진 원본은 포함되지 않습니다. PC에서 실제 족보의 인식 결과를 검수해 사용해야 합니다.
 
@@ -37,7 +37,7 @@ Tesseract 모델 출처와 라이선스는 [SOURCE.txt](../../web/ocr-models/SOU
 세대 띠 **한 구획씩 잘라** 입력하는 실험 모드입니다. 사진 방향을 보정하고 반시계 방향으로 회전해 인식한 뒤, 같은 세로 열의 글줄 조각을 모읍니다. 여러 세대 띠가 섞인 전체 페이지는 먼저 잘라야 합니다.
 
 ```sh
-python -m pip install rapidocr==3.9.2 onnxruntime pillow
+python -m pip install rapidocr==3.10.0 onnxruntime pillow
 python tools/jokbo_prototype/parser_engine.py --engine rapidocr
 ```
 
@@ -49,3 +49,20 @@ python tools/jokbo_prototype/parser_engine.py --engine rapidocr
 
 **백업 파일 저장**으로 인물, 부모 연결, OCR 원문을 JSON 파일로 내려받습니다. **백업 복원**에서 파일을 선택하면 검사와 교체 확인 후 브라우저에 저장하고 검수 화면을 복원합니다. 식별자 중복, 누락된 부모·원문, 순환 관계가 있는 파일은 복원을 중단합니다. 저장 공간이 부족하면 현재 검수 내용을 유지합니다. 원본 사진은 별도 보관해야 합니다.
 
+
+
+## 외부 OCR 결과와 출처 대조
+
+작업 성씨를 한글로 입력하고 OCR을 실행합니다. 이미지의 이름을 한글로 자동 음역하지 않으며, 사위 후보를 딸의 이름으로 저장하지 않습니다. 세대·이름·생몰 기록은 미확정 후보입니다. 인물 행의 **원문** 버튼으로 해당 OCR 결과를 바로 확인할 수 있습니다.
+
+**다른 판독기의 원문 불러오기**에서 UTF-8 TXT를 선택하거나 텍스트를 붙여 넣습니다. NDL古典籍OCR-Lite 등에서 내보낸 텍스트에도 같은 인물 후보 파서를 사용할 수 있습니다. 한 인물의 머리글이 한 줄의 처음에 있어야 하며, 여백·줄 순서를 먼저 확인해야 합니다.
+
+### 공개 기술과 적용 범위
+
+- RapidOCR 3.10.0, PP-OCRv5 Mobile 검출과 PP-OCRv6 Small 인식 조합을 사용합니다. [공식 릴리스](https://github.com/RapidAI/RapidOCR/releases/tag/v3.10.0), [모델 라이선스](https://rapidai.github.io/RapidOCRDocs/main/en/model_licenses/)
+- ONNX Runtime의 CPU 추론을 사용합니다. [MIT 라이선스](https://github.com/microsoft/onnxruntime/blob/main/LICENSE)
+- 일본 국립국회도서관 NDL古典籍OCR-Lite는 별도 실행 도구입니다. 해당 엔진은 이 배포본에 포함되지 않으며 출력 TXT를 가져옵니다. [공식 저장소·CC BY 4.0](https://github.com/ndl-lab/ndlkotenocr-lite)
+- 한국 고서 한자용 AI-Hub 데이터는 향후 평가·학습을 위한 검토 자료입니다. 이번 변경에서 내려받거나 학습하지 않았습니다. [공식 데이터](https://aihub.or.kr/aihubdata/data/view.do?dataSetSn=234)
+- 족보 표식 검토 자료와 가족·출처 관리 참고 자료는 [FamilySearch](https://www.familysearch.org/ko/korea/training), [Gramps](https://gramps-project.org/wiki/index.php?title=Features)입니다. 해당 앱의 소스를 복사하지 않았습니다.
+
+같은 프로세스에서 최근 네 번의 동일 이미지 판독은 메모리 캐시를 재사용합니다. 원문 텍스트를 재분석할 때는 OCR 엔진을 다시 호출하지 않습니다. 캐시는 서버 종료 시 지워집니다.

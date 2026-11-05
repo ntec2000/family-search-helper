@@ -9,6 +9,7 @@ import re
 import subprocess
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
+from urllib.parse import unquote
 
 HERE = Path(__file__).resolve().parent
 MODEL_DIR = HERE.parents[1] / "web" / "ocr-models"
@@ -16,27 +17,66 @@ LIMIT = 12 * 1024 * 1024
 PORT = 8765
 ORIGIN = f"http://127.0.0.1:{PORT}"
 HAN = r"[㐀-䶿一-鿿𠀀-𲎯]"
-HEADING = re.compile(rf"^[ \t]*(?:(?P<generation>[0-9]+)[ \t]*[世세][ \t]*)?(?:諱|휘)(?:\(諱\))?[ \t]*(?P<name>{HAN}{{1,5}}?|[가-힣]{{1,5}}?)(?=[ \t]|$|[字号號墓配]|[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥](?:年)?[生卒])", re.M)
+GENERATION = re.compile(r"^\s*([0-9]{1,3}|[〇零一二三四五六七八九十百]{1,6})\s*[世세]\s*")
+PERSON_MARKER = re.compile(r"^\s*(?P<marker>휘\(諱\)|諱|휘|子|男|女)\s*")
+NAME = re.compile(rf"^(?P<name>{HAN}{{1,4}}?|[가-힣]{{1,5}}?)(?=\s|$|[字号號墓配]|[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥](?:年)?[生卒])")
+DATE = re.compile(r"(?:[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥](?:年)?|[0-9]{4}年)\s*[生卒]")
+NOTE_START = re.compile(r"^(?:坐|向|孫|女|男|配|字|號|墓|忌|生|卒|父|祖)")
 
 
-def parse_candidates(raw):
-    """Only explicit person headings delimit candidates. Keep all OCR separately."""
-    headings = list(HEADING.finditer(raw))
+def generation_number(value):
+    if value.isascii() and value.isdigit():
+        return str(int(value))
+    digits = dict(zip("〇零一二三四五六七八九", [0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9]))
+    total, current = 0, 0
+    for char in value:
+        if char in digits:
+            current = digits[char]
+        elif char in "十百":
+            total += (current or 1) * (10 if char == "十" else 100)
+            current = 0
+    return str(total + current)
+
+
+def parse_candidates(raw, surname=""):
+    """Recognize explicit line headings; preserve the complete transcript."""
+    surname = surname.strip()
+    if surname.endswith("씨"):
+        surname = surname[:-1]
+    if surname and not re.fullmatch(r"[가-힣]{1,2}", surname):
+        raise ValueError("작업 성씨를 한글 한두 글자로 입력하세요.")
+    generation = ""
     candidates = []
-    for index, heading in enumerate(headings):
-        end = headings[index + 1].start() if index + 1 < len(headings) else len(raw)
-        # Only the heading line has an unambiguous person context in this
-        # narrow parser. Multiline or spouse notes remain in the OCR transcript.
-        line = raw[heading.end():end].split("\n", 1)[0].split("配", 1)[0]
-        dates = re.findall(r"(?:[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥](?:年)?|[0-9]{4}年)[ \t]*[生卒]", line)
-        name = heading["name"]
+    for original in raw.lstrip("\ufeff").splitlines():
+        line = original.strip()
+        gen = GENERATION.match(line)
+        if gen:
+            generation = generation_number(gen[1])
+            line = line[gen.end():]
+        heading = PERSON_MARKER.match(line)
+        if not heading:
+            continue
+        marker = heading["marker"]
+        rest = line[heading.end():].strip()
+        if not rest or NOTE_START.match(rest):
+            continue
+        name_match = NAME.match(rest)
+        if not name_match:
+            continue
+        name = name_match["name"]
+        daughter = marker == "女"
+        tail = rest[name_match.end():].split("配", 1)[0].strip()
         is_han = re.fullmatch(HAN + "+", name) is not None
         candidates.append({
-            "generation": heading["generation"] or "",
-            "name_hanja": name if is_han else "",
-            "name_korean": "" if is_han else name,
-            "birth_death": " · ".join(dates),
-            "details": line.strip(),
+            "generation": generation,
+            "name_hanja": "" if daughter or not is_han else name,
+            "name_korean": (surname + "씨" if surname else "이름 미상") if daughter
+                else ("" if is_han else surname + name if surname and not name.startswith(surname) else name),
+            "surname": surname,
+            "relation": "딸 후보" if daughter else "아들 후보" if marker in ("子", "男") else "인물 후보",
+            "birth_death": "" if daughter else " · ".join(DATE.findall(tail)),
+            "details": ("사위 후보 원문 · " + rest) if daughter else tail,
+            "verified": False,
         })
     return candidates
 
@@ -75,6 +115,7 @@ def rapid_engine():
     })
 
 
+@lru_cache(maxsize=4)
 def recognize_rapid(image, *, glyph=False):
     try:
         import numpy as np
@@ -104,12 +145,12 @@ def recognize_rapid(image, *, glyph=False):
     return order_rotated_lines(output.boxes, output.txts)
 
 
-def recognize(image, engine="tesseract"):
+def recognize(image, engine="tesseract", surname=""):
     if not image.startswith((b"\x89PNG\r\n\x1a\n", b"\xff\xd8\xff")):
         raise ValueError("JPG 또는 PNG 이미지를 선택하세요.")
     if engine == "rapidocr":
         raw = recognize_rapid(image)
-        return {"raw": raw, "candidates": parse_candidates(raw)}
+        return {"raw": raw, "candidates": parse_candidates(raw, surname)}
     try:
         result = subprocess.run(
             ["tesseract", "stdin", "stdout", "--tessdata-dir", str(MODEL_DIR),
@@ -123,7 +164,7 @@ def recognize(image, engine="tesseract"):
     if result.returncode:
         raise RuntimeError("이미지 또는 세로쓰기 모델을 읽지 못했습니다.")
     raw = result.stdout.decode("utf-8")
-    return {"raw": raw, "candidates": parse_candidates(raw)}
+    return {"raw": raw, "candidates": parse_candidates(raw, surname)}
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -147,7 +188,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_error(404)
 
     def do_POST(self):
-        if self.path not in ("/ocr", "/ocr/glyph"):
+        if self.path not in ("/ocr", "/ocr/glyph", "/parse"):
             self.send_error(404)
             return
         if self.headers.get("Host") != f"127.0.0.1:{PORT}" or self.headers.get("Origin") != ORIGIN:
@@ -159,13 +200,22 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError("12 MiB 이하 이미지를 선택하세요.")
             self.connection.settimeout(10)
             image = self.rfile.read(size)
-            if self.path == "/ocr/glyph":
+            if self.path == "/parse":
+                try:
+                    data = json.loads(image.decode("utf-8-sig"))
+                except (UnicodeDecodeError, json.JSONDecodeError) as error:
+                    raise ValueError("원문 요청을 읽지 못했습니다.") from error
+                if not isinstance(data, dict) or not isinstance(data.get("raw"), str) or not isinstance(data.get("surname", ""), str):
+                    raise ValueError("원문과 성씨를 문자열로 입력하세요.")
+                raw = data["raw"]
+                self.send_json(200, {"raw": raw, "candidates": parse_candidates(raw, data.get("surname", ""))})
+            elif self.path == "/ocr/glyph":
                 if not image.startswith(b"\x89PNG\r\n\x1a\n"):
                     raise ValueError("한 글자 영역을 다시 선택하세요.")
                 raw = recognize_rapid(image, glyph=True)
                 self.send_json(200, {"raw": raw})
             else:
-                self.send_json(200, recognize(image, self.ocr_engine))
+                self.send_json(200, recognize(image, self.ocr_engine, unquote(self.headers.get("X-Jokbo-Surname", ""))))
         except ValueError as error:
             self.send_json(400, {"error": str(error)})
         except RuntimeError as error:
