@@ -124,7 +124,11 @@ function clearGlyphSelection() {
   glyphStatus('');
 }
 get('pick-glyph').onclick = () => {
-  if (!original.naturalWidth) return;
+  if (!previewUrl || original.currentSrc !== previewUrl ||
+      !original.complete || !original.naturalWidth) {
+    glyphStatus('원본 이미지가 표시된 뒤 영역을 지정하세요.');
+    return;
+  }
   clearGlyphSelection();
   original.classList.add('selecting');
   glyphStatus('한 글자의 왼쪽 위와 오른쪽 아래를 차례로 누르세요.');
