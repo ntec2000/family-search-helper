@@ -49,6 +49,7 @@ td input{min-width:6rem;width:100%;box-sizing:border-box}td:last-child select{ma
   <div id="preview" class="preview" hidden><img id="original" alt="선택한 족보 원본 이미지"></div>
   <div id="glyph-tools" hidden>
     <button id="pick-glyph">한 글자 영역 지정</button>
+    <button id="cancel-glyph" hidden>영역 지정 취소</button>
     <button id="read-glyph" disabled>RapidOCR 재판독</button>
     <p id="glyph-status" role="status"></p>
     <canvas id="glyph-crop" hidden></canvas>
@@ -119,6 +120,7 @@ function clearGlyphSelection() {
   firstCorner = null;
   original.classList.remove('selecting');
   crop.hidden = true;
+  get('cancel-glyph').hidden = true;
   get('read-glyph').disabled = true;
   get('glyph-result').value = '';
   glyphStatus('');
@@ -131,13 +133,18 @@ get('pick-glyph').onclick = () => {
   }
   clearGlyphSelection();
   original.classList.add('selecting');
+  get('cancel-glyph').hidden = false;
   glyphStatus('한 글자의 왼쪽 위와 오른쪽 아래를 차례로 누르세요. 취소: Esc');
 };
-document.addEventListener('keydown', event => {
-  if (event.key !== 'Escape' || !original.classList.contains('selecting')) return;
+function cancelGlyphSelection() {
+  if (!original.classList.contains('selecting')) return;
   clearGlyphSelection();
   get('pick-glyph').focus();
   glyphStatus('영역 지정을 취소했습니다.');
+}
+get('cancel-glyph').onclick = cancelGlyphSelection;
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape') cancelGlyphSelection();
 });
 original.onclick = event => {
   if (!original.classList.contains('selecting')) return;
@@ -171,6 +178,7 @@ original.onclick = event => {
   firstCorner = null;
   original.classList.remove('selecting');
   crop.hidden = false;
+  get('cancel-glyph').hidden = true;
   get('read-glyph').disabled = false;
   glyphStatus('획이 모두 보이는지 확인하고 재판독을 누르세요.');
 };
