@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -125,6 +125,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (kIsWeb) {
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('저장 후 브라우저 탭을 닫으세요.')));
+      return;
+    }
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('기록을 저장한 뒤 홈 화면으로 이동하세요.')));
       return;
     }
     final ok = await showDialog<bool>(
