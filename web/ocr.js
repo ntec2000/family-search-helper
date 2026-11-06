@@ -59,6 +59,23 @@
     return servicePromise;
   }
 
+  // chi_tra_vert's recognition model expects a glyph rotated with its
+  // vertical line. PSM 10 does not perform the layout rotation for us.
+  async function rotatedGlyph(path) {
+    const image = new Image();
+    image.src = path;
+    await image.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = image.naturalHeight;
+    canvas.height = image.naturalWidth;
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('글자 이미지를 준비하지 못했습니다.');
+    context.translate(0, canvas.height);
+    context.rotate(-Math.PI / 2);
+    context.drawImage(image, 0, 0);
+    return canvas;
+  }
+
   let pending = Promise.resolve();
   function recognize(path, singleColumn, glyph) {
     const result = pending.then(async () => {
@@ -80,8 +97,13 @@
         tessedit_pageseg_mode: glyph ? '10' : '5',
         preserve_interword_spaces: '1',
       });
-      const {data} = await instance.recognize(path);
-      return data.text;
+      const canvas = glyph ? await rotatedGlyph(path) : null;
+      try {
+        const {data} = await instance.recognize(canvas || path);
+        return data.text;
+      } finally {
+        if (canvas) { canvas.width = 0; canvas.height = 0; }
+      }
     });
     pending = result.catch(() => {});
     return result;

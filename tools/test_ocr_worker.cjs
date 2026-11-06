@@ -6,25 +6,48 @@ const vm = require('node:vm');
 
 const source = fs.readFileSync(path.join(__dirname, '../web/ocr.js'), 'utf8');
 
-function setup({failPage = false} = {}) {
+function setup({failPage = false, failGlyphDecode = false} = {}) {
   const created = [];
   const parameters = [];
+  const recognized = [];
+  const canvases = [];
+  const transforms = [];
   const context = vm.createContext({
     URL,
-    document: {baseURI: 'https://example.test/app/'},
+    Image: class {
+      naturalWidth = 19;
+      naturalHeight = 31;
+      async decode() { if (failGlyphDecode) throw Error('glyph decode failed'); }
+    },
+    document: {baseURI: 'https://example.test/app/',
+      createElement(tag) {
+        assert.equal(tag, 'canvas');
+        const canvas = {width: 0, height: 0, getContext: () => ({
+          translate: (...args) => transforms.push(['translate', ...args]),
+          rotate: angle => transforms.push(['rotate', angle]),
+          drawImage: () => transforms.push(['draw']),
+        })};
+        canvases.push(canvas);
+        return canvas;
+      },
+    },
     Tesseract: {
       async createWorker(language, _mode, options) {
         created.push({language, options});
         if (failPage && language.includes('+kor')) throw Error('page model unavailable');
         return {
           async setParameters(value) { parameters.push(value); },
-          async recognize() { return {data: {text: language}}; },
+          async recognize(input) {
+            recognized.push(typeof input === 'string' ? input :
+                {width: input.width, height: input.height});
+            return {data: {text: language}};
+          },
         };
       },
     },
   });
   vm.runInContext(source, context);
-  return {recognize: context.jokboRecognize, glyph: context.jokboRecognizeGlyph, created, parameters};
+  return {recognize: context.jokboRecognize, glyph: context.jokboRecognizeGlyph, created, parameters, recognized, canvases, transforms};
 }
 
 test('failed page initialization does not block the bundled column model', async () => {
@@ -85,4 +108,25 @@ test('a configured local engine error is shown to the user', async () => {
   });
   vm.runInContext(source, context);
   await assert.rejects(context.jokboRecognizeGlyph('blob:crop'), /model unavailable/);
+});
+
+test('glyph model gets a complete counterclockwise raster and releases it', async () => {
+  const {glyph, recognize, recognized, canvases, transforms} = setup();
+  await glyph('glyph-image');
+  assert.deepEqual(recognized[0], {width:31, height:19});
+  assert.deepEqual(transforms.slice(0,2), [
+    ['translate',0,19], ['rotate',-Math.PI/2],
+  ]);
+  assert.equal(canvases[0].width, 0);
+  assert.equal(canvases[0].height, 0);
+  await recognize('unchanged-column', true);
+  assert.equal(recognized[1], 'unchanged-column');
+  assert.equal(canvases.length, 1);
+});
+
+test('unreadable glyph does not block later column recognition', async () => {
+  const {glyph, recognize, recognized} = setup({failGlyphDecode:true});
+  await assert.rejects(glyph('bad-glyph'), /glyph decode failed/);
+  assert.equal(await recognize('good-column', true), 'chi_tra_vert');
+  assert.deepEqual(recognized, ['good-column']);
 });

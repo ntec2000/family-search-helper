@@ -122,6 +122,7 @@ List<Uint8List> genealogyOcrColumns(Uint8List bytes) {
       start = null;
     }
   }
+  _joinHeadingFragments(image, spans);
   if (spans.length < 2 || spans.length > 80) return [];
   final columns = <Uint8List>[];
   for (var i = spans.length - 1; i >= 0; i--) {
@@ -140,6 +141,78 @@ List<Uint8List> genealogyOcrColumns(Uint8List bytes) {
         backgroundColor: img.ColorRgb8(255, 255, 255)))));
   }
   return columns;
+}
+
+
+typedef _InkRun = ({int top, int bottom, int inkRows});
+
+/// Join only tall, narrow pieces sharing a large glyph's vertical band.
+/// Ordinary note columns and two complete adjacent headings stay separate.
+void _joinHeadingFragments(img.Image image, List<(int, int)> spans) {
+  List<_InkRun> runs((int, int) span) {
+    final width = span.$2 - span.$1 + 1;
+    final minimum = (image.height * .14).ceil();
+    final output = <_InkRun>[];
+    int? top;
+    var last = 0;
+    var runInkRows = 0;
+    var totalInkRows = 0;
+    void finish() {
+      if (top != null && last - top! + 1 >= minimum &&
+          last - top! + 1 <= image.height * .45 &&
+          last - top! + 1 >= width * 1.25) {
+        output.add((top: top!, bottom: last, inkRows: runInkRows));
+      }
+      top = null;
+      runInkRows = 0;
+    }
+    for (var y = (image.height * .03).ceil();
+        y < image.height * .97; y++) {
+      var dark = 0;
+      for (var x = span.$1; x <= span.$2; x++) {
+        if (img.getLuminance(image.getPixel(x, y)) < 180) dark++;
+      }
+      if (dark >= (width * .08).ceil().clamp(2, width)) {
+        if (top != null && y - last > 4) finish();
+        top ??= y;
+        last = y;
+        runInkRows++;
+        totalInkRows++;
+      }
+    }
+    finish();
+    // Multiple equally sized runs usually indicate separate note columns.
+    return output.length == 1 && output.single.inkRows >= totalInkRows * .5
+        ? output : <_InkRun>[];
+  }
+
+  for (var i = 0; i + 1 < spans.length; i++) {
+    final left = spans[i];
+    final right = spans[i + 1];
+    final gap = right.$1 - left.$2 - 1;
+    final combinedWidth = right.$2 - left.$1 + 1;
+    var join = false;
+    for (final a in runs(left)) {
+      for (final b in runs(right)) {
+        final ah = a.bottom - a.top + 1;
+        final bh = b.bottom - b.top + 1;
+        final small = ah < bh ? ah : bh;
+        final large = ah > bh ? ah : bh;
+        final overlap = (a.bottom < b.bottom ? a.bottom : b.bottom) -
+            (a.top > b.top ? a.top : b.top) + 1;
+        if (overlap >= small * .75 && large <= small * 1.6 &&
+            gap <= small * .4 && combinedWidth <= large * 1.45) {
+          join = true;
+        }
+      }
+    }
+    if (join) {
+      spans[i] = (left.$1, right.$2);
+      spans.removeAt(i + 1);
+      // A joined full glyph is no longer a narrow fragment; recheck safely.
+      i--;
+    }
+  }
 }
 
 typedef GenealogyColumnLayout = ({bool heading, bool startsLow});
