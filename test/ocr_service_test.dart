@@ -5,6 +5,39 @@ import 'package:family_search_helper/services/jokbo_parser.dart';
 void main() {
   OcrResult result(String text) => OcrResult(text: text, rawBlocks: []);
 
+  test('한 구획이 실패해도 완료된 OCR과 이후 구획을 순서대로 보존한다', () async {
+    final visited = <int>[];
+    final texts = <String>[];
+    final labels = <String?>[];
+    await OcrService.readRowsInOrder(4, (index) async {
+      visited.add(index);
+      if (index == 1) throw StateError('구획 OCR 실패');
+      texts.add(['子格', '', '子承烈', '子賢東'][index]);
+      labels.add(['二十一世', null, '二十三世', '二十四世'][index]);
+    });
+    final whole = result('전체 페이지 비교 원문');
+    final combined = OcrService.useSegmentedOrWhole(whole, texts, [],
+        generationLabels: labels);
+    expect(visited, [0, 1, 2, 3]);
+    expect(combined.regionTexts, ['子格', '子承烈', '子賢東']);
+    expect(combined.generationLabels, ['二十一世', '二十三世', '二十四世']);
+    expect(combined.alternatives, contains(whole.text));
+  });
+
+  test('모든 구획이 실패하면 읽힌 전체 OCR을 그대로 사용한다', () async {
+    final texts = <String>[];
+    var attempts = 0;
+    await OcrService.readRowsInOrder(3, (index) async {
+      attempts++;
+      throw StateError('구획 OCR 실패');
+    });
+    final whole = result('子格');
+    expect(attempts, 3);
+    expect(OcrService.useSegmentedOrWhole(whole, texts, []), same(whole));
+    expect(() => OcrService.useSegmentedOrWhole(null, texts, []),
+        throwsStateError);
+  });
+
   test('재판독은 같은 표식의 누락 인명만 후보로 복구한다', () {
     expect(OcrService.recoverBareName('子', '子 格'), '子格');
     expect(OcrService.recoverBareName('子格', '子昃'), isNull);

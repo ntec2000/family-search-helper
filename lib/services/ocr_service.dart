@@ -85,79 +85,88 @@ class OcrService {
     final rawColumns = <String>[];
     final generationLabels = <String?>[];
     var nameRetriesLeft = 2;
-    for (var i = 0; i < regions.length; i++) {
+    await readRowsInOrder(regions.length, (i) async {
       final row = regions[i];
       onProgress?.call('세대 구획 ${i + 1}/${regions.length} 한자 인식 중...');
-      try {
-        final columns = await compute(genealogyOcrColumns, row.body);
-        var entries = <String>[];
-        if (columns.isNotEmpty) {
-          final columnTexts = await readColumnsOrNull(columns.length, (j) async {
-            onProgress?.call('구획 ${i + 1}/${regions.length} · 세로 열 ${j + 1}/${columns.length} 인식 중...');
-            return (await recognize(await storeImageBytes(columns[j], extension: 'png'),
-                singleColumn: true)).text;
-          });
-          if (columnTexts != null && hasReadableText(columnTexts)) {
-            rawColumns.add(columnTexts.join('\n'));
-            final layouts = await compute(genealogyOcrColumnLayouts, columns);
-            for (var j = 0; j < columns.length && nameRetriesLeft > 0; j++) {
-              if (layouts[j].startsLow || !_barePersonMarker.hasMatch(columnTexts[j].trim())) {
-                continue;
-              }
-              nameRetriesLeft--;
-              try {
-                final crop = await compute(genealogyOcrNameCrop, columns[j]);
-                final retry = await recognize(
-                    await storeImageBytes(crop, extension: 'png'),
-                    singleColumn: true);
-                if (retry.text.trim().isNotEmpty) {
-                  rawColumns.add('[구획 ${i + 1} · 열 ${j + 1} 인명 재판독] ${retry.text.trim()}');
-                }
-                final candidate = recoverBareName(columnTexts[j], retry.text);
-                if (candidate != null) columnTexts[j] = candidate;
-              } catch (_) {
-                // A retry failure does not discard the first pass.
-              }
+      final columns = await compute(genealogyOcrColumns, row.body);
+      var entries = <String>[];
+      if (columns.isNotEmpty) {
+        final columnTexts = await readColumnsOrNull(columns.length, (j) async {
+          onProgress?.call('구획 ${i + 1}/${regions.length} · 세로 열 ${j + 1}/${columns.length} 인식 중...');
+          return (await recognize(await storeImageBytes(columns[j], extension: 'png'),
+              singleColumn: true)).text;
+        });
+        if (columnTexts != null && hasReadableText(columnTexts)) {
+          rawColumns.add(columnTexts.join('\n'));
+          final layouts = await compute(genealogyOcrColumnLayouts, columns);
+          for (var j = 0; j < columns.length && nameRetriesLeft > 0; j++) {
+            if (layouts[j].startsLow || !_barePersonMarker.hasMatch(columnTexts[j].trim())) {
+              continue;
             }
-            entries = assembleOcrEntries(columnTexts,
-                headings: layouts.map((layout) => layout.heading).toList(),
-                startsLow: layouts.map((layout) => layout.startsLow).toList());
-          }
-        }
-        if (JokboParser.parseRegions(entries).isEmpty) {
-          final wholeRow = (await recognize(await storeImageBytes(row.body),
-              singleColumn: wholePage == null)).text;
-          // Keep readable column evidence when neither path finds a person.
-          if (entries.isEmpty || JokboParser.parseRegions([wholeRow]).isNotEmpty) {
-            entries = [wholeRow];
-          } else if (wholeRow.trim().isNotEmpty) {
-            rawColumns.add(wholeRow);
-          }
-        }
-        String? label;
-        final margin = row.generationMargin;
-        if (margin != null && hasReadableText(entries)) {
-          try {
-            final marginText = (await recognize(
-                await storeImageBytes(margin, extension: 'png'),
-                singleColumn: true)).text.trim();
-            if (marginText.isNotEmpty) {
-              rawColumns.add('[구획 ${i + 1} 세대 여백] $marginText');
-              label = marginText;
+            nameRetriesLeft--;
+            try {
+              final crop = await compute(genealogyOcrNameCrop, columns[j]);
+              final retry = await recognize(
+                  await storeImageBytes(crop, extension: 'png'),
+                  singleColumn: true);
+              if (retry.text.trim().isNotEmpty) {
+                rawColumns.add('[구획 ${i + 1} · 열 ${j + 1} 인명 재판독] ${retry.text.trim()}');
+              }
+              final candidate = recoverBareName(columnTexts[j], retry.text);
+              if (candidate != null) columnTexts[j] = candidate;
+            } catch (_) {
+              // A retry failure does not discard the first pass.
             }
-          } catch (_) {
-            // A failed margin must not discard the recognized people.
           }
+          entries = assembleOcrEntries(columnTexts,
+              headings: layouts.map((layout) => layout.heading).toList(),
+              startsLow: layouts.map((layout) => layout.startsLow).toList());
         }
-        texts.addAll(entries);
-        generationLabels.addAll(List<String?>.filled(entries.length, label));
-      } catch (_) {
-        if (wholePage != null) return wholePage;
-        // A failed row cannot replace previously recognized rows.
       }
-    }
+      if (JokboParser.parseRegions(entries).isEmpty) {
+        final wholeRow = (await recognize(await storeImageBytes(row.body),
+            singleColumn: wholePage == null)).text;
+        // Keep readable column evidence when neither path finds a person.
+        if (entries.isEmpty || JokboParser.parseRegions([wholeRow]).isNotEmpty) {
+          entries = [wholeRow];
+        } else if (wholeRow.trim().isNotEmpty) {
+          rawColumns.add(wholeRow);
+        }
+      }
+      String? label;
+      final margin = row.generationMargin;
+      if (margin != null && hasReadableText(entries)) {
+        try {
+          final marginText = (await recognize(
+              await storeImageBytes(margin, extension: 'png'),
+              singleColumn: true)).text.trim();
+          if (marginText.isNotEmpty) {
+            rawColumns.add('[구획 ${i + 1} 세대 여백] $marginText');
+            label = marginText;
+          }
+        } catch (_) {
+          // A failed margin must not discard the recognized people.
+        }
+      }
+      texts.addAll(entries);
+      generationLabels.addAll(List<String?>.filled(entries.length, label));
+    });
     return useSegmentedOrWhole(wholePage, texts, rawColumns,
         generationLabels: generationLabels);
+  }
+
+  /// A failed generation row must not discard completed rows or skip later rows.
+  /// The caller retains each successful row and falls back to whole-page OCR
+  /// only when no row contains readable text.
+  static Future<void> readRowsInOrder(
+      int count, Future<void> Function(int) readRow) async {
+    for (var i = 0; i < count; i++) {
+      try {
+        await readRow(i);
+      } catch (_) {
+        // Continue in source order; never reuse another row's text or label.
+      }
+    }
   }
 
   static final _barePersonMarker = RegExp(r'^[子女男]$');
