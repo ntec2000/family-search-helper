@@ -21,12 +21,12 @@ class DbService {
         (await getApplicationDocumentsDirectory()).path, 'family_search.db');
     _db = await openDatabase(
       path,
-      version: 8,
+      version: 9,
       onCreate: (db, v) async {
         await db.execute('''
           CREATE TABLE persons (
             id TEXT PRIMARY KEY,
-            name_hanja TEXT, name_hangul TEXT, name_roman TEXT,
+            name_hanja TEXT, name_hangul TEXT, name_roman TEXT, generated_name TEXT,
             surname_hanja TEXT, surname_hangul TEXT,
             ja TEXT, ho TEXT, siho TEXT, bongwan TEXT, pa TEXT, sega INTEGER,
             gender TEXT,
@@ -54,6 +54,12 @@ class DbService {
             'CREATE TABLE app_config (k TEXT PRIMARY KEY, v TEXT)');
       },
       onUpgrade: (db, oldV, newV) async {
+        if (oldV < 9) {
+          final schema = await db.rawQuery('PRAGMA table_info(persons)');
+          if (!schema.any((column) => column['name'] == 'generated_name')) {
+            await db.execute('ALTER TABLE persons ADD COLUMN generated_name TEXT');
+          }
+        }
         if (oldV < 8) {
           await db.execute('ALTER TABLE persons ADD COLUMN source_document_path TEXT');
           await db.execute('ALTER TABLE persons ADD COLUMN source_page_number INTEGER');
@@ -223,8 +229,8 @@ class DbService {
     final rows = search == null || search.isEmpty
         ? await db.query('persons', orderBy: order)
         : await db.query('persons',
-            where: 'name_hangul LIKE ? OR name_hanja LIKE ?',
-            whereArgs: ['%$search%', '%$search%'],
+            where: 'name_hangul LIKE ? OR name_hanja LIKE ? OR generated_name LIKE ?',
+            whereArgs: ['%$search%', '%$search%', '%$search%'],
             orderBy: order);
     return rows.map(Person.fromMap).toList();
   }

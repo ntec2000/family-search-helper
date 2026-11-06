@@ -1,5 +1,6 @@
 import '../widgets/source_image.dart';
 import '../widgets/candidate_editor.dart';
+import '../widgets/family_candidates_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/person.dart';
@@ -11,6 +12,7 @@ import '../services/parent_child_review.dart';
 import '../services/surname_review.dart';
 import '../services/family_name_candidates.dart';
 import '../services/female_name_display.dart';
+import '../services/daughter_order.dart';
 import '../theme/traditional_theme.dart';
 import '../widgets/surname_input_dialog.dart';
 import 'person_card_screen.dart';
@@ -172,7 +174,7 @@ class _ResultScreenState extends State<ResultScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('${p.nameHanja} ${p.nameHangul} · ID: ${p.id} · ${p.sega == null ? "세대 미상" : "${p.sega}世"} · ${p.gender == "M" ? "남" : p.gender == "F" ? "여" : "성별 미상"}'),
+              Text('${p.displayName} · ID: ${p.id} · ${p.sega == null ? "세대 미상" : "${p.sega}世"} · ${p.gender == "M" ? "남" : p.gender == "F" ? "여" : "성별 미상"}'),
               Text('출생: ${p.birthDateLunar ?? p.birthDateSolar ?? "미상"} · 사망: ${p.deathDateLunar ?? p.deathDateSolar ?? "미상"}',
                   style: const TextStyle(fontSize: 12)),
               if (p.rawText?.trim().isNotEmpty == true)
@@ -424,7 +426,8 @@ class _ResultScreenState extends State<ResultScreen> {
   Future<void> _saveReviewedPersons() async {
     if (_saved || _saving) return;
     if (_persons.isEmpty || _persons.any((p) => p.gender != 'F' &&
-        p.nameHanja.trim().isEmpty && p.nameHangul.trim().isEmpty && p.nameRoman.trim().isEmpty)) {
+        p.nameHanja.trim().isEmpty && p.nameHangul.trim().isEmpty && p.nameRoman.trim().isEmpty &&
+        (p.generatedName ?? '').trim().isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('이름이 비어 있는 후보를 수정하거나 제외하세요.')));
       return;
@@ -631,7 +634,7 @@ class _ResultScreenState extends State<ResultScreen> {
               tooltip: '수정할 인물 선택',
               onSelected: (person) => Navigator.pop(ctx, person),
               itemBuilder: (_) => [for (final p in _persons)
-                PopupMenuItem(value: p, child: Text('${p.nameHanja} ${p.nameHangul} · ${p.id}'))],
+                PopupMenuItem(value: p, child: Text('${p.displayName} · ${p.id}'))],
               child: const Padding(padding: EdgeInsets.all(12), child: Text('인물 수정'))),
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('닫기')),
         ],
@@ -742,7 +745,7 @@ class _ResultScreenState extends State<ResultScreen> {
                       selectedIds.remove(p.id);
                     }
                   }),
-                  title: Text('${p.nameHanja} ${p.nameHangul} (${p.gender == 'F' ? '여' : '남'}, ID: ${p.id})'),
+                  title: Text('${p.displayName} (${p.gender == 'F' ? '여' : '남'}, ID: ${p.id})'),
                   subtitle: Text('세대: ${p.sega?.toString() ?? "미상"}'
                       '${p.rawText?.trim().isNotEmpty == true ? " · 원문: ${p.rawText!.trim()}" : ""}',
                       maxLines: 3, overflow: TextOverflow.ellipsis),
@@ -782,28 +785,26 @@ class _ResultScreenState extends State<ResultScreen> {
     ));
   }
 
-  void _showFamilyCandidates() {
+  Future<void> _showFamilyCandidates() async {
+    if (_saved || _saving) return;
+    final sourceById = {for (final person in _persons) person.id: person};
     final rows = [for (final person in _persons)
       ...FamilyNameCandidates.fromPerson(person)];
-    showDialog<void>(context: context, builder: (ctx) => AlertDialog(
-      title: Text('가족 이름 후보 (${rows.length}건)'),
-      content: SizedBox(width: double.maxFinite, child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text('원문 확인 전 후보입니다. 미상 표시는 실제 이름이 아니며 '
-              '동일 인물이 중복될 수 있습니다. 괄호의 한글은 사전 음이므로 확인하세요. 이 목록은 별도로 저장되지 않습니다.'),
-          const SizedBox(height: 8),
-          Flexible(child: ListView.builder(shrinkWrap: true, itemCount: rows.length,
-            itemBuilder: (_, index) {
-              final row = rows[index];
-              return ListTile(title: Text('${index + 1}. ${HanjaDict.instance.annotate(row.display)}'),
-                subtitle: Text('${row.role}${row.placeholder ? ' · 표시명' : ''} · 원본 인물 ID: ${row.sourcePersonId}'));
-            })),
-        ],
-      )),
-      actions: [TextButton(onPressed: () => Navigator.pop(ctx),
-        child: const Text('닫기'))],
-    ));
+    final selected = await showDialog<List<FamilyNameCandidate>>(
+      context: context, builder: (_) => FamilyCandidatesDialog(
+          rows: rows, existingIds: _persons.map((p) => p.id).toSet()));
+    if (selected == null || selected.isEmpty || !mounted || _saved || _saving) return;
+    setState(() {
+      final ids = _persons.map((p) => p.id).toSet();
+      for (final row in selected) {
+        final source = sourceById[row.sourcePersonId];
+        if (source != null && ids.add(row.candidateId)) {
+          _persons.add(row.materialize(source));
+        }
+      }
+      _relationshipsReviewed = false;
+      _reviewStep = 0;
+    });
   }
 
   List<Person> get _comparisonNames => widget.comparisonNames.where((candidate) {
@@ -1172,11 +1173,15 @@ class _PersonList extends StatelessWidget {
         final segaPrefix = p.sega != null ? '[${p.sega}世] ' : '';
         final String nameLine;
         if (isFemale) {
-          final ord = (p.relation ?? '').trim().isNotEmpty ? p.relation!.trim() : '여성';
+          final daughterRole = DaughterOrder.label(p, _persons);
+          final ord = daughterRole.isNotEmpty ? daughterRole : '여성';
           final displayed = FemaleNameDisplay.forPerson(p);
           final nm = p.nameHangul.trim().isEmpty && p.nameHanja.trim().isEmpty
               ? '$displayed (개인 이름 미상)' : displayed;
           nameLine = '$segaPrefix$ord (이름: $nm)';
+        } else if ((p.generatedName ?? '').trim().isNotEmpty &&
+            p.nameHanja.trim().isEmpty && p.nameHangul.trim().isEmpty) {
+          nameLine = '$segaPrefix${p.generatedName} (생성 표시명)';
         } else if (p.nameHanja.isNotEmpty) {
           final nm = fullHangul.isNotEmpty ? fullHangul : p.nameHanja;
           nameLine = '$segaPrefix${p.nameHanja} (이름: $nm)';

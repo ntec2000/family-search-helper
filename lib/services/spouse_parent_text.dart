@@ -5,8 +5,11 @@ import 'hanja_dict.dart';
 /// 배우자 부모 기록을 원문 그대로 표시하며 이름 미상 표시는 구분한다.
 class SpouseParentText {
   /// 배우자의 성씨를 부친의 짧은 이름에 조합한 표시 후보. 원문 필드는 보존한다.
-  static String candidateFatherName(Person person) {
-    final father = (person.spouseFather ?? '').trim();
+  static String candidateFatherName(Person person) =>
+      candidatePaternalName(person, person.spouseFather);
+
+  static String candidatePaternalName(Person person, String? name) {
+    final father = (name ?? '').trim();
     final surname = person.gender == 'F'
         ? Genealogy.personalNameSurname(person.spouseHanja ?? '')
         : Genealogy.spouseSurname(person.spouseHanja);

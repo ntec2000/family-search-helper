@@ -13,6 +13,7 @@ class _CandidateEditorState extends State<CandidateEditor> {
   static const fields = {
     'surname_hanja': '성씨 한자', 'surname_hangul': '성씨 한글',
     'name_hanja': '한자 이름', 'name_hangul': '한글 이름',
+    'generated_name': '생성 표시명 (원문 개인 이름 아님)',
     'bongwan': '본관', 'ja': '자(字)', 'ho': '호(號)',
     'birth_date_lunar': '출생 · 간지/음력 원문',
     'death_date_lunar': '사망 · 간지/기일 원문',

@@ -15,6 +15,8 @@ class FemaleNameDisplay {
       return hanjaSurname.isNotEmpty && !hanja.startsWith(hanjaSurname)
           ? '$hanjaSurname$hanja' : hanja;
     }
+    final generated = (person.generatedName ?? '').trim();
+    if (generated.isNotEmpty) return generated;
     final value = surname.isNotEmpty ? surname : (person.surnameHanja ?? '').trim();
     return value.isEmpty ? '성씨 미상' : (value.endsWith('씨') || value.endsWith('氏') ? value : '$value씨');
   }

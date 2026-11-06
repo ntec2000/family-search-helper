@@ -59,3 +59,10 @@ Apply on every genealogy task, including a follow-up saying "다음". This secti
 - Build the existing shared Flutter app for Android and Web. iPhone uses the same Web app through Safari, optionally added to the Home Screen.
 - Do not develop, sign, build, or distribute a separate native iOS app unless the user explicitly changes this decision. Keep native iOS CI disabled.
 - Preserve the existing brand, data, original OCR and review flow. A Windows/Python launcher is an optional PC OCR path, not the iPhone product or a replacement app.
+
+## Android-first family-name rules (latest user instruction)
+- Prioritize completing Android; do not continue separate web deployment work unless requested.
+- Apply docs/ANDROID_FAMILY_NAME_RULES.md to family extraction and generated anonymous spouse labels.
+- User-provided sample readings are a review fixture, not universal OCR replacements.
+- Include selected spouse/in-law candidates and generated labels in the person review/save list.
+- Store generated labels separately from personal names and preserve source text; do not infer confirmed biological relationships from generated labels.

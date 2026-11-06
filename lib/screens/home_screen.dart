@@ -345,8 +345,8 @@ class _PersonTile extends StatelessWidget {
               style: const TextStyle(fontSize: 18)),
         ),
         title: Row(children: [
-          Text(person.nameHangul,
-              style: const TextStyle(fontWeight: FontWeight.bold)),
+          Flexible(child: Text(person.displayName,
+              style: const TextStyle(fontWeight: FontWeight.bold))),
           const SizedBox(width: 8),
           Text(person.nameHanja,
               style: const TextStyle(color: HanjiColors.mukSoft)),

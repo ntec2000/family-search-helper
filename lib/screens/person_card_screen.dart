@@ -185,7 +185,7 @@ class _PersonCardScreenState extends State<PersonCardScreen> {
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
     return Scaffold(
       appBar: AppBar(
-        title: Text('${_p!.nameHangul} 조상 신상정보'),
+        title: Text('${_p!.displayName} 조상 신상정보'),
         actions: [
           IconButton(icon: const Icon(Icons.share), onPressed: _shareAsText),
           IconButton(icon: const Icon(Icons.save), onPressed: _save),
@@ -200,6 +200,11 @@ class _PersonCardScreenState extends State<PersonCardScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _section('인물 정보'),
+                if ((_p!.generatedName ?? '').isNotEmpty &&
+                    _p!.nameHangul.isEmpty && _p!.nameHanja.isEmpty)
+                  Padding(padding: const EdgeInsets.only(bottom: 12),
+                      child: Text('생성 표시명: ${_p!.generatedName} · 개인 이름 미기재')),
+
                 _genderRow(),
                 Row(children: [
                   Expanded(

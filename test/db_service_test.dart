@@ -33,17 +33,17 @@ void main() {
     final legacy = await openDatabase('${directory.path}/family_search.db', version: 7,
         onCreate: (db, version) async {
       final columns = Person(id: 'legacy').toMap().keys.where((key) =>
-          key != 'source_document_path' && key != 'source_page_number');
+          key != 'source_document_path' && key != 'source_page_number' && key != 'generated_name');
       await db.execute('CREATE TABLE persons (${columns.map((key) =>
           '$key ${key == 'id' ? 'TEXT PRIMARY KEY' : key == 'sega' ? 'INTEGER' : 'TEXT'}').join(',')})');
       await db.execute('CREATE TABLE app_config (k TEXT PRIMARY KEY, v TEXT)');
       await db.insert('persons', Person(id: 'legacy', rawText: '기존 원문 보존').toMap()
-        ..remove('source_document_path')..remove('source_page_number'));
+        ..remove('source_document_path')..remove('source_page_number')..remove('generated_name'));
     });
     await legacy.close();
     await service.open();
     expect((await service.getPerson('legacy'))!.rawText, '기존 원문 보존');
-    expect(await service.db.getVersion(), 8);
+    expect(await service.db.getVersion(), 9);
   });
 
   tearDownAll(() async {
@@ -54,6 +54,19 @@ void main() {
   });
 
   setUp(() async => service.clearAll());
+
+  test('생성 표시명은 개인 이름을 비운 채 저장·검색·복원한다', () async {
+    final wife = Person(id: 'generated-wife', gender: 'F',
+        generatedName: '변국성의 부인', rawText: '보존할 원문');
+    await service.upsertPersonsAtomically([wife]);
+    final restored = (await service.getPerson(wife.id))!;
+    expect(restored.generatedName, '변국성의 부인');
+    expect(restored.nameHanja, isEmpty);
+    expect(restored.nameHangul, isEmpty);
+    expect(restored.rawText, '보존할 원문');
+    expect(restored.displayName, '변국성의 부인');
+    expect((await service.listPersons(search: '변국성의 부인')).single.id, wife.id);
+  });
 
   test('확인한 FamilySearch ID는 기존 연결·대기·중복을 원자적으로 보호한다', () async {
     await service.upsertPerson(Person(id: 'bind-a'));

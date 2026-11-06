@@ -8,6 +8,7 @@ import '../services/gedcom_export.dart';
 import '../services/ganzhi_year_label.dart';
 import '../services/family_reference_text.dart';
 import '../services/female_name_display.dart';
+import '../services/daughter_order.dart';
 import '../services/spouse_parent_text.dart';
 import '../services/gender_label.dart';
 import '../services/familysearch_record.dart';
@@ -123,7 +124,8 @@ class _State extends State<ExportScreen> {
             hanja: '', hangul: '',
             surnameHanja: p.surnameHanja, surnameHangul: p.surnameHangul,
             isFemale: true, inferSurnameFromName: false);
-        final dauRel = (p.relation ?? '').isNotEmpty ? p.relation! : '여성';
+        final daughterRole = DaughterOrder.label(p, list);
+        final dauRel = daughterRole.isNotEmpty ? daughterRole : '여성';
         final femaleName = FemaleNameDisplay.forPerson(p);
         final hasPersonalName = p.nameHangul.trim().isNotEmpty || p.nameHanja.trim().isNotEmpty;
         buf.writeln(div);
@@ -188,7 +190,10 @@ class _State extends State<ExportScreen> {
           ? p.nameRoman
           : Romanizer.romanizeName(np.surnameHangul + np.givenHangul);
       buf.writeln(div);
-      buf.writeln('${i + 1}. $segaTag${p.nameHanja} (이름: ${np.surnameHangul}${np.givenHangul})');
+      buf.writeln('${i + 1}. $segaTag${p.nameHanja} (이름: ${p.displayName})');
+      if ((p.generatedName ?? '').isNotEmpty && p.nameHanja.isEmpty && p.nameHangul.isEmpty) {
+        buf.writeln('  생성 표시명 : ${p.generatedName} (원문 개인 이름 미기재)');
+      }
       buf.writeln('  성(姓)    : ${np.surnameHangul} ${np.surnameHanja} (${np.surnameRoman})');
       buf.writeln('  이름      : ${np.givenHangul} ${np.givenHanja}'
           '${np.givenRoman.isNotEmpty ? ' (${np.givenRoman})' : ''}');

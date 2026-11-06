@@ -7,6 +7,8 @@ class Person {
   String nameHanja;       // 崔海斗
   String nameHangul;      // 최해두
   String nameRoman;       // CHOI HAE-DU
+  // Generated label for an unnamed person; never a recorded personal name.
+  String? generatedName;
   // v2.2 — 성(姓)/이름 분리 표기 및 성씨 상속
   String? surnameHanja;   // 姓 한자 — 예: 崔
   String? surnameHangul;  // 성 한글 — 예: 최
@@ -80,6 +82,7 @@ class Person {
     this.nameHanja = '',
     this.nameHangul = '',
     this.nameRoman = '',
+    this.generatedName,
     this.surnameHanja,
     this.surnameHangul,
     this.ja,
@@ -133,11 +136,35 @@ class Person {
         createdAt = createdAt ?? DateTime.now(),
         updatedAt = updatedAt ?? DateTime.now();
 
+  String get displayName {
+    final korean = nameHangul.trim();
+    final hanja = nameHanja.trim();
+    if (korean.isNotEmpty) {
+      final surname = (surnameHangul ?? '').trim();
+      return surname.isNotEmpty && !korean.startsWith(surname)
+          ? '$surname$korean' : korean;
+    }
+    if (hanja.isNotEmpty) {
+      final surname = (surnameHanja ?? '').trim();
+      return surname.isNotEmpty && !hanja.startsWith(surname)
+          ? '$surname$hanja' : hanja;
+    }
+    final generated = (generatedName ?? '').trim();
+    if (generated.isNotEmpty) return generated;
+    final koreanSurname = (surnameHangul ?? '').trim();
+    final surname = koreanSurname.isNotEmpty ? koreanSurname : (surnameHanja ?? '').trim();
+    if (surname.isNotEmpty && gender == 'F') {
+      return surname.endsWith('씨') || surname.endsWith('氏') ? surname : '$surname씨';
+    }
+    return gender == 'F' ? '성씨 미상' : '이름 미상';
+  }
+
   Map<String, dynamic> toMap() => {
         'id': id,
         'name_hanja': nameHanja,
         'name_hangul': nameHangul,
         'name_roman': nameRoman,
+        'generated_name': generatedName,
         'surname_hanja': surnameHanja,
         'surname_hangul': surnameHangul,
         'ja': ja,
@@ -192,6 +219,7 @@ class Person {
         nameHanja: m['name_hanja'] ?? '',
         nameHangul: m['name_hangul'] ?? '',
         nameRoman: m['name_roman'] ?? '',
+        generatedName: m['generated_name'],
         surnameHanja: m['surname_hanja'],
         surnameHangul: m['surname_hangul'],
         ja: m['ja'],
