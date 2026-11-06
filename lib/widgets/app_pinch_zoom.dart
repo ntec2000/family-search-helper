@@ -38,8 +38,9 @@ class _AppPinchZoomState extends State<AppPinchZoom> {
           return PositionedDirectional(
             end: 12,
             top: MediaQuery.paddingOf(context).top + 64,
-            child: Tooltip(
-              message: '화면 배율 초기화',
+            child: Semantics(
+              label: '화면 배율 초기화',
+              button: true,
               child: FilledButton.tonalIcon(
                 key: const ValueKey('app-pinch-reset'),
                 onPressed: () => _transform.value = Matrix4.identity(),
