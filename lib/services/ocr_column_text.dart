@@ -14,7 +14,7 @@ List<String> assembleOcrEntries(List<String> columns,
   final entries = <String>[];
   final output = StringBuffer();
   for (var i = 0; i < columns.length; i++) {
-    final text = columns[i].trim();
+    final text = joinFragmentedHeadingLines(columns[i]);
     // 명시적인 표제는 OCR이 인명을 놓쳤어도 경계를 유지한다.
     // 빈 열은 새로운 인물 경계를 만들지 않는다.
     if (text.isEmpty) {
@@ -40,4 +40,43 @@ List<String> assembleOcrEntries(List<String> columns,
   }
   if (output.toString().trim().isNotEmpty) entries.add(output.toString().trim());
   return entries;
+}
+
+/// Join only line-separated glyphs within one OCR heading column.
+/// Plain spaces and adjacent columns are not evidence of one personal name.
+/// Original OCR remains in OcrResult.alternatives before assembly.
+String joinFragmentedHeadingLines(String raw) {
+  final lines = raw.trim().split(RegExp(r'\r?\n')).map((line) => line.trim())
+      .where((line) => line.isNotEmpty).toList();
+  if (lines.length < 2) return raw.trim();
+  final head = RegExp(r'^([子女男])\s*([一-鿿]{0,4})$').firstMatch(lines.first);
+  if (head == null) return raw.trim();
+  const structural = '子女男字號墓配生卒父祖系繼坐向忌出娶贈';
+  var name = head.group(2)!;
+  if (name.runes.any((r) => structural.contains(String.fromCharCode(r)))) {
+    return raw.trim();
+  }
+  final limit = head.group(1) == '女' ? 4 : 3;
+  var end = 1;
+  while (end < lines.length && RegExp(r'^[一-鿿]$').hasMatch(lines[end])) {
+    final glyph = lines[end];
+    if (structural.contains(glyph)) break;
+    // A split sexagenary birth/death date starts a field, not another name.
+    if (end + 2 < lines.length &&
+        RegExp(r'^[甲乙丙丁戊己庚辛壬癸]$').hasMatch(glyph) &&
+        RegExp(r'^[子丑寅卯辰巳午未申酉戌亥]$').hasMatch(lines[end + 1]) &&
+        RegExp(r'^[年生卒]').hasMatch(lines[end + 2])) break;
+    if (name.length >= limit) return raw.trim();
+    name += glyph;
+    end++;
+  }
+  if (end == 1 || name.isEmpty) return raw.trim();
+  if (end < lines.length) {
+    final next = lines[end];
+    // Require an explicit field or printed Korean reading after the heading.
+    // Another person marker may belong to a different column: do not merge.
+    if (!RegExp(r'^(?:[가-힣]|[字號墓配生卒父祖忌出娶贈]|[甲乙丙丁戊己庚辛壬癸])')
+        .hasMatch(next)) return raw.trim();
+  }
+  return ['${head.group(1)}$name', ...lines.skip(end)].join('\n');
 }
