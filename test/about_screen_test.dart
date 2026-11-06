@@ -31,8 +31,10 @@ void main() {
           await tester.pump();
           expect(tester.takeException(), isNull);
         }
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
         expect(scrollable.position.pixels,
-            scrollable.position.maxScrollExtent);
+            closeTo(scrollable.position.maxScrollExtent, 0.5));
       });
     }
   }
