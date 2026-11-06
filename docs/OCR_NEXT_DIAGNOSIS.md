@@ -1,13 +1,17 @@
-# OCR follow-up from user device log — 2026-11-07
+# OCR device-log diagnosis and scheduling fix — 2026-11-07
 
-The user's v3.0.4 comparison text includes heading retries for rows 2 through 5, but none for rows 6 and 7.
-The ten-retry budget was consumed by earlier headings, including page-title text (卷公源譜 / 卷之) and already readable names.
-This is evidence of a retry-selection/budget distribution issue. It does not prove whether ML Kit can read the later headings after reflow.
+The user supplied a device OCR log. All ten heading retries occurred in rows 2–5, including book/page titles (卷公源譜 / 卷之) and already readable names. Rows 6–7 had no heading retry.
 
-Next OCR scope:
-- Exclude book/page headers before spending name-retry budget.
-- Prioritize structurally suspicious headings across the entire page, rather than exhausting retries in early rows.
-- Retain every original reading and human review for conflicting names.
-- Do not replace 全免傑, 賢東束 or other names with sample answers.
+## v3.0.6 fix
 
-The v3.0.5 change is global app magnification only. It does not claim to fix these remaining OCR errors.
+- Remove obvious book/page/generation labels before assigning retry priority.
+- Strip only leading OCR punctuation for selection, retaining the original column.
+- Interpret ordinal prefixes when ranking, without changing recognized names.
+- Prioritize missing and structurally suspicious headings within each row.
+- Reserve budget for later rows and cap each row at three attempts.
+- Keep the total Android retry cap at ten; preserve existing Web behavior.
+- Retain original readings and expose conflicting names through human review.
+
+A synthetic seven-row fixture shaped like the device log verifies that rows 6 and 7 receive attempts and total attempts remain ten.
+This verifies scheduling, not Android character-recognition accuracy. No sample-specific name replacement is implemented.
+Unknown life events and relationships remain subject to source review.

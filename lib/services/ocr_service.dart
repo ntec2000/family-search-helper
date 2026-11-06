@@ -107,14 +107,14 @@ class OcrService {
         if (columnTexts != null && hasReadableText(columnTexts)) {
           rawColumns.add(columnTexts.join('\n'));
           final layouts = await compute(genealogyOcrColumnLayouts, columns);
-          for (var j = 0; j < columns.length && nameRetriesLeft > 0; j++) {
-            if (kIsWeb
-                ? (layouts[j].startsLow ||
-                    !_barePersonMarker.hasMatch(columnTexts[j].trim()))
-                : !shouldRetryHeading(columnTexts[j],
-                    heading: layouts[j].heading, startsLow: layouts[j].startsLow)) {
-              continue;
-            }
+          final retryIndices = kIsWeb
+              ? [for (var j = 0; j < columns.length; j++)
+                  if (!layouts[j].startsLow &&
+                      _barePersonMarker.hasMatch(columnTexts[j].trim())) j]
+                  .take(nameRetriesLeft)
+              : selectHeadingRetries(columnTexts, layouts,
+                  limit: rowRetryQuota(nameRetriesLeft, regions.length - i - 1));
+          for (final j in retryIndices) {
             nameRetriesLeft--;
             try {
               final strip = kIsWeb ? null :
@@ -193,21 +193,71 @@ class OcrService {
   static final _shortPersonName = RegExp(r'^[子女男][一-鿿]{1,3}$');
   static final _detailMarker = RegExp(r'[子女男字號墓配生卒父祖系繼坐向忌]');
 
-  /// Retry suspect headings, not every note column.
-  static bool shouldRetryHeading(String raw,
+  /// Reserve attempts for later rows; a single row may use at most three.
+  static int rowRetryQuota(int remainingBudget, int laterRows) {
+    if (remainingBudget <= 0) return 0;
+    final reserve = laterRows.clamp(0, remainingBudget - 1);
+    return (remainingBudget - reserve).clamp(1, 3);
+  }
+
+  /// Lower values identify missing or structurally suspicious headings.
+  /// This only schedules recognition; it never changes the source reading.
+  static int? headingRetryPriority(String raw,
       {required bool heading, required bool startsLow}) {
-    if (startsLow || raw.trim().isEmpty) return false;
-    final normalized = joinFragmentedHeadingLines(raw);
+    if (startsLow || raw.trim().isEmpty) return null;
+    var normalized = joinFragmentedHeadingLines(raw)
+        .replaceFirst(RegExp(r'^[\s|｜·,，:：;；]+'), '');
+    normalized = normalized.replaceFirstMapped(
+        RegExp(r'^([子女男])\s*([一二三四五六七八九十]+)\s+([一-鿿]{1,3})(?=\s|$)'),
+        (match) => _detailMarker.hasMatch(match[3]!)
+            ? match[0]! : '${match[1]}${match[2]}${match[3]}');
     final match = RegExp(r'^([子女男])\s*([一-鿿]{0,4})')
         .firstMatch(normalized);
-    if (match == null) return heading;
-    final name = match.group(2)!;
-    if (_detailMarker.hasMatch(name)) return false;
+    if (match == null) {
+      if (RegExp(r'[卷巻譜谱派]|之[終终]').hasMatch(normalized) ||
+          RegExp(r'^[0-9一二三四五六七八九十百+＋\s]+[世代]?$')
+              .hasMatch(normalized)) {
+        return null;
+      }
+      return heading ? 2 : null;
+    }
+    final name = match.group(2)!
+        .replaceFirst(RegExp(r'^[一二三四五六七八九十]+'), '');
+    if (_detailMarker.hasMatch(name)) return null;
+    if (name.isEmpty) return 0;
     final female = match.group(1) == '女';
-    return name.isEmpty || name.length >= 3 ||
-        (heading && name.length == 1) ||
-        (female && (name.length == 1 ||
-            !Genealogy.surnamesHanja.contains(name.substring(0, 1))));
+    if (female && (name.length == 1 ||
+        !Genealogy.surnamesHanja.contains(name.substring(0, 1)))) {
+      return 1;
+    }
+    if (!female && name.length >= 3) return 1;
+    if (female && name.length >= 3) return 3;
+    if (heading && name.length == 1) return 4;
+    return null;
+  }
+
+  static bool shouldRetryHeading(String raw,
+      {required bool heading, required bool startsLow}) =>
+      headingRetryPriority(raw, heading: heading, startsLow: startsLow) != null;
+
+  /// Stable priority order within a row, retaining source order for ties.
+  static List<int> selectHeadingRetries(List<String> columns,
+      List<GenealogyColumnLayout> layouts, {required int limit}) {
+    if (columns.length != layouts.length) {
+      throw ArgumentError('열과 표제 경계 수가 다릅니다.');
+    }
+    if (limit <= 0) return [];
+    final candidates = <({int index, int priority})>[];
+    for (var i = 0; i < columns.length; i++) {
+      final priority = headingRetryPriority(columns[i],
+          heading: layouts[i].heading, startsLow: layouts[i].startsLow);
+      if (priority != null) candidates.add((index: i, priority: priority));
+    }
+    candidates.sort((a, b) {
+      final priority = a.priority.compareTo(b.priority);
+      return priority != 0 ? priority : a.index.compareTo(b.index);
+    });
+    return candidates.take(limit).map((candidate) => candidate.index).toList();
   }
 
   /// Heading retries supply names only; never import nearby life events.

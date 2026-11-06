@@ -44,7 +44,7 @@ class AboutScreen extends StatelessWidget {
                 Text('Family Search Helper',
                     style: TextStyle(fontSize: 12, color: HanjiColors.mukSoft, letterSpacing: 2)),
                 SizedBox(height: 16),
-                Text('v3.0.5',
+                Text('v3.0.6',
                     style: TextStyle(fontSize: 14, color: HanjiColors.ju, letterSpacing: 2)),
               ],
             ),
@@ -174,6 +174,18 @@ class AboutScreen extends StatelessWidget {
               padding: EdgeInsets.all(8),
               child: Column(
                 children: [
+                  _Hist(
+                    ver: 'v3.0.6',
+                    date: '2026-11-07 · 재판독 우선순위 보완',
+                    items: [
+                      '책 제목·권말·세대 표제를 이름 재판독 대상에서 제외',
+                      '누락·잘린 이름·의심 표제를 우선하고 뒤쪽 세대에 재판독 기회를 배분',
+                      '페이지당 추가 판독 10회 제한을 유지하며 한 구획의 소진을 최대 3회로 제한',
+                      '사용자 기기 로그 형태를 재현하는 회귀 검사 추가. 실제 판독 정확도는 별도 확인 필요',
+                      '원문·기존 이름·가족관계와 전체 앱 핀치줌 기능 보존',
+                    ],
+                  ),
+                  Divider(),
                   _Hist(
                     ver: 'v3.0.5',
                     date: '2026-11-07 · 전체 앱 핀치줌',

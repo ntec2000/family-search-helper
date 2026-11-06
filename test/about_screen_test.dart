@@ -19,7 +19,7 @@ void main() {
             child: const AboutScreen(),
           ),
         ));
-        expect(find.text('v3.0.5'), findsOneWidget);
+        expect(find.text('v3.0.6'), findsOneWidget);
         expect(tester.takeException(), isNull);
         final scrollable = tester.state<ScrollableState>(
             find.byType(Scrollable).first);
