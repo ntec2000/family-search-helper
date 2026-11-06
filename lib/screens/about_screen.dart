@@ -44,7 +44,7 @@ class AboutScreen extends StatelessWidget {
                 Text('Family Search Helper',
                     style: TextStyle(fontSize: 12, color: HanjiColors.mukSoft, letterSpacing: 2)),
                 SizedBox(height: 16),
-                Text('v3.0.2',
+                Text('v3.0.3',
                     style: TextStyle(fontSize: 14, color: HanjiColors.ju, letterSpacing: 2)),
               ],
             ),
@@ -175,6 +175,20 @@ class AboutScreen extends StatelessWidget {
               child: Column(
                 children: [
                   _Hist(
+                    ver: 'v3.0.3',
+                    date: '2026-11-06 · 안드로이드 검수용',
+                    items: [
+                      '앱 정보의 긴 버전·날짜 제목을 줄바꿈해 좁은 화면과 큰 글꼴에서 가로 넘침 방지',
+                      '세대 구획 하나의 OCR이 실패해도 이미 읽은 결과를 보존하고 다음 구획 인식 계속',
+                      '같은 세로열에서 줄바꿈된 인명 글자를 조합하고 날짜·자·배우자 표지와 구분',
+                      '배우자·처가 인물과 누구의 부인 같은 생성 표시명을 별도 후보로 검토·저장·검색',
+                      '실제 이름과 생성 표시명 분리, 원본·OCR 원문·기존 인물 데이터 보존',
+                      '딸 순번은 확인된 아버지별로 표시하며 출계·간지 연도·가족관계는 자동 확정하지 않음',
+                      '자동 검사 이력은 GitHub Actions에서 확인. 실제 기기의 족보 전체 판독 정확도 검증은 별도',
+                    ],
+                  ),
+                  Divider(),
+                  _Hist(
                     ver: 'v3.0.2',
                     date: '2026-10-24 · 개발 변경 / 배포 검증 대기',
                     items: [
@@ -206,7 +220,7 @@ class AboutScreen extends StatelessWidget {
                       '👧 딸 순서는 같은 아버지의 연속한 女 묶음 안에서 첫째딸·둘째딸…로 부여(아들이 등장하면 새 묶음으로 초기화)',
                       '💍 配(아내)·父(장인)·祖·曾祖·外祖 처가 계열 표기 정밀화 — 사위 이름 미상 시 \'○씨의 남편(이름 미상)\'으로 표기',
                       '📤 내보내기에 관계(첫째아들/둘째딸 등, 父 기준) 항목 추가 — 화면·텍스트 모두 형제 순서 표시',
-                      '✅ 224면 실제 족보 이미지 전수 시뮬레이션 통과(아들 12·딸 5 관계 검증) 후 빌드',
+                      '224면 샘플 검토 기록 — 과거의 전수 통과 문구를 정정하며 실제 기기 전체 판독 검증은 별도',
                     ],
                   ),
                   Divider(),
@@ -541,12 +555,12 @@ class _Section extends StatelessWidget {
       child: Row(children: [
         Container(width: 4, height: 18, color: HanjiColors.ju),
         const SizedBox(width: 8),
-        Text(title,
+        Expanded(child: Text(title,
             style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: HanjiColors.muk,
-                letterSpacing: 1)),
+                letterSpacing: 1))),
       ]),
     );
   }
@@ -582,13 +596,12 @@ class _Hist extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(children: [
+          Wrap(spacing: 8, runSpacing: 4, children: [
             Text(ver,
                 style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     color: HanjiColors.muk,
                     fontSize: 15)),
-            const SizedBox(width: 8),
             Text('· $date',
                 style: const TextStyle(color: HanjiColors.mukSoft, fontSize: 12)),
           ]),
