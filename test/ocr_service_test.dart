@@ -38,6 +38,55 @@ void main() {
         throwsStateError);
   });
 
+  test('heading retries are selective and never target low continuation columns', () {
+    expect(OcrService.shouldRetryHeading('子賢東束',
+        heading: true, startsLow: false), isTrue);
+    expect(OcrService.shouldRetryHeading('女權',
+        heading: true, startsLow: false), isTrue);
+    expect(OcrService.shouldRetryHeading('女孝集',
+        heading: true, startsLow: false), isTrue);
+    expect(OcrService.shouldRetryHeading('子核',
+        heading: true, startsLow: false), isTrue);
+    expect(OcrService.shouldRetryHeading('字君實',
+        heading: false, startsLow: false), isFalse);
+    expect(OcrService.shouldRetryHeading('子賢東束',
+        heading: true, startsLow: true), isFalse);
+    expect(OcrService.shouldRetryHeading('子承勳',
+        heading: true, startsLow: false), isFalse);
+  });
+
+  test('reflow candidates contain only one person heading and no event fields', () {
+    expect(OcrService.reviewHeadingCandidate('子 賢 東'), '子賢東');
+    expect(OcrService.reviewHeadingCandidate('女\n金免傑'), '女金免傑');
+    for (final text in ['子賢東 字致安', '子格 配趙氏', '子格\n子核', '子字君平']) {
+      expect(OcrService.reviewHeadingCandidate(text), isNull, reason: text);
+    }
+  });
+
+  test('conflicting heading names stay review alternatives without replacing the primary', () {
+    final combined = OcrService.useSegmentedOrWhole(null,
+        ['子賢東束 字致安西 配交河盧氏'], [],
+        headingAlternatives: ['子賢東']);
+    final people = JokboParser.parseRegions(combined.regionTexts);
+    final review = JokboParser.reviewAlternativeNames(
+        combined.wholePageAlternatives, people, clanHangul: '이');
+    expect(people.single.nameHanja, '賢東束');
+    expect(people.single.ja, '致安西');
+    expect(review.single.nameHanja, '賢東');
+    expect(review.single.spouseHanja, isNull);
+    expect(review.single.rawText, '子賢東');
+    expect(combined.alternatives, contains('子賢東'));
+  });
+
+  test('whole-page fallback retains heading alternatives and the original result', () {
+    final whole = result('子賢東束');
+    final combined = OcrService.useSegmentedOrWhole(whole, [], [],
+        headingAlternatives: ['子賢東']);
+    expect(combined.text, whole.text);
+    expect(combined.wholePageAlternatives, ['子賢東']);
+    expect(whole.wholePageAlternatives, isEmpty);
+  });
+
   test('재판독은 같은 표식의 누락 인명만 후보로 복구한다', () {
     expect(OcrService.recoverBareName('子', '子 格'), '子格');
     expect(OcrService.recoverBareName('子格', '子昃'), isNull);

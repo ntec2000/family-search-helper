@@ -44,7 +44,7 @@ class AboutScreen extends StatelessWidget {
                 Text('Family Search Helper',
                     style: TextStyle(fontSize: 12, color: HanjiColors.mukSoft, letterSpacing: 2)),
                 SizedBox(height: 16),
-                Text('v3.0.3',
+                Text('v3.0.4',
                     style: TextStyle(fontSize: 14, color: HanjiColors.ju, letterSpacing: 2)),
               ],
             ),
@@ -174,6 +174,18 @@ class AboutScreen extends StatelessWidget {
               padding: EdgeInsets.all(8),
               child: Column(
                 children: [
+                  _Hist(
+                    ver: 'v3.0.4',
+                    date: '2026-11-06 · 이름 영역 비교 판독',
+                    items: [
+                      '큰 이름 글자의 세로 배열을 회전 없이 가로로 재배치해 별도 OCR 후보 생성',
+                      '작은 한글 독음은 상대 글자 크기로 분리하고 애매한 영역은 기존 판독으로 유지',
+                      '누락·긴 이름·사위 성씨 의심 표제 등을 선택해 안드로이드에서 최대 10회 추가 판독',
+                      '기존 이름과 다른 결과는 검토 후보로만 보존하며 이름·관계·생몰일을 자동 덮어쓰지 않음',
+                      '외부 AI API 호출 없이 기기 내에서 처리. 전체 샘플의 실제 기기 정확도 검증은 별도',
+                    ],
+                  ),
+                  Divider(),
                   _Hist(
                     ver: 'v3.0.3',
                     date: '2026-11-06 · 안드로이드 검수용',

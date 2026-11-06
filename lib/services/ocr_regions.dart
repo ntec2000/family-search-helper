@@ -258,3 +258,80 @@ Uint8List genealogyOcrNameCrop(Uint8List bytes) {
       interpolation: img.Interpolation.linear);
   return Uint8List.fromList(img.encodePng(enlarged));
 }
+
+/// Reflow large heading glyphs into one horizontal line without rotating them.
+/// Smaller printed Korean readings are excluded by relative glyph height.
+/// This is a second OCR view, never a replacement for the source image.
+Uint8List? genealogyOcrNameStrip(Uint8List bytes) {
+  final image = img.decodeImage(bytes);
+  if (image == null) throw const FormatException('열 이미지를 해독할 수 없습니다.');
+  if (image.width <= 24 || image.height <= 24) return null;
+  final runs = <({int top, int bottom, int left, int right})>[];
+  final gap = (image.height * .008).round().clamp(2, 5);
+  int? top;
+  var last = 0;
+  var left = image.width;
+  var right = 0;
+  void finish() {
+    if (top != null && last - top! + 1 >= 6 &&
+        last - top! + 1 <= image.height * .5) {
+      runs.add((top: top!, bottom: last, left: left, right: right));
+    }
+    top = null;
+    left = image.width;
+    right = 0;
+  }
+  for (var y = 12; y < image.height - 12; y++) {
+    var count = 0;
+    var rowLeft = image.width;
+    var rowRight = 0;
+    for (var x = 12; x < image.width - 12; x++) {
+      if (img.getLuminance(image.getPixel(x, y)) >= 180) continue;
+      count++;
+      if (x < rowLeft) rowLeft = x;
+      if (x > rowRight) rowRight = x;
+    }
+    if (count < 2) continue;
+    if (top != null && y - last > gap + 1) finish();
+    top ??= y;
+    last = y;
+    if (rowLeft < left) left = rowLeft;
+    if (rowRight > right) right = rowRight;
+  }
+  finish();
+  if (runs.length < 2) return null;
+  final largest = runs.fold<int>(0, (value, run) {
+    final height = run.bottom - run.top + 1;
+    return height > value ? height : value;
+  });
+  final selected = <({int top, int bottom, int left, int right})>[];
+  for (final run in runs) {
+    final height = run.bottom - run.top + 1;
+    if (height < largest * .65) {
+      if (selected.isNotEmpty) break;
+      continue;
+    }
+    final width = run.right - run.left + 1;
+    if (width < height * .3 || width > height * 1.7) return null;
+    selected.add(run);
+    // Marker plus up to four name glyphs; never silently truncate more.
+    if (selected.length > 5) return null;
+  }
+  if (selected.length < 2) return null;
+  final strip = img.Image(width: selected.length * 80 + 24, height: 88);
+  img.fill(strip, color: img.ColorRgb8(255, 255, 255));
+  for (var i = 0; i < selected.length; i++) {
+    final run = selected[i];
+    final glyph = img.copyCrop(image, x: run.left, y: run.top,
+        width: run.right - run.left + 1, height: run.bottom - run.top + 1);
+    final scale = 64 / (glyph.width > glyph.height ? glyph.width : glyph.height);
+    final resized = img.copyResize(glyph,
+        width: (glyph.width * scale).round().clamp(1, 64),
+        height: (glyph.height * scale).round().clamp(1, 64),
+        interpolation: img.Interpolation.linear);
+    img.compositeImage(strip, resized,
+        dstX: 12 + i * 80 + (64 - resized.width) ~/ 2,
+        dstY: 12 + (64 - resized.height) ~/ 2);
+  }
+  return Uint8List.fromList(img.encodePng(strip));
+}

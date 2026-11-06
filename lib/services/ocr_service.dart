@@ -3,6 +3,7 @@ import 'image_store.dart';
 import 'ocr_regions.dart';
 import 'ocr_column_text.dart';
 import 'jokbo_parser.dart';
+import 'genealogy.dart';
 import 'browser_ocr_stub.dart' if (dart.library.js_interop) 'browser_ocr.dart';
 import 'vertical_reading_order.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
@@ -17,6 +18,7 @@ class OcrService {
   static Future<OcrResult> recognize(String imagePath, {
     bool singleColumn = false,
     bool fullPage = false,
+    bool horizontalLine = false,
   }) async {
     if (kIsWeb) {
       return OcrResult(text: await recognizeInBrowser(imagePath, singleColumn: singleColumn), rawBlocks: []);
@@ -27,10 +29,14 @@ class OcrService {
     // 세로쓰기: 오른쪽 열부터, 같은 열에서는 위에서 아래로 읽는다.
     // 고정 30px 행 기준은 이미지 크기에 따라 순서를 뒤섞을 수 있다.
     final lines = [for (final block in result.blocks) ...block.lines];
-    final order = verticalReadingOrder(
-      lines.map((line) => line.boundingBox).toList(),
-      splitRows: fullPage,
-    );
+    final order = horizontalLine
+        ? (List<int>.generate(lines.length, (i) => i)
+          ..sort((a, b) => lines[a].boundingBox.left
+              .compareTo(lines[b].boundingBox.left)))
+        : verticalReadingOrder(
+            lines.map((line) => line.boundingBox).toList(),
+            splitRows: fullPage,
+          );
     final orderedBlocks = [for (final index in order) lines[index]];
 
     final buf = StringBuffer();
@@ -84,7 +90,8 @@ class OcrService {
     final texts = <String>[];
     final rawColumns = <String>[];
     final generationLabels = <String?>[];
-    var nameRetriesLeft = 2;
+    final headingAlternatives = <String>[];
+    var nameRetriesLeft = kIsWeb ? 2 : 10;
     await readRowsInOrder(regions.length, (i) async {
       final row = regions[i];
       onProgress?.call('세대 구획 ${i + 1}/${regions.length} 한자 인식 중...');
@@ -100,19 +107,30 @@ class OcrService {
           rawColumns.add(columnTexts.join('\n'));
           final layouts = await compute(genealogyOcrColumnLayouts, columns);
           for (var j = 0; j < columns.length && nameRetriesLeft > 0; j++) {
-            if (layouts[j].startsLow || !_barePersonMarker.hasMatch(columnTexts[j].trim())) {
+            if (kIsWeb
+                ? (layouts[j].startsLow ||
+                    !_barePersonMarker.hasMatch(columnTexts[j].trim()))
+                : !shouldRetryHeading(columnTexts[j],
+                    heading: layouts[j].heading, startsLow: layouts[j].startsLow)) {
               continue;
             }
             nameRetriesLeft--;
             try {
-              final crop = await compute(genealogyOcrNameCrop, columns[j]);
+              final strip = kIsWeb ? null :
+                  await compute(genealogyOcrNameStrip, columns[j]);
+              final crop = strip ??
+                  await compute(genealogyOcrNameCrop, columns[j]);
               final retry = await recognize(
                   await storeImageBytes(crop, extension: 'png'),
-                  singleColumn: true);
+                  singleColumn: strip == null, horizontalLine: strip != null);
               if (retry.text.trim().isNotEmpty) {
                 rawColumns.add('[구획 ${i + 1} · 열 ${j + 1} 인명 재판독] ${retry.text.trim()}');
               }
-              final candidate = recoverBareName(columnTexts[j], retry.text);
+              final review = reviewHeadingCandidate(retry.text);
+              if (review != null && !headingAlternatives.contains(review)) {
+                headingAlternatives.add(review);
+              }
+              final candidate = recoverBareName(columnTexts[j], review ?? retry.text);
               if (candidate != null) columnTexts[j] = candidate;
             } catch (_) {
               // A retry failure does not discard the first pass.
@@ -152,7 +170,8 @@ class OcrService {
       generationLabels.addAll(List<String?>.filled(entries.length, label));
     });
     return useSegmentedOrWhole(wholePage, texts, rawColumns,
-        generationLabels: generationLabels);
+        generationLabels: generationLabels,
+        headingAlternatives: headingAlternatives);
   }
 
   /// A failed generation row must not discard completed rows or skip later rows.
@@ -172,6 +191,33 @@ class OcrService {
   static final _barePersonMarker = RegExp(r'^[子女男]$');
   static final _shortPersonName = RegExp(r'^[子女男][一-鿿]{1,3}$');
   static final _detailMarker = RegExp(r'[子女男字號墓配生卒父祖系繼坐向忌]');
+
+  /// Retry suspect headings, not every note column.
+  static bool shouldRetryHeading(String raw,
+      {required bool heading, required bool startsLow}) {
+    if (startsLow || raw.trim().isEmpty) return false;
+    final normalized = joinFragmentedHeadingLines(raw);
+    final match = RegExp(r'^([子女男])\s*([一-鿿]{0,4})')
+        .firstMatch(normalized);
+    if (match == null) return heading;
+    final name = match.group(2)!;
+    if (_detailMarker.hasMatch(name)) return false;
+    final female = match.group(1) == '女';
+    return name.isEmpty || name.length >= 3 ||
+        (heading && name.length == 1) ||
+        (female && (name.length == 1 ||
+            !Genealogy.surnamesHanja.contains(name.substring(0, 1))));
+  }
+
+  /// Heading retries supply names only; never import nearby life events.
+  static String? reviewHeadingCandidate(String raw) {
+    final compact = raw.replaceAll(RegExp(r'\s+'), '');
+    if (!RegExp(r'^[子女男][一-鿿]{1,4}$').hasMatch(compact) ||
+        _detailMarker.hasMatch(compact.substring(1))) {
+      return null;
+    }
+    return compact;
+  }
 
   /// Only restore missing text. Keep already recognized names unchanged.
   static String? recoverBareName(String first, String retry) {
@@ -221,9 +267,18 @@ class OcrService {
   }
 
   static OcrResult useSegmentedOrWhole(OcrResult? wholePage,
-      List<String> regions, List<String> rawColumns, {List<String?>? generationLabels}) {
+      List<String> regions, List<String> rawColumns, {List<String?>? generationLabels,
+      List<String> headingAlternatives = const []}) {
     if (!hasReadableText(regions)) {
-      if (wholePage != null) return wholePage;
+      if (wholePage != null) {
+        if (headingAlternatives.isEmpty) return wholePage;
+        return OcrResult(text: wholePage.text, rawBlocks: wholePage.rawBlocks,
+            alternatives: [...wholePage.alternatives, ...headingAlternatives],
+            wholePageAlternatives: [...wholePage.wholePageAlternatives,
+              ...headingAlternatives],
+            regionTexts: wholePage.regionTexts,
+            generationLabels: wholePage.generationLabels);
+      }
       throw StateError('OCR 입력을 읽을 수 없습니다');
     }
     // 구획과 전체 인식은 원문 탭에서 함께 보존한다. 파싱은 구획 결과를 사용한다.
@@ -231,9 +286,11 @@ class OcrService {
         alternatives: [
           if (wholePage != null) ...[wholePage.text, ...wholePage.alternatives],
           ...rawColumns,
+          ...headingAlternatives,
         ],
         wholePageAlternatives: [
           if (wholePage != null) ...[wholePage.text, ...wholePage.wholePageAlternatives],
+          ...headingAlternatives,
         ],
         regionTexts: regions, generationLabels: generationLabels);
   }
