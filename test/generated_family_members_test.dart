@@ -12,7 +12,7 @@ void main() {
     final source = Person(id:'source', gender:'M', nameHangul:'핵',
         surnameHangul:'이', spouseHanja:'坡平尹氏', spouseHangul:'윤씨',
         spouseFather:'光岳', spouseGrandfather:'東憶', spouseGreatGrandfather:'道經',
-        spouseMaternalGrandfather:'丁若萬', rawText:'원본 족보');
+        spouseMaternalGrandfather:'丁若萬(정약만)', rawText:'원본 족보');
     final before = source.toMap();
     final rows = FamilyNameCandidates.fromPerson(source);
     for (final name in ['윤광악의 부인','윤동억의 부인','윤도경의 부인','정약만의 부인']) {

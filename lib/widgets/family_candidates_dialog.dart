@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../services/family_name_candidates.dart';
-import '../services/hanja_dict.dart';
 
 /// Select names to add to the existing person/relationship review flow.
 class FamilyCandidatesDialog extends StatefulWidget {
@@ -24,7 +23,7 @@ class _FamilyCandidatesDialogState extends State<FamilyCandidatesDialog> {
       mainAxisSize: MainAxisSize.min,
       children: [
         const Text('추출 이름과 생성 표시명을 함께 표시합니다. 선택한 인물을 검토 목록에 '
-            '추가한 뒤 내용·가족관계를 확인하고 저장하세요. 같은 이름이라도 다른 사람일 수 있습니다.'),
+            '추가한 뒤 내용·가족관계를 확인하고 저장하세요. 같은 이름이라도 다른 사람일 수 있습니다. 한자 사전 음은 검수본과 대조하세요.'),
         const SizedBox(height: 8),
         TextButton(onPressed: () => setState(() {
           _selected.addAll(widget.rows.where(_available).map((r) => r.candidateId));
@@ -38,7 +37,7 @@ class _FamilyCandidatesDialogState extends State<FamilyCandidatesDialog> {
                 if (selected == true) { _selected.add(row.candidateId); }
                 else { _selected.remove(row.candidateId); }
               }),
-              title: Text('${index + 1}. ${HanjaDict.instance.annotate(row.display)}'),
+              title: Text('${index + 1}. ${row.displayLabel}'),
               subtitle: Text('${row.role}${row.placeholder ? " · 생성 표시명" : ""}'
                   '${!_available(row) ? " · 이미 목록에 있음" : ""}'
                   ' · 원본 인물 ID: ${row.sourcePersonId}'),

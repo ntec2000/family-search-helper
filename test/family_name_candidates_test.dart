@@ -59,7 +59,8 @@ void main() {
     final rows = FamilyNameCandidates.fromPerson(p);
     expect(rows.firstWhere((r) => r.role == '배우자의 조부 후보').display, '東憶');
     expect(rows.firstWhere((r) => r.role == '배우자의 증조부 후보').display, '道經');
-    expect(rows.firstWhere((r) => r.role == '배우자의 외조부 후보').display, '高');
+    expect(rows.firstWhere((r) => r.role == '배우자의 외조부 후보').display, '고씨');
+    expect(rows.firstWhere((r) => r.role == '배우자의 외조부 후보').placeholder, isTrue);
     expect(rows.where((r) => r.role.contains('아버지')), isEmpty);
     expect(rows.firstWhere((r) => r.role == '배우자 후보').display, '이핵의 부인');
     expect(p.toMap(), original);

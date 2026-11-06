@@ -20,6 +20,11 @@ class FamilyNameCandidate {
 
   String get candidateId => '$sourcePersonId::family::$kind';
   bool get canMaterialize => kind != 'self';
+  String get displayLabel {
+    final token = Genealogy.parseToken(display);
+    return token.$1.isNotEmpty && token.$2.isNotEmpty
+        ? '${token.$1}(${token.$2})' : HanjaDict.instance.annotate(display);
+  }
 
   Person materialize(Person source) {
     if (!canMaterialize || source.id != sourcePersonId) {
@@ -53,7 +58,10 @@ class FamilyNameCandidate {
 
 class FamilyNameCandidates {
   static String _value(String? text) => (text ?? '').trim();
-  static String _readable(String text) => HanjaDict.instance.toHangul(text);
+  static String _readable(String text) {
+    final token = Genealogy.parseToken(text);
+    return token.$2.isNotEmpty ? token.$2 : HanjaDict.instance.toHangul(token.$1);
+  }
 
   static (String?, String?) _spouseSurname(Person person) {
     final explicit = person.gender == 'F'
