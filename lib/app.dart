@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'theme/traditional_theme.dart';
 import 'screens/home_screen.dart';
+import 'widgets/app_pinch_zoom.dart';
 
 class FamilySearchHelperApp extends StatelessWidget {
   const FamilySearchHelperApp({super.key});
@@ -14,7 +15,7 @@ class FamilySearchHelperApp extends StatelessWidget {
       darkTheme: TraditionalTheme.dark(),
       builder: (context, child) => Center(child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1280),
-          child: child ?? const SizedBox.shrink())),
+          child: AppPinchZoom(child: child ?? const SizedBox.shrink()))),
       home: const HomeScreen(),
     );
   }

@@ -44,7 +44,7 @@ class AboutScreen extends StatelessWidget {
                 Text('Family Search Helper',
                     style: TextStyle(fontSize: 12, color: HanjiColors.mukSoft, letterSpacing: 2)),
                 SizedBox(height: 16),
-                Text('v3.0.4',
+                Text('v3.0.5',
                     style: TextStyle(fontSize: 14, color: HanjiColors.ju, letterSpacing: 2)),
               ],
             ),
@@ -174,6 +174,17 @@ class AboutScreen extends StatelessWidget {
               padding: EdgeInsets.all(8),
               child: Column(
                 children: [
+                  _Hist(
+                    ver: 'v3.0.5',
+                    date: '2026-11-07 · 전체 앱 핀치줌',
+                    items: [
+                      '앱 공통 화면에 두 손가락 확대·축소를 적용해 버튼·입력칸·대화상자까지 1~4배 확대',
+                      '확대 중 배율 초기화 버튼으로 전체 화면을 100%로 복원',
+                      '원본 이미지의 기존 핀치줌과 일반 화면의 한 손가락 스크롤·탭 유지',
+                      '화면 확대는 표시만 변경하며 OCR 원문·인물 기록·가족관계를 수정하지 않음',
+                    ],
+                  ),
+                  Divider(),
                   _Hist(
                     ver: 'v3.0.4',
                     date: '2026-11-06 · 이름 영역 비교 판독',
