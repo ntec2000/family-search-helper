@@ -9,7 +9,9 @@ class DaughterOrder {
     final original = (person.relation ?? '').trim();
     if (person.gender != 'F' || !original.contains('딸') ||
         (person.fatherId ?? '').isEmpty ||
-        !(person.note ?? '').contains('女 등장 순서')) return original;
+        !(person.note ?? '').contains('女 등장 순서')) {
+      return original;
+    }
     final siblings = people.where((p) => p.gender == 'F' &&
         p.fatherId == person.fatherId && (p.relation ?? '').contains('딸')).toList();
     final index = siblings.indexWhere((p) => p.id == person.id);

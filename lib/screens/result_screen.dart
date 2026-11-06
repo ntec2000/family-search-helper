@@ -1173,7 +1173,7 @@ class _PersonList extends StatelessWidget {
         final segaPrefix = p.sega != null ? '[${p.sega}世] ' : '';
         final String nameLine;
         if (isFemale) {
-          final daughterRole = DaughterOrder.label(p, _persons);
+          final daughterRole = DaughterOrder.label(p, persons);
           final ord = daughterRole.isNotEmpty ? daughterRole : '여성';
           final displayed = FemaleNameDisplay.forPerson(p);
           final nm = p.nameHangul.trim().isEmpty && p.nameHanja.trim().isEmpty
