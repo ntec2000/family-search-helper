@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb, compute;
 import 'image_store.dart';
 import 'ocr_regions.dart';
@@ -118,8 +119,8 @@ class OcrService {
             try {
               final strip = kIsWeb ? null :
                   await compute(genealogyOcrNameStrip, columns[j]);
-              final crop = strip ??
-                  await compute(genealogyOcrNameCrop, columns[j]);
+              final Uint8List crop = strip ??
+                  await compute<Uint8List, Uint8List>(genealogyOcrNameCrop, columns[j]);
               final retry = await recognize(
                   await storeImageBytes(crop, extension: 'png'),
                   singleColumn: strip == null, horizontalLine: strip != null);
