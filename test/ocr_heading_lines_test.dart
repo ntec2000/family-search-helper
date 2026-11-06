@@ -4,7 +4,7 @@ import 'package:family_search_helper/services/jokbo_parser.dart';
 
 void main() {
   test('same-column single-glyph lines restore a complete heading candidate', () {
-    final raw = '子\n顯\n五\n현오';
+    const raw = '子\n顯\n五\n현오';
     final entries = assembleOcrEntries([raw, '字行之 庚午生'],
         headings: [true, false]);
     final people = JokboParser.parseRegions(entries);

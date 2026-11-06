@@ -65,7 +65,9 @@ String joinFragmentedHeadingLines(String raw) {
     if (end + 2 < lines.length &&
         RegExp(r'^[甲乙丙丁戊己庚辛壬癸]$').hasMatch(glyph) &&
         RegExp(r'^[子丑寅卯辰巳午未申酉戌亥]$').hasMatch(lines[end + 1]) &&
-        RegExp(r'^[年生卒]').hasMatch(lines[end + 2])) break;
+        RegExp(r'^[年生卒]').hasMatch(lines[end + 2])) {
+      break;
+    }
     if (name.length >= limit) return raw.trim();
     name += glyph;
     end++;
@@ -76,7 +78,9 @@ String joinFragmentedHeadingLines(String raw) {
     // Require an explicit field or printed Korean reading after the heading.
     // Another person marker may belong to a different column: do not merge.
     if (!RegExp(r'^(?:[가-힣]|[字號墓配生卒父祖忌出娶贈]|[甲乙丙丁戊己庚辛壬癸])')
-        .hasMatch(next)) return raw.trim();
+        .hasMatch(next)) {
+      return raw.trim();
+    }
   }
   return ['${head.group(1)}$name', ...lines.skip(end)].join('\n');
 }
