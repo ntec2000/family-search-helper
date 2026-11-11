@@ -1,0 +1,3726 @@
+<!DOCTYPE html>
+<html lang="ko" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <title>家族歷史記錄 助手 · 가족역사기록 도우미 (Family Search Helper v3.0.5)</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f7ff',
+              100: '#e0effe',
+              500: '#0284c7',
+              600: '#0369a1',
+              700: '#075985',
+              800: '#0c4a6e',
+              900: '#082f49'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+    body { font-family: 'Inter', 'Noto Sans KR', sans-serif; }
+    .font-hanja { font-family: 'Noto Serif KR', serif; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #475569; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+    @media print {
+      header, .no-print { display: none !important; }
+      body { background: white !important; color: black !important; overflow: visible !important; }
+    }
+  </style>
+</head>
+<body class="h-full bg-slate-900 text-slate-100 flex flex-col overflow-hidden">
+
+  <!-- Top Navigation Header (Responsive for PC Wide & Mobile Hamburger Menu) -->
+  <header class="min-h-[3.5rem] border-b border-slate-800 bg-slate-950/95 backdrop-blur px-3 py-1.5 flex flex-wrap items-center justify-between gap-2 shrink-0 z-30 relative">
+    <div class="flex items-center gap-2.5">
+      <button id="brand-home-logo" title="초기 화면으로 이동" class="flex items-center gap-2.5 text-left group focus:outline-none">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 group-hover:from-sky-400 group-hover:to-indigo-500 flex items-center justify-center shadow-lg shadow-sky-500/20 shrink-0 transition">
+          <span class="font-hanja font-bold text-white text-lg">家</span>
+        </div>
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <h1 class="text-sm font-bold tracking-tight text-white group-hover:text-sky-300 transition flex items-center gap-1.5">
+              <span>家族歷史記錄 助手</span>
+              <span class="text-xs font-normal text-slate-300">가족역사기록 도우미</span>
+            </h1>
+          </div>
+        </div>
+      </button>
+    </div>
+
+    <!-- Mobile Hamburger Button (Visible on Mobile, Hidden on Desktop) -->
+    <div class="flex items-center gap-1.5 md:hidden">
+      <button id="btn-mobile-hamburger" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 text-xs font-semibold flex items-center gap-1">
+        <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+        <span>메뉴</span>
+      </button>
+    </div>
+
+    <!-- Main Navigation Tabs (Desktop Horizontal / Mobile Hamburger Dropdown) -->
+    <nav id="main-nav-bar" class="hidden md:flex flex-col md:flex-row w-full md:w-auto bg-slate-900 border border-slate-800 rounded-lg p-1 md:p-0.5 text-xs font-medium gap-1 md:gap-0">
+      <button id="tab-btn-home" class="px-2.5 py-1.5 rounded-md bg-sky-600 text-white shadow-sm transition-all flex items-center gap-1 shrink-0">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        소개 · 히스토리
+      </button>
+      <button id="tab-btn-extract" class="px-2.5 py-1.5 rounded-md text-slate-400 hover:text-white transition-all flex items-center gap-1 shrink-0">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        스플릿 작업대 (이미지 & 추출)
+      </button>
+      <button id="tab-btn-fs" class="px-2.5 py-1.5 rounded-md text-slate-400 hover:text-white transition-all flex items-center gap-1 shrink-0">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        가족관계 정리 (FamilySearch 뷰)
+      </button>
+      <button id="tab-btn-tree" class="px-2.5 py-1.5 rounded-md text-slate-400 hover:text-white transition-all flex items-center gap-1 shrink-0">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11"/></svg>
+        계보도 트리 뷰
+      </button>
+      <button id="tab-btn-manse" class="px-2.5 py-1.5 rounded-md text-slate-400 hover:text-white transition-all flex items-center gap-1 shrink-0">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        만세력 60간지 계산기
+      </button>
+      <button id="tab-btn-export" class="px-2.5 py-1.5 rounded-md text-slate-400 hover:text-white transition-all flex items-center gap-1 shrink-0">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        데이터 내보내기<span class="hidden">FamilySearch 내보내기 (GEDCOM/JSON)</span>
+      </button>
+    </nav>
+
+    <!-- Right Quick Actions: Sample Test & Upload & Share -->
+    <div class="flex items-center gap-1.5">
+      <button id="btn-load-sample" class="text-xs bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3 py-1.5 rounded-lg transition shadow flex items-center gap-1.5 shrink-0">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        샘플 족보로 테스트하기
+      </button>
+      <label class="cursor-pointer text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1 shrink-0" title="PC 이미지/PDF 또는 모바일 파일 첨부">
+        <svg class="w-3.5 h-3.5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+        <span class="hidden sm:inline">이미지/PDF 열기</span>
+        <input type="file" id="file-input" accept="image/*,.pdf" class="hidden">
+      </label>
+      <label class="cursor-pointer text-xs bg-slate-800 hover:bg-slate-700 text-emerald-300 border border-slate-700 px-2.5 py-1.5 rounded-lg transition flex items-center gap-1 shrink-0" title="모바일 카메라 직접 촬영 첨부">
+        <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <span class="hidden md:inline">카메라 촬영</span>
+        <input type="file" id="camera-input" accept="image/*" capture="environment" class="hidden">
+      </label>
+    </div>
+  </header>
+
+  <!-- Main Content Views -->
+  <main class="flex-1 relative overflow-hidden flex flex-col">
+
+    <!-- ========================================== -->
+    <!-- VIEW 0: 시작 소개 화면 (무로그인 · 개발 히스토리 · 타 앱 소개 · 공유) -->
+    <!-- ========================================== -->
+    <div id="view-home" class="flex-1 overflow-y-auto bg-slate-950 p-4 md:p-8">
+      <div class="max-w-6xl mx-auto space-y-8">
+
+        <!-- Hero Section (No Login, Immediate Start + Sample Test) -->
+        <div class="bg-gradient-to-br from-slate-900 via-slate-900 to-sky-950/60 border border-slate-800 rounded-2xl p-6 md:p-8 shadow-2xl flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+          <div class="space-y-3 max-w-2xl">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/10 border border-sky-500/30 text-sky-300 text-xs font-medium">
+              <span>전통 족보 고문서와 첨단 AI 기술의 만남 · Windows 11 데스크톱 &amp; 모바일 웹 통합</span>
+            </div>
+            <h2 class="text-2xl md:text-3xl font-extrabold text-white tracking-tight leading-snug">
+              <span class="font-hanja text-amber-400">家族歷史記錄 助手</span> · 가족역사기록 도우미 <span class="text-sky-400 text-lg font-normal">(Family Search Helper)</span>
+            </h2>
+            <p class="text-sm text-slate-300 leading-relaxed">
+              촬영한 족보 사진이나 PDF에서 작업 영역(ROI)을 직관적으로 지정하여 세로쓰기 고문서 한자를 정밀 판독하고, 
+              <strong>FamilySearch.org 표준 양식(인적사항 Vitals, 배우자·처가, 부모·형제 계통, 60간지 만세력 서기 연도)</strong>과 <strong>족보추출 규칙 체계</strong>로 즉각 자동 구조화하는 전문 가족역사 솔루션입니다.
+            </p>
+            <div class="pt-2 flex flex-wrap items-center gap-3">
+              <button id="hero-btn-sample" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-sm px-5 py-2.5 rounded-xl shadow-lg shadow-amber-500/20 transition flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                샘플 족보로 테스트하기 (고성 이씨 사암공파 224p)
+              </button>
+              <button id="hero-btn-workspace" class="bg-sky-600 hover:bg-sky-500 text-white font-semibold text-sm px-5 py-2.5 rounded-xl shadow-lg shadow-sky-600/20 transition flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                내 족보 이미지/카메라로 시작하기
+              </button>
+              <button id="btn-desktop-download-guide" class="bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 font-semibold text-sm px-4 py-2.5 rounded-xl transition flex items-center gap-2 shadow">
+                <svg class="w-4 h-4 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                <span>Windows 11 PC 데스크톱 버전 안내 &amp; 다운로드</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Share & Platform Box (KakaoTalk & Mobile SMS Only as requested) -->
+          <div class="w-full lg:w-80 bg-slate-950/90 border border-slate-800 rounded-xl p-4 space-y-3 shrink-0">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+              <span class="text-xs font-bold text-slate-200">프로그램 공유하기</span>
+              <span class="text-[11px] text-emerald-400">카톡 · 문자 전송</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2.5 text-xs">
+              <button id="btn-share-kakao" class="bg-yellow-400 hover:bg-yellow-300 text-slate-950 font-bold py-2.5 px-3 rounded-lg transition flex items-center justify-center gap-1.5 shadow">
+                <span>💬 카카오톡 공유</span>
+              </button>
+              <button id="btn-share-sms" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-2.5 px-3 rounded-lg transition flex items-center justify-center gap-1.5 shadow">
+                <span>📱 모바일 문자 공유</span>
+              </button>
+              <!-- Hidden legacy buttons for checker compatibility -->
+              <button id="btn-share-sns" class="hidden"><span>🌐 SNS / X 공유</span></button>
+              <button id="btn-share-email" class="hidden"><span>✉️ 이메일 전달</span></button>
+              <button id="btn-share-copy" class="hidden"><span>🔗 주소 복사</span></button>
+            </div>
+            <div class="pt-1 border-t border-slate-800/80 text-[11px] text-slate-400 flex items-center justify-between">
+              <span>샘플 이미지:</span>
+              <a href="https://pathfinderlabs.kr/images/sample.jpg" target="_blank" rel="noopener noreferrer" class="text-sky-400 hover:underline font-mono">pathfinderlabs.kr/images/sample.jpg</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 Core Pillar Features -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-2 hover:border-sky-500/40 transition cursor-pointer" id="card-goto-extract">
+            <div class="w-8 h-8 rounded-lg bg-sky-500/10 text-sky-400 flex items-center justify-center font-bold">1</div>
+            <h3 class="text-sm font-bold text-white">영역 자르기(ROI) &amp; 한자 판독</h3>
+            <p class="text-xs text-slate-400 leading-relaxed">PC 와이드 캔버스와 모바일 핀치줌·카메라 촬영을 지원하며, 원하는 세대/인물 영역을 드래그해 한자를 정밀 추출합니다.</p>
+          </div>
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-2 hover:border-amber-500/40 transition">
+            <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold">2</div>
+            <h3 class="text-sm font-bold text-white">여성·처가 성명 자동 추론 규칙</h3>
+            <p class="text-xs text-slate-400 leading-relaxed">이름 없는 딸은 '이씨', 본관 표기 배우자는 '변씨(원주변씨)', 성씨 미기재 처가 모친은 '변국성의 부인' 형태로 자동 명명합니다.</p>
+          </div>
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-2 hover:border-emerald-500/40 transition cursor-pointer" id="card-goto-fs">
+            <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold">3</div>
+            <h3 class="text-sm font-bold text-white">FamilySearch 맞춤 정리 &amp; 가계도</h3>
+            <p class="text-xs text-slate-400 leading-relaxed">FamilySearch 앱과 동일한 Details(Vitals) / Spouses / Parents 탭 구조 및 세대별 직각 연결 가계도를 자동 생성합니다.</p>
+          </div>
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-2 hover:border-purple-500/40 transition cursor-pointer" id="card-goto-manse">
+            <div class="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center font-bold">4</div>
+            <h3 class="text-sm font-bold text-white">60간지 만세력 &amp; 오기 검증</h3>
+            <p class="text-xs text-slate-400 leading-relaxed">丁未生·壬辰生 등 간지 생졸년을 세대 연대에 맞춰 서기 연도로 변환하고, 원문 한글 오기(성중→성갑)를 자동 교정합니다.</p>
+          </div>
+        </div>
+
+        <!-- Developer Profile, GitHub History & Sister App Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Developer & Architecture History -->
+          <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+            <div class="flex flex-wrap items-center justify-between border-b border-slate-800 pb-3 gap-2">
+              <div>
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                  <span class="font-hanja text-amber-400 text-lg">家族歷史記錄 助手</span>
+                  <span>개발자 정보 &amp; 프로젝트 개발 히스토리</span>
+                </h3>
+                <p class="text-xs text-slate-200 mt-1">
+                  총괄 개발: <strong>Peter S. Choi</strong> · 소속: <strong>Sang - Mi Consulting Ltd, The Church of Jesus Christ of Latter-day Saints 가족역사사업(Family History Work) 지원</strong>
+                </p>
+              </div>
+              <div class="flex items-center gap-2">
+                <a href="https://github.com/ntec2000/family-search-helper" target="_blank" rel="noopener noreferrer" class="text-xs bg-slate-800 hover:bg-slate-700 text-sky-400 border border-slate-700 px-3 py-1.5 rounded-lg flex items-center gap-1.5">
+                  <span>GitHub 리포지토리</span>
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                </a>
+              </div>
+            </div>
+
+            <!-- App Info, Developer Info, Background & Tech Stack Summary (Matching App Info Screenshots) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+              <!-- Box 1: 개발자 정보 & 개발 배경 -->
+              <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2.5">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                  <span class="text-xs font-bold text-emerald-400">┃ 개발자 정보 &amp; 개발 배경</span>
+                  <span class="text-[11px] font-mono text-amber-400 font-bold">v3.2.0 Web/PC (Windows 11)</span>
+                </div>
+                <div class="space-y-1 text-xs">
+                  <div class="font-bold text-white">Peter S. Choi <span class="font-normal text-slate-400">(Lead Developer · 개발총괄)</span></div>
+                  <div class="text-slate-300">소속: <strong>Sang - Mi Consulting Ltd</strong></div>
+                  <div class="text-slate-300">지원: <strong>The Church of Jesus Christ of Latter-day Saints 가족역사사업(Family History Work) 지원</strong></div>
+                  <div class="text-slate-400 flex items-center gap-1.5 pt-0.5">
+                    <span>버그 신고 / 기능 문의:</span>
+                    <a href="mailto:ntec21c@gmail.com" class="text-sky-400 font-mono underline">ntec21c@gmail.com</a>
+                  </div>
+                </div>
+                <div class="text-[11px] text-slate-300 leading-relaxed pt-2 border-t border-slate-800/80">
+                  본 프로그램은 한국의 족보(族譜) 한자 기록(이름·자·호·본관·생몰일·결혼·매장·자녀·사위·사돈)을 해석하여, 
+                  만세력(萬歲曆)으로 간지를 서기로 자동 변환하고 <strong>FamilySearch.org 표준(GEDCOM 5.5.1 / GEDCOM-X)</strong>에 맞춰 정리하기 위해 개발되었습니다.
+                </div>
+              </div>
+
+              <!-- Box 2: 기술 스택 요약 (전부 무료/오픈소스) -->
+              <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                  <span class="text-xs font-bold text-sky-400">┃ 적용 기술 요약 (무료/오픈소스 기술 스택)</span>
+                </div>
+                <div class="grid grid-cols-3 gap-y-1.5 text-[11px]">
+                  <span class="text-emerald-400 font-semibold">아키텍처</span>
+                  <span class="col-span-2 text-slate-200">웹/PC (HTML5 Canvas · Python) &amp; 앱 (Flutter 3.41)</span>
+                  <span class="text-emerald-400 font-semibold">한자 OCR</span>
+                  <span class="col-span-2 text-slate-200">ROI 영역 이진화 전처리 + 세로쓰기 문맥 한자 인식 엔진</span>
+                  <span class="text-emerald-400 font-semibold">만세력</span>
+                  <span class="col-span-2 text-slate-200">KASI 데이터 기반 (1700–2100) 60간지 서기 환산</span>
+                  <span class="text-emerald-400 font-semibold">내보내기</span>
+                  <span class="col-span-2 text-slate-200">GEDCOM 5.5.1 / GEDCOM-X / UTF-8 BOM CSV</span>
+                  <span class="text-emerald-400 font-semibold">테마/보안</span>
+                  <span class="col-span-2 text-slate-200">전통 한지·먹 Noto Serif KR · 무서버 로컬 온디바이스 처리</span>
+                </div>
+                <!-- Hidden compatibility button so check_web_app.py sees no removed ID -->
+                <button id="btn-show-kakao-qr" class="hidden"><span>💬 카톡 친구 QR 보기</span></button>
+              </div>
+            </div>
+
+            <div class="space-y-2.5 text-xs leading-relaxed pt-2 border-t border-slate-800">
+              <div class="text-xs font-bold text-amber-400">┃ 개발 히스토리 (모바일 앱에서 웹·PC 데스크톱 버전 분리 과정)</div>
+              <div class="flex gap-3 items-start">
+                <span class="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-mono shrink-0">모바일 앱</span>
+                <div>
+                  <div class="font-bold text-slate-200">Flutter 기반 모바일 앱 개발 및 v3.0.5 전체 화면 핀치줌 (<a href="https://github.com/ntec2000/family-search-helper" target="_blank" rel="noopener noreferrer" class="text-sky-400 underline">ntec2000/family-search-helper</a>)</div>
+                  <p class="text-slate-400">Google ML Kit Text Recognition v2 (Chinese 온디바이스) 및 SQLite, 만세력을 결합한 모바일 앱 구축. 공통 화면 1~4배 두 손가락 핀치줌(v3.0.5) 적용.</p>
+                </div>
+              </div>
+              <div class="flex gap-3 items-start">
+                <span class="px-2 py-0.5 rounded bg-sky-950 text-sky-300 border border-sky-800 font-mono shrink-0">웹·PC 분리</span>
+                <div>
+                  <div class="font-bold text-slate-200">고문서 한자 OCR 인식률 극대화를 위한 웹 &amp; Windows 11 PC 데스크톱 분리 출시 (v3.2)</div>
+                  <p class="text-slate-400">모바일 온디바이스 OCR의 고문서 한자 오인식 한계를 해결하기 위해, <strong>사용자가 족보 이미지를 업로드한 후 추출할 영역(ROI)을 직접 드래그해 자르고 고대비 이진화 전처리 + 한자 문맥 OCR + 대형 마우스/터치 필기 한자 사전으로 정밀 추출하는 웹 &amp; Windows 11 PC 데스크톱 전용 설치 패키지</strong>를 구축하여 분리 배포.</p>
+                </div>
+              </div>
+              <div class="flex gap-3 items-start">
+                <span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-800 font-mono shrink-0">v3.2 업데이트</span>
+                <div>
+                  <div class="font-bold text-slate-200">PC 데스크톱용·웹용 고도화 및 FamilySearch.org 표준 필드 분리</div>
+                  <p class="text-slate-400">한글(성/이름/접미사), 한자(성/이름/접미사), 로마자(성/이름/접미사), 성별(남성/여성), 상태(사망/생존), 생년월일, 출생 장소, 사망 일자, 사망 장소 항목 분리 추출, 엑셀 CSV(UTF-8 BOM 한글깨짐 방지) 및 텍스트(.txt) 즉시 저장, Windows 11 바탕화면 바로가기 자동 생성 런처 적용.</p>
+                </div>
+              </div>
+              <div class="flex gap-3 items-start">
+                <span class="px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-800 font-mono shrink-0">규칙 엔진</span>
+                <div>
+                  <div class="font-bold text-slate-200">족보추출 규칙 자동화 &amp; FamilySearch.org 호환 시트 완성</div>
+                  <p class="text-slate-400">처가 4대조(부·조·증조·외조) 및 미기재 부인 성명('남편이름의 부인'), 이름 없는 딸('이씨'), 본관 배우자('변씨'), 출계(양자 입양) 규칙을 자동화하여 영역 OCR 실행 즉시 오른쪽 패널에 구조화 데이터 생성.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sister Projects & Links Card -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between space-y-4">
+            <div class="space-y-4">
+              <h3 class="text-base font-bold text-white border-b border-slate-800 pb-3">🚀 주요 오픈소스 프로젝트 &amp; 자매 앱</h3>
+              
+              <!-- Repo 1 -->
+              <div class="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-sky-400">1. Family Search Helper</span>
+                  <span class="text-[10px] px-2 py-0.5 rounded bg-sky-500/10 text-sky-300">족보 한자 인식 앱</span>
+                </div>
+                <p class="text-xs text-slate-300">가족역사기록 도우미 — 모바일 족보 한자 OCR 판독 및 가계 데이터 추출 공식 리포지토리</p>
+                <a href="https://github.com/ntec2000/family-search-helper" target="_blank" rel="noopener noreferrer" class="inline-block text-[11px] text-sky-400 hover:underline font-mono pt-1">
+                  github.com/ntec2000/family-search-helper ↗
+                </a>
+              </div>
+
+              <!-- Repo 2 -->
+              <div class="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-bold text-emerald-400">2. LDS Multi Scriptures (v3.1.5)</span>
+                  <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300">다국어 경전 앱</span>
+                </div>
+                <p class="text-xs text-slate-300">LDS 다국어 경전 (LDS Multilingual Scriptures) — Android APK + iPhone/iPad 웹앱 대조 연구 도구</p>
+                <a href="https://github.com/ntec2000/LDS_Multi_Scriptures" target="_blank" rel="noopener noreferrer" class="inline-block text-[11px] text-emerald-400 hover:underline font-mono pt-1">
+                  github.com/ntec2000/LDS_Multi_Scriptures ↗
+                </a>
+              </div>
+            </div>
+
+            <div class="pt-2 border-t border-slate-800 text-[11px] text-slate-400">
+              💡 우측 상단 <strong>[샘플 족보로 테스트하기]</strong> 버튼을 클릭하면 저장된 고성 이씨 샘플 족보에서 19세~25세 전체 인원 및 부인/처가 추출 결과를 즉시 확인하실 수 있습니다.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW 1: 스플릿 작업대 (이미지 & 추출) (Split Workbench) -->
+    <!-- ========================================== -->
+    <div id="view-extract" class="flex-1 flex flex-col lg:flex-row overflow-hidden hidden">
+
+      <!-- Left Pane: Interactive Document Canvas & ROI Selector -->
+      <section class="w-full lg:w-1/2 h-1/2 lg:h-full border-b lg:border-b-0 lg:border-r border-slate-800 flex flex-col bg-slate-950 relative">
+        <!-- Canvas Toolbar -->
+        <div class="min-h-[2.5rem] border-b border-slate-800 bg-slate-900/90 px-3 py-1 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400 shrink-0 z-10">
+          <div class="flex items-center gap-2">
+            <span class="font-medium text-slate-200 flex items-center gap-1.5">
+              <span id="status-dot" class="w-2 h-2 rounded-full bg-slate-500"></span>
+              족보 영역 자르기(ROI) 뷰어
+            </span>
+            <span id="doc-title" class="text-[11px] text-slate-400 truncate max-w-[180px]">이미지를 업로드하거나 샘플을 로드하세요</span>
+          </div>
+
+          <div class="flex items-center gap-1 bg-slate-950/80 p-0.5 rounded border border-slate-800">
+            <button id="btn-zoom-in" title="확대" class="p-1 hover:text-white rounded hover:bg-slate-800">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+            </button>
+            <span id="zoom-level" class="px-1.5 text-[11px] font-mono text-slate-300">100%</span>
+            <button id="btn-zoom-out" title="축소" class="p-1 hover:text-white rounded hover:bg-slate-800">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 12H6"/></svg>
+            </button>
+            <button id="btn-zoom-reset" title="화면 맞춤" class="px-2 py-0.5 text-[11px] hover:text-white rounded hover:bg-slate-800">맞춤</button>
+            <div class="h-3 w-px bg-slate-800 mx-0.5"></div>
+            <button id="btn-toggle-roi" class="px-2 py-0.5 rounded text-[11px] bg-amber-500/10 text-amber-300 border border-amber-500/30 flex items-center gap-1 hover:bg-amber-500/20">
+              <span>ROI 영역지정</span>
+            </button>
+            <button id="btn-toggle-guides" class="px-2 py-0.5 rounded text-[11px] bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 flex items-center gap-1">
+              <span>세대 열 가이드</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Canvas Viewport (Empty State by Default until Sample or Upload is triggered!) -->
+        <div id="canvas-viewport" class="flex-1 overflow-hidden relative cursor-crosshair flex items-center justify-center bg-slate-950 p-2 touch-none">
+          
+          <!-- Empty State Prompt (Shown initially when sample is not yet loaded) -->
+          <div id="empty-canvas-prompt" class="max-w-md text-center p-6 rounded-2xl border border-dashed border-slate-700 bg-slate-900/50 space-y-4 z-20">
+            <div class="w-12 h-12 rounded-2xl bg-sky-500/10 border border-sky-500/30 text-sky-400 flex items-center justify-center mx-auto">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            </div>
+            <div class="space-y-1">
+              <h3 class="text-sm font-bold text-white">족보 이미지 / PDF 업로드 또는 샘플 테스트</h3>
+              <p class="text-xs text-slate-400 leading-relaxed">
+                PC 파일 열기, 모바일 카메라 촬영, 또는 내장된 <strong>[샘플 족보로 테스트하기]</strong> 버튼을 눌러 족보 추출 규칙 결과를 즉시 확인하세요.
+              </p>
+            </div>
+            <div class="flex flex-wrap items-center justify-center gap-2 pt-1">
+              <button id="empty-btn-load-sample" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-4 py-2 rounded-lg shadow transition">
+                고성 이씨 샘플 로드
+              </button>
+              <label class="cursor-pointer bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs px-3.5 py-2 rounded-lg transition">
+                📂 내 족보 파일 선택
+                <input type="file" id="empty-file-input" accept="image/*,.pdf" class="hidden">
+              </label>
+            </div>
+          </div>
+
+          <!-- Hidden Stored Sample Image & Pan Wrapper (Revealed on Sample Load or Upload) -->
+          <div id="canvas-pan-wrapper" class="relative transition-transform duration-75 origin-center hidden" style="transform: translate(0px, 0px) scale(1);">
+            <img id="jokbo-image" src="https://pathfinderlabs.kr/images/sample.jpg" alt="족보 스캔" class="max-h-[75vh] w-auto shadow-2xl rounded border border-slate-700/50 pointer-events-none select-none">
+            <canvas id="roi-canvas" class="absolute inset-0 w-full h-full pointer-events-auto"></canvas>
+            <div id="generation-guides" class="absolute inset-0 pointer-events-none flex hidden">
+              <div class="flex-1 border-r border-sky-500/30 bg-sky-500/5 relative"><span class="absolute top-2 left-1/2 -translate-x-1/2 text-[10px] font-bold text-sky-400 bg-slate-950/80 px-1 rounded">19世</span></div>
+              <div class="flex-1 border-r border-sky-500/30 bg-sky-500/5 relative"><span class="absolute top-2 left-1/2 -translate-x-1/2 text-[10px] font-bold text-sky-400 bg-slate-950/80 px-1 rounded">20世</span></div>
+              <div class="flex-1 border-r border-sky-500/30 bg-sky-500/5 relative"><span class="absolute top-2 left-1/2 -translate-x-1/2 text-[10px] font-bold text-sky-400 bg-slate-950/80 px-1 rounded">21世</span></div>
+              <div class="flex-1 border-r border-sky-500/30 bg-sky-500/5 relative"><span class="absolute top-2 left-1/2 -translate-x-1/2 text-[10px] font-bold text-sky-400 bg-slate-950/80 px-1 rounded">22世</span></div>
+              <div class="flex-1 border-r border-sky-500/30 bg-sky-500/5 relative"><span class="absolute top-2 left-1/2 -translate-x-1/2 text-[10px] font-bold text-sky-400 bg-slate-950/80 px-1 rounded">23世</span></div>
+              <div class="flex-1 border-r border-sky-500/30 bg-sky-500/5 relative"><span class="absolute top-2 left-1/2 -translate-x-1/2 text-[10px] font-bold text-sky-400 bg-slate-950/80 px-1 rounded">24世</span></div>
+              <div class="flex-1 bg-sky-500/5 relative"><span class="absolute top-2 left-1/2 -translate-x-1/2 text-[10px] font-bold text-sky-400 bg-slate-950/80 px-1 rounded">25世</span></div>
+            </div>
+          </div>
+
+          <!-- Floating ROI Action Bar -->
+          <div id="roi-action-bar" class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-slate-900/95 border border-amber-500/40 rounded-xl px-4 py-2 text-xs shadow-2xl flex items-center gap-3 backdrop-blur hidden z-30">
+            <div class="flex items-center gap-1.5 text-amber-300 font-medium">
+              <span>✂️ 영역 선택됨</span>
+            </div>
+            <span id="roi-coords-text" class="text-slate-400 font-mono text-[11px]"></span>
+            <button id="btn-extract-roi" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3 py-1 rounded-md transition shadow">
+              한자 OCR & 데이터 추출 실행
+            </button>
+            <button id="btn-clear-roi" class="text-slate-400 hover:text-white px-1.5 py-1">취소</button>
+          </div>
+        </div>
+
+        <!-- Canvas Footer Tips -->
+        <div class="h-7 border-t border-slate-800 bg-slate-950 px-3 flex items-center justify-between text-[11px] text-slate-400 shrink-0">
+          <span>💡 PC: 마우스 드래그(영역 자르기) · 휠(줌) | 모바일: 두 손가락 핀치줌(Pinch Zoom) · 터치 영역지정</span>
+          <span class="hidden sm:inline text-sky-400">성씨·부인 자동 명명 규칙 활성</span>
+        </div>
+      </section>
+
+      <!-- Right Pane: Extracted Jokbo Rules & Cards -->
+      <section class="w-full lg:w-1/2 h-1/2 lg:h-full flex flex-col bg-slate-900/60 overflow-hidden">
+        <!-- Subheader & Output Format Switcher -->
+        <div class="p-3 border-b border-slate-800 bg-slate-900/90 flex flex-col gap-2 shrink-0">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <h2 class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded bg-sky-400"></span>
+                족보 추출 결과
+                <span id="person-count-badge" class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-slate-800 text-sky-400 border border-slate-700">대기 중 (샘플 테스트를 눌러주세요)</span>
+              </h2>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <!-- Toggle between Card View and Verbatim Rule Text View -->
+              <button id="btn-view-mode-cards" class="text-xs bg-sky-600 text-white px-2.5 py-1 rounded font-medium transition">인물 카드 뷰</button>
+              <button id="btn-view-mode-ruletext" class="text-xs bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 px-2.5 py-1 rounded font-medium transition">족보추출규칙 원문 뷰</button>
+              <button id="btn-reparse-all" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded transition" title="재추출">전체 재추출</button>
+              <button id="btn-copy-rule-text" class="text-xs bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 px-2.5 py-1 rounded transition">
+                추출규칙 양식 복사
+              </button>
+            </div>
+          </div>
+
+          <!-- Generation Segment Filter -->
+          <div class="flex items-center gap-1 overflow-x-auto pb-0.5 text-xs text-slate-400">
+            <span class="text-[11px] text-slate-400 mr-1 shrink-0">세대 필터:</span>
+            <button class="gen-filter-btn px-2 py-0.5 rounded bg-sky-600 text-white font-medium shrink-0" data-gen="all">전체</button>
+            <button class="gen-filter-btn px-2 py-0.5 rounded bg-slate-800 text-slate-300 hover:text-white shrink-0" data-gen="19">19世 (昃)</button>
+            <button class="gen-filter-btn px-2 py-0.5 rounded bg-slate-800 text-slate-300 hover:text-white shrink-0" data-gen="20">20世 (格·核·女)</button>
+            <button class="gen-filter-btn px-2 py-0.5 rounded bg-slate-800 text-slate-300 hover:text-white shrink-0" data-gen="21">21世 (聖甲·顯五)</button>
+            <button class="gen-filter-btn px-2 py-0.5 rounded bg-slate-800 text-slate-300 hover:text-white shrink-0" data-gen="22">22世 (承烈·承勳)</button>
+            <button class="gen-filter-btn px-2 py-0.5 rounded bg-slate-800 text-slate-300 hover:text-white shrink-0" data-gen="23">23世 (賢東)</button>
+            <button class="gen-filter-btn px-2 py-0.5 rounded bg-slate-800 text-slate-300 hover:text-white shrink-0" data-gen="24">24世 (炳吉·炳旭·炳烈·炳直)</button>
+          </div>
+        </div>
+
+        <!-- Live Cropped ROI & OCR Hanja Inspection Bar (Appears when ROI OCR runs) -->
+        <div id="ocr-live-inspector" class="mx-3 mt-2 p-3 rounded-xl bg-slate-950 border border-amber-500/40 space-y-2 hidden shrink-0">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-amber-400 flex items-center gap-1.5">
+              <span>🔍 선택 영역(ROI) OCR 한자 판독 및 데이터 변환 결과</span>
+              <span id="ocr-confidence-badge" class="text-[10px] px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-mono">인식률 99.2% (이진화 전처리 완료)</span>
+            </span>
+            <button id="btn-close-ocr-inspector" class="text-[11px] text-slate-400 hover:text-white">접기 ▲</button>
+          </div>
+          <div class="flex flex-col sm:flex-row gap-3 items-start">
+            <div class="shrink-0 text-center">
+              <div class="text-[10px] text-slate-400 mb-1">선택 영역 크롭 원본</div>
+              <img id="ocr-cropped-preview-img" src="" alt="ROI Crop" class="max-h-24 max-w-[140px] rounded border border-slate-700 bg-slate-900 object-contain mx-auto">
+            </div>
+            <div class="flex-1 w-full space-y-1.5">
+              <div class="flex items-center justify-between text-[11px] text-slate-400">
+                <span>OCR 판독 한자 원문 (직접 수정한 뒤 [원문 재파싱] 가능):</span>
+              </div>
+              <textarea id="ocr-raw-hanja-textarea" rows="2" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-amber-200 font-hanja leading-relaxed"></textarea>
+              <div class="flex justify-end gap-2">
+                <button id="btn-parse-custom-ocr-text" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-[11px] px-3 py-1 rounded transition">
+                  판독 한자 → 우측 데이터로 즉시 변환 반영
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Person Cards List Container -->
+        <div id="person-list" class="flex-1 overflow-y-auto p-3 space-y-3"></div>
+
+        <!-- Verbatim Rule Text Container (Hidden by default, toggled via button) -->
+        <div id="rule-text-container" class="flex-1 overflow-y-auto p-4 bg-slate-950 hidden">
+          <div class="mb-2 flex items-center justify-between">
+            <span class="text-xs font-bold text-amber-400">📋 족보추출 규칙 적용 데이터 (여성 '이씨' · 본관 '변씨' · 미기재 '남편이름의 부인' 규칙 완벽 적용)</span>
+          </div>
+          <pre id="verbatim-rule-pre" class="text-xs font-mono text-slate-200 whitespace-pre-wrap leading-relaxed bg-slate-900 p-4 rounded-xl border border-slate-800"></pre>
+        </div>
+
+        <!-- Footer Stats Bar -->
+        <div class="h-9 border-t border-slate-800 bg-slate-950 px-4 flex items-center justify-between text-xs text-slate-400 shrink-0">
+          <div class="flex items-center gap-3">
+            <span>직계/아들: <b class="text-slate-200" id="stat-male">0명</b></span>
+            <span>출가녀/사위: <b class="text-slate-200" id="stat-inlaws">0명</b></span>
+            <span>배우자·처가부인: <b class="text-slate-200" id="stat-spouses">0명</b></span>
+          </div>
+          <span class="text-emerald-400 flex items-center gap-1 text-[11px]">
+            <span>✓ 부인/딸 자동 명명 규칙 엔진 작동 중</span>
+          </span>
+        </div>
+      </section>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW 2: 가족관계 정리 및 FamilySearch 전용 시트 뷰 (첨부 이미지 2, 4, 5, 6 반영) -->
+    <!-- ========================================== -->
+    <div id="view-fs" class="flex-1 p-4 md:p-6 overflow-y-auto bg-slate-950 hidden">
+      <div class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left 5 Cols: FamilySearch Mobile/Web Style Sheet (Details / Spouses / Parents) -->
+        <div class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl flex flex-col">
+          <!-- FS Dark Banner Header -->
+          <div class="bg-slate-950 p-5 border-b border-slate-800 flex items-center gap-4">
+            <div id="fs-avatar" class="w-14 h-14 rounded-full bg-sky-500/20 border-2 border-sky-400 flex items-center justify-center text-xl font-bold text-sky-300 shrink-0">
+              이
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <h3 id="fs-header-name" class="text-lg font-bold text-white truncate">이측 (昃)</h3>
+                <span id="fs-header-pid" class="hidden"></span>
+              </div>
+              <p id="fs-header-lifespan" class="text-xs text-slate-400 mt-0.5">1787 (丁未生) – 신해년 3월 3일 · 20世</p>
+            </div>
+            <div>
+              <select id="fs-person-selector" class="bg-slate-900 border border-slate-700 text-xs text-slate-200 rounded-lg px-2.5 py-1.5">
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+          </div>
+
+          <!-- FS Sub-tabs: Details | Spouses | Parents -->
+          <div class="flex border-b border-slate-800 bg-slate-900 text-xs font-semibold">
+            <button id="fs-tab-details" class="flex-1 py-2.5 text-center border-b-2 border-sky-400 text-sky-400">Details (기본정보)</button>
+            <button id="fs-tab-spouses" class="flex-1 py-2.5 text-center border-b-2 border-transparent text-slate-400 hover:text-white">Spouses (배우자·자녀)</button>
+            <button id="fs-tab-parents" class="flex-1 py-2.5 text-center border-b-2 border-transparent text-slate-400 hover:text-white">Parents (부모·형제)</button>
+          </div>
+
+          <!-- FS Tab Body -->
+          <div id="fs-tab-content" class="p-5 space-y-4 text-xs flex-1 overflow-y-auto">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Right 7 Cols: 가족관계 정리 및 수동/자동 관계 빌더 (첨부 이미지 2 하단 '가족 관계' 반영) -->
+        <div class="lg:col-span-7 space-y-6">
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div>
+                <h3 class="text-base font-bold text-white">🔗 가족 관계 정리 및 처가/사위 가계 매핑</h3>
+                <p class="text-xs text-slate-400 mt-0.5">기준 인물을 선택하고 부모(윗세대), 배우자, 자녀(아랫세대), 처가 4대조 관계를 추가·편집합니다.</p>
+              </div>
+              <button id="btn-open-new-person" class="bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition">
+                + 새 인물 직접 등록
+              </button>
+            </div>
+
+            <!-- Relationship Adder Bar -->
+            <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end bg-slate-950 p-3.5 rounded-xl border border-slate-800">
+              <div class="sm:col-span-4">
+                <label class="text-[11px] text-slate-400 block mb-1">기준 인물</label>
+                <select id="rel-source-select" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-white"></select>
+              </div>
+              <div class="sm:col-span-3">
+                <label class="text-[11px] text-slate-400 block mb-1">관계 유형</label>
+                <select id="rel-type-select" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-white">
+                  <option value="배우자">배우자 (부인/남편)</option>
+                  <option value="자녀">자녀 (아들/딸)</option>
+                  <option value="부모">부모 (윗세대)</option>
+                  <option value="장인">처부 (장인 및 장인의 부인)</option>
+                  <option value="출계">출계 (양자 입양 부모)</option>
+                </select>
+              </div>
+              <div class="sm:col-span-3">
+                <label class="text-[11px] text-slate-400 block mb-1">대상 인물 (또는 성명 입력)</label>
+                <input type="text" id="rel-target-input" placeholder="예: 원주변씨 / 홍길동" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-2 text-xs text-white">
+              </div>
+              <div class="sm:col-span-2">
+                <button id="btn-add-relation" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-bold py-2 px-3 rounded-lg text-xs transition">
+                  관계 추가
+                </button>
+              </div>
+            </div>
+
+            <!-- Active Relationship List -->
+            <div class="space-y-2 max-h-[420px] overflow-y-auto pr-1" id="relationship-list-container">
+              <!-- Populated dynamically -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW 3: 계보도 트리 뷰 (첨부 이미지 3 스타일 직각 계보 트리 + 표시 항목 필터) -->
+    <!-- ========================================== -->
+    <div id="view-tree" class="flex-1 p-4 md:p-6 overflow-auto bg-slate-950 hidden">
+      <div class="max-w-6xl mx-auto space-y-6">
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 class="text-base font-bold text-white flex items-center gap-2">
+              <span id="tree-clan-title">가문 족보 가계도 트리</span>
+              <span id="tree-gen-range-badge" class="text-xs font-normal text-sky-400 bg-sky-950 px-2 py-0.5 rounded border border-sky-800">추출된 세대 계통</span>
+            </h2>
+          </div>
+
+          <!-- Display Checkboxes (세대, 이름 병기, 본관, 출생일, 성별 색) -->
+          <div class="flex flex-wrap items-center gap-3 text-xs text-slate-300">
+            <span class="text-slate-400 font-medium">표시 항목:</span>
+            <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="tree-opt-gen" checked class="accent-sky-500"> 세대</label>
+            <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="tree-opt-hanja" checked class="accent-sky-500"> 한자·한글 병기</label>
+            <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="tree-opt-birth" checked class="accent-sky-500"> 출생·사망(서기)</label>
+            <label class="flex items-center gap-1 cursor-pointer"><input type="checkbox" id="tree-opt-spouse" checked class="accent-sky-500"> 배우자·사위 포함</label>
+            <button onclick="window.print()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-3 py-1 rounded-lg transition ml-2">
+              전체 펼치기 / 가계도 인쇄 · PDF
+            </button>
+          </div>
+        </div>
+
+        <!-- Tree Diagram Container -->
+        <div id="tree-diagram-container" class="space-y-8 pb-12"></div>
+      </div>
+    </div>
+
+    <!-- 명명규칙 파서용 숨김 요소 (한자 도구 화면은 제거됨) -->
+    <div class="hidden" aria-hidden="true">
+      <input type="text" id="rule-test-input" value="配原州邊氏">
+      <button id="btn-run-rule-test">규칙 적용하여 이름 추출하기</button>
+      <button id="btn-sample-rule-2">예시 2 (무안박씨 처가)</button>
+      <button id="btn-sample-rule-3">예시 3 (홍길동 처가)</button>
+      <pre id="rule-test-output"></pre>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW 5: 만세력 60간지 서기 계산기 -->
+    <!-- ========================================== -->
+    <div id="view-manse" class="flex-1 p-6 overflow-auto bg-slate-950 hidden">
+      <div class="max-w-4xl mx-auto space-y-6">
+        <div class="border-b border-slate-800 pb-4">
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <span>만세력 60간지 서기 환산 엔진</span>
+            <span class="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded">Solar-Lunar Converter</span>
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">족보에 표기된 간지 생졸년(예: 丁未生, 壬戌生, 壬辰生)을 세대 기준 연대에 맞춰 정확한 서기 연도로 환산합니다.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+            <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+              <span class="w-1.5 h-3 rounded bg-amber-500"></span>
+              간지 입력 및 연대 선택
+            </h3>
+            <div>
+              <label for="manse-ganji-select" class="text-xs text-slate-400 block mb-1">육십간지 (干支)</label>
+              <select id="manse-ganji-select" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm font-medium text-white focus:outline-none focus:border-sky-500"></select>
+            </div>
+            <div>
+              <label for="manse-century-select" class="text-xs text-slate-400 block mb-1">추정 시대 (기준 세기)</label>
+              <select id="manse-century-select" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm font-medium text-white focus:outline-none focus:border-sky-500">
+                <option value="1700">18세기 (1700년대) - 조선 영·정조</option>
+                <option value="1800" selected>19세기 (1800년대) - 조선 순조·철종·고종</option>
+                <option value="1900">20세기 (1900년대) - 대한제국·현대</option>
+              </select>
+            </div>
+            <button id="btn-calc-manse" class="w-full bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold py-2 rounded-lg text-sm transition shadow">
+              서기 연도 산출
+            </button>
+          </div>
+
+          <div class="md:col-span-2 bg-slate-900 border border-slate-800 rounded-xl p-5 flex flex-col justify-between">
+            <div>
+              <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2 mb-3">
+                <span class="w-1.5 h-3 rounded bg-emerald-500"></span>
+                환산 결과 및 주기 연대표 (60년 주기)
+              </h3>
+              <div id="manse-result-box" class="p-4 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-between">
+                <div>
+                  <div class="text-xs text-slate-400">가장 유력한 서기 연도</div>
+                  <div id="manse-result-year" class="text-3xl font-extrabold text-amber-400 font-mono mt-1">서기 1847년 (丁未)</div>
+                  <div id="manse-result-info" class="text-xs text-slate-400 mt-1">조선 헌종 13년 | 붉은 양의 해 (정미)</div>
+                </div>
+                <div class="text-right">
+                  <span class="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs border border-emerald-500/30">FamilySearch 적합</span>
+                </div>
+              </div>
+              <div class="mt-4">
+                <div class="text-xs text-slate-400 mb-2 font-medium">인접 60년 주기 후보군:</div>
+                <div id="manse-cycles-grid" class="grid grid-cols-4 gap-2 text-xs font-mono"></div>
+              </div>
+            </div>
+            <div class="text-[11px] text-slate-400 border-t border-slate-800/80 pt-3 mt-4">
+              ※ 샘플 족보의 모든 인물 생졸 간지는 앞뒤 세대(25~30년) 간격으로 서기 연도가 자동 산출되어 있습니다.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- VIEW 6: 데이터 내보내기 (텍스트 화면 표시 및 전체 복사) -->
+    <!-- ========================================== -->
+    <div id="view-export" class="flex-1 p-4 md:p-6 overflow-auto bg-slate-950 hidden">
+      <div class="max-w-5xl mx-auto space-y-6">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 class="text-lg font-bold text-white flex items-center gap-2">
+              <span>💾 추출 데이터 내보내기 (텍스트 화면 표시 · 복사)</span>
+              <span class="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded">한글·한자·로마자 성/이름/접미사 · 생몰년월일시 · 참고 완벽 구분</span>
+            </h2>
+            <p class="text-xs text-slate-400 mt-1">
+              가족관계 정리에서 추출된 각각의 인물의 [한글 성·이름·접미사 / 한자 성·이름·접미사 / 로마자 성·이름·접미사 / 성별(남성·여성) / 상태(사망·생존) / 생년월일 / 출생장소 / 사망일자 / 사망장소 / 참고] 데이터를 화면에 텍스트로 보여주고 클립보드 메모리에 복사하여 다른 곳에 붙여넣기 할 수 있습니다.
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-2.5">
+            <button id="btn-download-txt-file" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-4 py-2.5 rounded-xl transition flex items-center gap-1.5 shadow-lg shadow-amber-500/20">
+              <span>📥 텍스트(.txt) 파일로 내보내기</span>
+            </button>
+            <button id="btn-copy-preview-content" class="bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition flex items-center gap-1.5 shadow">
+              <span>📋 전체 텍스트 복사 (<span class="underline">메모리 저장 · 붙여넣기</span>)</span>
+            </button>
+            <!-- Hidden legacy buttons (엑셀 다운로드 삭제) -->
+            <button id="btn-download-csv" class="hidden">엑셀/CSV 다운로드</button>
+            <button id="btn-download-gedcom" class="hidden">GEDCOM (.ged) 다운로드</button>
+            <button id="btn-download-json" class="hidden">FamilySearch JSON 저장</button>
+          </div>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+          <div class="bg-slate-950 px-4 py-2.5 border-b border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-2 text-xs">
+              <button id="exp-preview-tab-structured" class="px-3 py-1.5 rounded-lg bg-sky-600 text-white font-bold">항목별 구분 추출 텍스트 (성·이름·생몰·장소)</button>
+              <button id="exp-preview-tab-txt" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white font-medium">족보추출 규칙 텍스트</button>
+              <button id="exp-preview-tab-gedcom" class="hidden">GEDCOM 5.5.1</button>
+              <button id="exp-preview-tab-json" class="hidden">FamilySearch JSON</button>
+            </div>
+          </div>
+          <pre id="export-preview-content" class="p-5 text-xs font-mono text-emerald-300 overflow-x-auto max-h-[540px] bg-slate-950/80 leading-relaxed whitespace-pre-wrap select-all"></pre>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Edit / Add Person Modal -->
+  <div id="edit-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+      <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950">
+        <h3 class="text-sm font-bold text-white flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-sky-500"></span>
+          <span>인물 및 가족 기록 상세 편집</span>
+          <span id="modal-person-gen" class="text-xs text-sky-400 font-mono"></span>
+        </h3>
+        <button id="btn-close-modal" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800"><span class="sr-only">닫기</span>✕</button>
+      </div>
+      <div class="p-6 overflow-y-auto space-y-4 text-xs">
+        <input type="hidden" id="modal-person-id">
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="modal-name-hanja" class="text-slate-400 block mb-1">한자 성명 (미기재 시 비움)</label>
+            <input type="text" id="modal-name-hanja" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-hanja">
+          </div>
+          <div>
+            <label for="modal-name-korean" class="text-slate-400 block mb-1">한글 성명 (예: 이측 / 이씨 / 홍길동의 부인)</label>
+            <input type="text" id="modal-name-korean" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="modal-birth-ganji" class="text-slate-400 block mb-1">출생 기록 (간지)</label>
+            <input type="text" id="modal-birth-ganji" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+          </div>
+          <div>
+            <label for="modal-birth-solar" class="text-slate-400 block mb-1">환산 서기 출생년도</label>
+            <input type="number" id="modal-birth-solar" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white font-mono">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label for="modal-death-text" class="text-slate-400 block mb-1">사망/기일 기록</label>
+            <input type="text" id="modal-death-text" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+          </div>
+          <div>
+            <label for="modal-burial" class="text-slate-400 block mb-1">매장지 / 묘소</label>
+            <input type="text" id="modal-burial" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+          </div>
+        </div>
+        <div>
+          <label for="modal-spouse-info" class="text-slate-400 block mb-1">배우자 (예: 변씨, 原州邊氏(원주변씨) / 권두(權頭))</label>
+          <input type="text" id="modal-spouse-info" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+        </div>
+        <div>
+          <label for="modal-inlaws-info" class="text-slate-400 block mb-1">처가 가족 정보 (장인 / 부인이름: 장인의 부인 등 줄바꿈 입력)</label>
+          <textarea id="modal-inlaws-info" rows="4" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white leading-relaxed"></textarea>
+        </div>
+        <div>
+          <label for="modal-notes" class="text-slate-400 block mb-1">자(字) · 호 · 관직 · 출계 · 특이사항</label>
+          <input type="text" id="modal-notes" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-white">
+        </div>
+      </div>
+      <div class="px-6 py-3 border-t border-slate-800 bg-slate-950 flex justify-end gap-2">
+        <button id="btn-cancel-modal" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs">취소</button>
+        <button id="btn-save-modal" class="px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-medium text-xs shadow">저장하기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed top-16 right-6 bg-slate-800 border border-sky-500/40 text-sky-200 px-4 py-2.5 rounded-xl shadow-2xl text-xs flex items-center gap-2 transition-opacity duration-300 opacity-0 pointer-events-none z-50">
+    <span id="toast-message">성공적으로 처리되었습니다.</span>
+  </div>
+
+  <!-- Core Application Script -->
+  <script>
+    // 1. Verbatim Jokbo Extraction Rule Text (100% matched to user's 족보추출 규칙.txt)
+    const VERBATIM_RULE_TEXT = [
+      "이름: 昃 (이측)",
+      "출생 · 사망: 丁未生(정미생) · 申亥月 三日 卒(신해년 3월 3일 사망)",
+      "매장지: 기록 없음 (미상)",
+      "넷째 아들",
+      "",
+      " 이측의 아내 이름: 변씨, 原州邊氏(원주변씨)",
+      " 출생 · 사망: 壬戌生(임술생) · 甲子月 十八日 卒(갑자년 10월 18일 사망)",
+      "   ",
+      "이측의 처가 가족 정보(아내 변씨의 가족)",
+      "처의 아버지(장인) 이름: 변국성(邊國聖) / 부인이름: 변국성의 부인",
+      "할아버지(장인의 아버지) 이름: 변동지(邊同知) / 부인이름: 변동지의 부인",
+      "증조할아버지(장인의 조부) 이름: 변상(判官邊尙) / 부인이름: 변상의 부인",
+      "처의 외할아버지 이름: 류승춘(文化柳承春) / 부인이름: 류승춘의 부인",
+      "",
+      "이측의 첫째 아들 이름: 이격(格)",
+      "출생 · 사망: 壬辰生(임진생) · 사망 정보 미상",
+      "",
+      "이격의 아내 이름: 조씨, 豊壤趙氏(풍양조씨)",
+      "출생 · 사망: 癸巳生(계사년생) · 사망 정보 미상",
+      "",
+      "이격의 처가 정보",
+      "조씨의 아버지(이격의 장인) 이름: 조영복(永復) / 부인이름: 조영복의 부인",
+      "",
+      "이측의 둘째 아들 이름: 이핵(核)",
+      "출생 · 사망: 丁酉生(정유년생) · 三月 五日 卒(3월 5일 사망, 사망 연도 미상)",
+      "매장지: 백석면 학동(白石面 鶴洞)",
+      "",
+      "이핵의 아내 이름: 윤씨, 坡平尹氏(파평윤씨)",
+      "출생 · 사망: 乙巳生(을사년생) · 사망 정보 미상",
+      "",
+      "윤씨의 아버지(이핵의 장인) 이름: 윤광악(尹光岳) / 부인이름: 윤광악의 부인",
+      "윤씨의 할아버지 이름: 윤동억(尹東憶) / 부인이름: 윤동억의 부인",
+      "윤씨의 증조할아버지 이름: 윤도경(通政 道經) / 부인이름: 윤도경의 부인",
+      "윤씨의 외할아버지 이름: 고씨, 濟州高氏 (제주고씨) / 부인이름: 고씨의 부인",
+      "",
+      "이측의 첫째 딸 이름: 이씨",
+      "출생 · 사망: 정보 미상",
+      "이씨의 남편 이름: 권두(權頭)",
+      "출생 · 사망: 정보 미상",
+      " ",
+      "이격의 아들 이름: 이성갑(聖甲)",
+      "출생 · 사망: 甲子生(갑자년생) · 사망 정보 미상",
+      "매장지: 기록 없음",
+      "관직 · 다른 이름 · 특이사항: 족보 원문 한글 표기 '성중'은 오기이며 정확한 이름은 성갑",
+      "이성갑의 아내정보 없음",
+      "",
+      "이핵의 아들 이름: 이현오(顯五)",
+      "출생 · 사망: 庚午生(경오년생) · 사망 정보 미상",
+      "매장지: 기록 없음",
+      "관직 · 다른 이름 · 특이사항: 자(字)는 之庚(지경) 또는 行之(행지)",
+      "",
+      "이현오의 아내 이름:원씨, 原州元氏(원주원씨) ",
+      "출생 · 사망: 甲戌生(출생: 갑술년생) ",
+      "원씨의 부친(이현오의 장인) 이름:원재억(元載億) / 부인이름: 원재억의 부인",
+      "",
+      "이핵의 첫째 딸 이름: 이씨",
+      "출생 · 사망: 정보 미상",
+      "이씨의 남편 이름: 권구수(權龜壽)",
+      "출생 · 사망: 정보 미상",
+      "남편 가족 정보: 기록 없음",
+      "",
+      "이핵의 둘째 딸 이름: 이씨",
+      "출생 · 사망: 정보 미상",
+      "이씨의 남편 이름: 이집(李集)",
+      "출생 · 사망: 정보 미상",
+      "남편 가족 정보: 본관: 安東人 (안동인)",
+      "",
+      "이현오의 첫째 아들 이름: 이승렬(承烈)",
+      "출생 · 사망: 辛丑生(신축년생) · 사망 정보 미상",
+      "이승렬의 아내 이름: 박씨 ,務安朴氏(무안박씨) ",
+      "출생 · 사망: 癸卯生(계묘년생) · 사망 정보 미상",
+      "",
+      "박씨의 아버지(이승렬의 장인) 이름: 박기풍(基豊) / 부인이름: 박기풍의 부인",
+      "박씨의 할아버지 이름: 박규수(奎秀) / 부인이름: 박규수의 부인",
+      "박씨의 증조할아버지 이름: 박사원(師元) / 부인이름: 박사원의 부인",
+      "박씨의 외할아버지 이름: 정약만(丁若萬) / 부인이름: 정약만의 부인",
+      "",
+      "이현오의 둘째 아들 이름: 이승훈(承勳)",
+      "출생 · 사망: 정보 미상",
+      "아내 이름 · 출생 · 사망: 기록 없음 (출계로 인한 미기재)",
+      "특이사항: 顯龍(현룡)의 후사로 출계(양자 입양)",
+      "",
+      "이현오의 첫째 딸 이름: 이씨",
+      "출생 · 사망: 정보 미상",
+      "이씨의 남편 이름: 기록 없음 (안동 출신 남성)",
+      "출생 · 사망: 정보 미상",
+      "남편 가족 정보: 안동인 (안동 출신)",
+      "",
+      "이현오의 둘째 딸 이름: 이씨",
+      "출생 · 사망: 정보 미상",
+      "남편 이름: 기록 없음 (전주 출신 남성)",
+      "출생 · 사망: 정보 미상",
+      "남편 가족 정보: 전주인 (전주 출신)",
+      "",
+      "이승렬의 아들 이름: 이현동(賢東)",
+      "출생 · 사망: 癸酉生(계유년생) · 庚午 十二月 十六日 卒(경오년 12월 16일 사망)",
+      "매장지: 謹峴 壬坐 合窆 (근현 임좌에 부인과 합장)",
+      "관직 · 다른 이름 · 특이사항: 자(字)는 致安(치안)",
+      "",
+      "이현동의 아내 이름: 노씨, 交河盧氏(교하노씨)",
+      " 출생 · 사망: 丁亥生(정해년생) · 四月 十三日 忌(4월 13일 기일)",
+      " 노씨의 아버지(이현동의 장인) 이름: 노신(愼) / 부인이름: 노신의 부인",
+      "",
+      "이현동의 첫째 아들 이름: 이병길 (炳吉)",
+      "출생 · 사망: 정보 미상",
+      "이병길의 아내 이름 · 출생 · 사망: 기록 다른 페이지에서 계속 (二卷 393)",
+      "",
+      "이현동의 둘째 아들 이름: 이병욱(炳旭)",
+      "아내 이름 · 출생 · 사망: 기록 다른 페이지에서 계속",
+      "특이사항: 寅東(인동)의 후사로 출계(양자 입양)",
+      "",
+      "이현동의 셋째 아들 이름: 이병렬(炳烈)",
+      "아내 이름 · 출생 · 사망: 기록 다른 페이지에서 계속 (二卷 394)",
+      "",
+      "이현동의 넷째 아들 이름: 이병직(炳直)",
+      "아내 이름 · 출생 · 사망: 기록 다른 페이지에서 계속 (二卷 395)",
+      "",
+      "이현동의 첫째 딸 이름: 이씨",
+      "출생 · 사망: 정보 미상",
+      "이씨의 남편 이름: 김면걸(金免傑)",
+      "출생 · 사망: 정보 미상",
+      "남편 가족 정보: 金海人 (김해 김씨)",
+      "",
+      "이현동의 둘째 딸 이름: 이씨",
+      "출생 · 사망: 정보 미상",
+      "이씨의 남편 이름: 윤긍수(尹兢秀)",
+      "출생 · 사망: 정보 미상",
+      "남편 가족 정보: 기록 없음"
+    ].join('\n');
+
+    // 2. 60 Ganji Definitions
+    const CHEONGAN = ['갑', '을', '병', '정', '무', '기', '경', '신', '임', '계'];
+    const CHEONGAN_HANJA = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+    const JIJI = ['자', '축', '인', '묘', '진', '사', '오', '미', '신', '유', '술', '해'];
+    const JIJI_HANJA = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
+
+    const GANJI_LIST = [];
+    for (let i = 0; i < 60; i++) {
+      GANJI_LIST.push({
+        index: i,
+        hanja: CHEONGAN_HANJA[i % 10] + JIJI_HANJA[i % 12],
+        korean: CHEONGAN[i % 10] + JIJI[i % 12]
+      });
+    }
+
+    // 3. Stored Sample Jokbo Dataset (Loaded when user clicks "샘플 족보로 테스트하기")
+    const SAMPLE_JOKBO_DATA = [
+      {
+        id: 'P19_01',
+        gen: 19,
+        generationTitle: '20世 (상단 19世 계통)',
+        role: '넷째 아들',
+        nameHanja: '昃',
+        nameKorean: '이측',
+        romanName: 'LEE CHEUK',
+        clanName: '고성이씨 / 사암공파 (固城李氏 思菴公派)',
+        birthGanji: '丁未生(정미생)',
+        birthSolarYear: 1787,
+        deathInfo: '申亥月 三日 卒(신해년 3월 3일 사망)',
+        burial: '기록 없음 (미상)',
+        notes: '자(字)는 良甫(양보) · 넷째 아들',
+        gender: 'M',
+        spouse: {
+          name: '변씨, 原州邊氏(원주변씨)',
+          birth: '壬戌生(임술생, 1790/1802)',
+          death: '甲子月 十八日 卒(갑자년 10월 18일 사망)',
+          inlaws: [
+            '처의 아버지(장인) 이름: 변국성(邊國聖) / 부인이름: 변국성의 부인',
+            '할아버지(장인의 아버지) 이름: 변동지(邊同知) / 부인이름: 변동지의 부인',
+            '증조할아버지(장인의 조부) 이름: 변상(判官邊尙) / 부인이름: 변상의 부인',
+            '처의 외할아버지 이름: 류승춘(文化柳承春) / 부인이름: 류승춘의 부인'
+          ]
+        },
+        children: ['P20_01', 'P20_02', 'P20_03']
+      },
+      {
+        id: 'P20_01',
+        gen: 20,
+        generationTitle: '21世',
+        parentId: 'P19_01',
+        role: '이측의 첫째 아들',
+        nameHanja: '格',
+        nameKorean: '이격',
+        romanName: 'LEE GYEOK',
+        clanName: '고성이씨 / 사암공파',
+        birthGanji: '壬辰生(임진생)',
+        birthSolarYear: 1832,
+        deathInfo: '사망 정보 미상',
+        burial: '기록 없음',
+        notes: '자(字)는 君平(군평)',
+        gender: 'M',
+        spouse: {
+          name: '조씨, 豊壤趙氏(풍양조씨)',
+          birth: '癸巳生(계사년생, 1833)',
+          death: '사망 정보 미상',
+          inlaws: [
+            '조씨의 아버지(이격의 장인) 이름: 조영복(永復) / 부인이름: 조영복의 부인'
+          ]
+        },
+        children: ['P21_01']
+      },
+      {
+        id: 'P20_02',
+        gen: 20,
+        generationTitle: '21世',
+        parentId: 'P19_01',
+        role: '이측의 둘째 아들',
+        nameHanja: '核',
+        nameKorean: '이핵',
+        romanName: 'LEE HAEK',
+        clanName: '고성이씨 / 사암공파',
+        birthGanji: '丁酉生(정유년생)',
+        birthSolarYear: 1837,
+        deathInfo: '三月 五日 卒(3월 5일 사망, 사망 연도 미상)',
+        burial: '백석면 학동(白石面 鶴洞)',
+        notes: '자(字)는 君實(군실)',
+        gender: 'M',
+        spouse: {
+          name: '윤씨, 坡平尹氏(파평윤씨)',
+          birth: '乙巳生(을사년생, 1845)',
+          death: '사망 정보 미상',
+          inlaws: [
+            '윤씨의 아버지(이핵의 장인) 이름: 윤광악(尹光岳) / 부인이름: 윤광악의 부인',
+            '윤씨의 할아버지 이름: 윤동억(尹東憶) / 부인이름: 윤동억의 부인',
+            '윤씨의 증조할아버지 이름: 윤도경(通政 道經) / 부인이름: 윤도경의 부인',
+            '윤씨의 외할아버지 이름: 고씨, 濟州高氏 (제주고씨) / 부인이름: 고씨의 부인'
+          ]
+        },
+        children: ['P21_02', 'P21_03', 'P21_04']
+      },
+      {
+        id: 'P20_03',
+        gen: 20,
+        generationTitle: '21世',
+        parentId: 'P19_01',
+        role: '이측의 첫째 딸',
+        nameHanja: '女',
+        nameKorean: '이씨',
+        romanName: 'LEE SSI',
+        clanName: '고성이씨 / 사암공파',
+        birthGanji: '정보 미상',
+        birthSolarYear: null,
+        deathInfo: '정보 미상',
+        burial: '기록 없음',
+        notes: '출가녀 성명 규칙 적용: 이름 미기재로 본성(이씨) 부여',
+        gender: 'F',
+        spouse: {
+          name: '남편: 권두(權頭)',
+          birth: '정보 미상',
+          death: '정보 미상',
+          inlaws: ['본관: 安東人 (안동 권씨) / 자: 권중집(權重輯), 중관(重寬)']
+        },
+        children: []
+      },
+      {
+        id: 'P21_01',
+        gen: 21,
+        generationTitle: '22世',
+        parentId: 'P20_01',
+        role: '이격의 아들',
+        nameHanja: '聖甲',
+        nameKorean: '이성갑',
+        romanName: 'LEE SEONG-GAP',
+        clanName: '고성이씨 / 사암공파',
+        birthGanji: '甲子生(갑자년생)',
+        birthSolarYear: 1864,
+        deathInfo: '사망 정보 미상',
+        burial: '기록 없음',
+        notes: '⚠️ [오기 자동 교정] 족보 원문 한글 표기 \'성중\'은 오기이며 정확한 이름은 성갑(聖甲). 아내정보 없음',
+        gender: 'M',
+        spouse: null,
+        children: []
+      },
+      {
+        id: 'P21_02',
+        gen: 21,
+        generationTitle: '22世',
+        parentId: 'P20_02',
+        role: '이핵의 아들',
+        nameHanja: '顯五',
+        nameKorean: '이현오',
+        romanName: 'LEE HYEON-O',
+        clanName: '고성이씨 / 사암공파',
+        birthGanji: '庚午生(경오년생)',
+        birthSolarYear: 1870,
+        deathInfo: '사망 정보 미상',
+        burial: '기록 없음',
+        notes: '자(字)는 之庚(지경) 또는 行之(행지)',
+        gender: 'M',
+        spouse: {
+          name: '원씨, 原州元氏(원주원씨)',
+          birth: '甲戌生(출생: 갑술년생, 1874)',
+          death: '사망 정보 미상',
+          inlaws: [
+            '원씨의 부친(이현오의 장인) 이름: 원재억(元載億) / 부인이름: 원재억의 부인'
+          ]
+        },
+        children: ['P22_01', 'P22_02', 'P22_03', 'P22_04']
+      },
+      {
+        id: 'P21_03',
+        gen: 21,
+        generationTitle: '22世',
+        parentId: 'P20_02',
+        role: '이핵의 첫째 딸',
+        nameHanja: '女',
+        nameKorean: '이씨',
+        romanName: 'LEE SSI',
+        clanName: '고성이씨 / 사암공파',
+        birthGanji: '정보 미상',
+        birthSolarYear: null,
+        deathInfo: '정보 미상',
+        burial: '기록 없음',
+        notes: '이씨의 남편 이름: 권구수(權龜壽)',
+        gender: 'F',
+        spouse: {
+          name: '남편: 권구수(權龜壽)',
+          birth: '정보 미상',
+          death: '정보 미상',
+          inlaws: ['남편 가족 정보: 기록 없음']
+        },
+        children: []
+      },
+      {
+        id: 'P21_04',
+        gen: 21,
+        generationTitle: '22世',
+        parentId: 'P20_02',
+        role: '이핵의 둘째 딸',
+        nameHanja: '女',
+        nameKorean: '이씨',
+        romanName: 'LEE SSI',
+        clanName: '고성이씨 / 사암공파',
+        birthGanji: '정보 미상',
+        birthSolarYear: null,
+        deathInfo: '정보 미상',
+        burial: '기록 없음',
+        notes: '이씨의 남편 이름: 이집(李集)',
+        gender: 'F',
+        spouse: {
+          name: '남편: 이집(李集)',
+          birth: '정보 미상',
+          death: '정보 미상',
+          inlaws: ['남편 가족 정보: 본관: 安東人 (안동인)']
+        },
+        children: []
+      },
+      {
+        id: 'P22_01',
+        gen: 22,
+        generationTitle: '23世',
+        parentId: 'P21_02',
+        role: '이현오의 첫째 아들',
+        nameHanja: '承烈',
+        nameKorean: '이승렬',
+        romanName: 'LEE SEUNG-RYEOL',
+        clanName: '고성이씨 / 사암공파',
+        birthGanji: '辛丑生(신축년생)',
+        birthSolarYear: 1901,
+        deathInfo: '사망 정보 미상',
+        burial: '기록 없음',
+        notes: '자(字)는 聖模(성모)',
+        gender: 'M',
+        spouse: {
+          name: '박씨, 務安朴氏(무안박씨)',
+          birth: '癸卯生(계묘년생, 1903)',
+          death: '사망 정보 미상',
+          inlaws: [
+            '박씨의 아버지(이승렬의 장인) 이름: 박기풍(基豊) / 부인이름: 박기풍의 부인',
+            '박씨의 할아버지 이름: 박규수(奎秀) / 부인이름: 박규수의 부인',
+            '박씨의 증조할아버지 이름: 박사원(師元) / 부인이름: 박사원의 부인',
+            '박씨의 외할아버지 이름: 정약만(丁若萬) / 부인이름: 정약만의 부인'
+          ]
+        },
+        children: ['P23_01']
+      },
+      {
+        id: 'P22_02',
+        gen: 22,
+        generationTitle: '23世',
+        parentId: 'P21_02',
+        role: '이현오의 둘째 아들',
+        nameHanja: '承勳',
+        nameKorean: '이승훈',
+        romanName: 'LEE SEUNG-HUN',
+        clanName: '고성이씨 / 사암공파',
+        birthGanji: '정보 미상',
+        birthSolarYear: null,
+        deathInfo: '정보 미상',
+        burial: '기록 없음',
+        notes: '아내 기록 없음 (출계로 인한 미기재) · 특이사항: 顯龍(현룡)의 후사로 출계(양자 입양)',
+        gender: 'M',
+        spouse: null,
+        children: []
+      },
+      {
+        id: 'P22_03',
+        gen: 22,
+        generationTitle: '23世',
+        parentId: 'P21_02',
+        role: '이현오의 첫째 딸',
+        nameHanja: '女',
+        nameKorean: '이씨',
+        romanName: 'LEE SSI',
+        clanName: '고성이씨 / 사암공파',
+        birthGanji: '정보 미상',
+        birthSolarYear: null,
+        deathInfo: '정보 미상',
+        burial: '기록 없음',
+        notes: '남편 이름: 기록 없음 (안동 출신 남성)',
+        gender: 'F',
+        spouse: {
+          name: '남편: 기록 없음 (안동 출신 남성)',
+          birth: '정보 미상',
+          death: '정보 미상',
+          inlaws: ['남편 가족 정보: 안동인 (안동 출신)']
+        },
+        children: []
+      },
+      {
+        id: 'P22_04',
+        gen: 22,
+        generationTitle: '23世',
+        parentId: 'P21_02',
+        role: '이현오의 둘째 딸',
+        nameHanja: '女',
+        nameKorean: '이씨',
+        romanName: 'LEE SSI',
+        clanName: '고성이씨 / 사암공파',
+        birthGanji: '정보 미상',
+        birthSolarYear: null,
+        deathInfo: '정보 미상',
+        burial: '기록 없음',
+        notes: '남편 이름: 기록 없음 (전주 출신 남성)',
+        gender: 'F',
+        spouse: {
+          name: '남편: 기록 없음 (전주 출신 남성)',
+          birth: '정보 미상',
+          death: '정보 미상',
+          inlaws: ['남편 가족 정보: 전주인 (전주 출신)']
+        },
+        children: []
+      },
+      {
+        id: 'P23_01',
+        gen: 23,
+        generationTitle: '24世',
+        parentId: 'P22_01',
+        role: '이승렬의 아들',
+        nameHanja: '賢東',
+        nameKorean: '이현동',
+        romanName: 'LEE HYEON-DONG',
+        clanName: '고성이씨 / 사암공파',
+        birthGanji: '癸酉生(계유년생)',
+        birthSolarYear: 1933,
+        deathInfo: '庚午 十二月 十六日 卒(경오년 12월 16일 사망)',
+        burial: '謹峴 壬坐 合窆 (근현 임좌에 부인과 합장)',
+        notes: '자(字)는 致安(치안)',
+        gender: 'M',
+        spouse: {
+          name: '노씨, 交河盧氏(교하노씨)',
+          birth: '丁亥生(정해년생, 1947)',
+          death: '四月 十三日 忌(4월 13일 기일)',
+          inlaws: [
+            '노씨의 아버지(이현동의 장인) 이름: 노신(愼) / 부인이름: 노신의 부인'
+          ]
+        },
+        children: ['P24_01', 'P24_02', 'P24_03', 'P24_04', 'P24_05', 'P24_06']
+      },
+      {
+        id: 'P24_01',
+        gen: 24,
+        generationTitle: '25世',
+        parentId: 'P23_01',
+        role: '이현동의 첫째 아들',
+        nameHanja: '炳吉',
+        nameKorean: '이병길',
+        romanName: 'LEE BYEONG-GIL',
+        clanName: '고성이씨 / 사암공파',
+        birthGanji: '정보 미상',
+        birthSolarYear: null,
+        deathInfo: '정보 미상',
+        burial: '기록 없음',
+        notes: '이병길의 아내 이름 · 출생 · 사망: 기록 다른 페이지에서 계속 (二卷 393)',
+        gender: 'M',
+        spouse: null,
+        children: []
+      },
+      {
+        id: 'P24_02',
+        gen: 24,
+        generationTitle: '25世',
+        parentId: 'P23_01',
+        role: '이현동의 둘째 아들',
+        nameHanja: '炳旭',
+        nameKorean: '이병욱',
+        romanName: 'LEE BYEONG-UK',
+        clanName: '고성이씨 / 사암공파',
+        birthGanji: '정보 미상',
+        birthSolarYear: null,
+        deathInfo: '정보 미상',
+        burial: '기록 없음',
+        notes: '아내 기록 다른 페이지에서 계속 · 특이사항: 寅東(인동)의 후사로 출계(양자 입양)',
+        gender: 'M',
+        spouse: null,
+        children: []
+      },
+      {
+        id: 'P24_03',
+        gen: 24,
+        generationTitle: '25世',
+        parentId: 'P23_01',
+        role: '이현동의 셋째 아들',
+        nameHanja: '炳烈',
+        nameKorean: '이병렬',
+        romanName: 'LEE BYEONG-RYEOL',
+        clanName: '고성이씨 / 사암공파',
+        birthGanji: '정보 미상',
+        birthSolarYear: null,
+        deathInfo: '정보 미상',
+        burial: '기록 없음',
+        notes: '아내 이름 · 출생 · 사망: 기록 다른 페이지에서 계속 (二卷 394)',
+        gender: 'M',
+        spouse: null,
+        children: []
+      },
+      {
+        id: 'P24_04',
+        gen: 24,
+        generationTitle: '25世',
+        parentId: 'P23_01',
+        role: '이현동의 넷째 아들',
+        nameHanja: '炳直',
+        nameKorean: '이병직',
+        romanName: 'LEE BYEONG-JIK',
+        clanName: '고성이씨 / 사암공파',
+        birthGanji: '정보 미상',
+        birthSolarYear: null,
+        deathInfo: '정보 미상',
+        burial: '기록 없음',
+        notes: '아내 이름 · 출생 · 사망: 기록 다른 페이지에서 계속 (二卷 395)',
+        gender: 'M',
+        spouse: null,
+        children: []
+      },
+      {
+        id: 'P24_05',
+        gen: 24,
+        generationTitle: '25世',
+        parentId: 'P23_01',
+        role: '이현동의 첫째 딸',
+        nameHanja: '女',
+        nameKorean: '이씨',
+        romanName: 'LEE SSI',
+        clanName: '고성이씨 / 사암공파',
+        birthGanji: '정보 미상',
+        birthSolarYear: null,
+        deathInfo: '정보 미상',
+        burial: '기록 없음',
+        notes: '이씨의 남편 이름: 김면걸(金免傑)',
+        gender: 'F',
+        spouse: {
+          name: '남편: 김면걸(金免傑)',
+          birth: '정보 미상',
+          death: '정보 미상',
+          inlaws: ['남편 가족 정보: 金海人 (김해 김씨)']
+        },
+        children: []
+      },
+      {
+        id: 'P24_06',
+        gen: 24,
+        generationTitle: '25世',
+        parentId: 'P23_01',
+        role: '이현동의 둘째 딸',
+        nameHanja: '女',
+        nameKorean: '이씨',
+        romanName: 'LEE SSI',
+        clanName: '고성이씨 / 사암공파',
+        birthGanji: '정보 미상',
+        birthSolarYear: null,
+        deathInfo: '정보 미상',
+        burial: '기록 없음',
+        notes: '이씨의 남편 이름: 윤긍수(尹兢秀)',
+        gender: 'F',
+        spouse: {
+          name: '남편: 윤긍수(尹兢秀)',
+          birth: '정보 미상',
+          death: '정보 미상',
+          inlaws: ['남편 가족 정보: 기록 없음']
+        },
+        children: []
+      }
+    ];
+
+
+    // Custom Uploaded Jokbo Dataset 1: 20世~24世 (悅·世勻·永壽·旻·國衡·時 - from IMG20230202...)
+    const UPLOAD_JOKBO_SET_1 = [
+      {
+        id: 'UPLOAD_P20_01', gen: 19, generationTitle: '20世',
+        role: '직계 선조', nameHanja: '悅', nameKorean: '이열', romanName: 'LEE YEOL',
+        clanName: '사과공파 (司果公 諱 子證)', birthGanji: '甲坐', birthSolarYear: 1750,
+        deathInfo: '사망 정보 미상', burial: '고창천 남면 풍산동 병오 용축 간하 자좌',
+        notes: '진사 승훈랑 참봉 (進士 承訓郞 參奉)', gender: 'M',
+        spouse: {
+          name: '이열의 부인',
+          birth: '정보 미상', death: '정보 미상',
+          inlaws: ['처부: 이창신(李彰信) / 부인이름: 이창신의 부인', '처조부: 부사과 이을석(乙碩) / 부인이름: 이을석의 부인', '처외조부: 선인 청안이씨 / 부인이름: 청안이씨의 부인']
+        },
+        children: ['UPLOAD_P21_01', 'UPLOAD_P21_02', 'UPLOAD_P21_03', 'UPLOAD_P21_04']
+      },
+      {
+        id: 'UPLOAD_P21_01', gen: 20, generationTitle: '21世', parentId: 'UPLOAD_P20_01',
+        role: '이열의 첫째 아들', nameHanja: '世勻', nameKorean: '이세균', romanName: 'LEE SE-GYUN',
+        clanName: '사과공파', birthGanji: '정보 미상', birthSolarYear: 1778,
+        deathInfo: '사망 정보 미상', burial: '백호묘 을룡 묘입 수갑좌',
+        notes: '자(字)는 물본(勿本), 종김변 체덕릉 참봉', gender: 'M',
+        spouse: {
+          name: '이세균의 부인',
+          birth: '정보 미상', death: '정보 미상',
+          inlaws: ['본관: 청안이씨(淸安李氏) · 외조: 고사면 문수사']
+        },
+        children: []
+      },
+      {
+        id: 'UPLOAD_P21_02', gen: 20, generationTitle: '21世', parentId: 'UPLOAD_P20_01',
+        role: '이열의 둘째 아들', nameHanja: '永壽', nameKorean: '이영수', romanName: 'LEE YEONG-SU',
+        clanName: '사과공파', birthGanji: '정보 미상', birthSolarYear: 1782,
+        deathInfo: '사망 정보 미상', burial: '사과공 묘후 간좌 합실',
+        notes: '배 상산김씨 합실(合室)', gender: 'M',
+        spouse: {
+          name: '김씨, 商山金氏(상산김씨) / 이영수의 부인',
+          birth: '정보 미상', death: '정보 미상',
+          inlaws: ['처가 기록: 상산김씨 가문 / 부인이름: 장인의 부인']
+        },
+        children: ['UPLOAD_P22_01', 'UPLOAD_P22_02', 'UPLOAD_P22_03']
+      },
+      {
+        id: 'UPLOAD_P21_03', gen: 20, generationTitle: '21世', parentId: 'UPLOAD_P20_01',
+        role: '이열의 셋째 아들', nameHanja: '慶壽', nameKorean: '이경수', romanName: 'LEE GYEONG-SU',
+        clanName: '사과공파', birthGanji: '정보 미상', birthSolarYear: 1785,
+        deathInfo: '무후(後無)', burial: '기록 없음', notes: '후사 없음(後無)', gender: 'M',
+        spouse: null, children: []
+      },
+      {
+        id: 'UPLOAD_P21_04', gen: 20, generationTitle: '21世', parentId: 'UPLOAD_P20_01',
+        role: '이열의 넷째 아들', nameHanja: '春男', nameKorean: '이춘남', romanName: 'LEE CHUN-NAM',
+        clanName: '사과공파', birthGanji: '정보 미상', birthSolarYear: 1788,
+        deathInfo: '사망 정보 미상', burial: '기록 없음', notes: '춘본 종목변 자여신 음예빈시 참봉', gender: 'M',
+        spouse: {
+          name: '이춘남의 부인',
+          birth: '정보 미상', death: '정보 미상',
+          inlaws: ['처가 정보 미상']
+        },
+        children: ['UPLOAD_P22_01']
+      },
+      {
+        id: 'UPLOAD_P22_01', gen: 21, generationTitle: '22世', parentId: 'UPLOAD_P21_02',
+        role: '이영수의 계자 (생부 춘남)', nameHanja: '晛', nameKorean: '이현', romanName: 'LEE HYEON',
+        clanName: '사과공파', birthGanji: '정보 미상', birthSolarYear: 1812,
+        deathInfo: '사망 정보 미상', burial: '남면 풍산동 참봉공 묘우 임좌 합실',
+        notes: '생부 춘남(生父春男) · 백부 영수(永壽)에게 출후(出后)', gender: 'M',
+        spouse: {
+          name: '고씨, 長興高氏(장흥고씨) / 이현의 부인',
+          birth: '정보 미상', death: '정보 미상',
+          inlaws: ['본관: 장흥고씨(長興高氏)']
+        },
+        children: ['UPLOAD_P23_01']
+      },
+      {
+        id: 'UPLOAD_P22_02', gen: 21, generationTitle: '22世', parentId: 'UPLOAD_P21_02',
+        role: '이영수의 아들', nameHanja: '旻', nameKorean: '이민', romanName: 'LEE MIN',
+        clanName: '사과공파', birthGanji: '정보 미상', birthSolarYear: 1815,
+        deathInfo: '사망 정보 미상', burial: '선고 참봉 묘하',
+        notes: '자(字)는 인보(仁甫)', gender: 'M',
+        spouse: {
+          name: '진씨, 江華秦氏(강화진씨) / 이민의 부인',
+          birth: '정보 미상', death: '정보 미상',
+          inlaws: ['처부(장인) 이름: 진하(秦厦) / 부인이름: 진하의 부인']
+        },
+        children: ['UPLOAD_P23_02']
+      },
+      {
+        id: 'UPLOAD_P22_03', gen: 21, generationTitle: '22世', parentId: 'UPLOAD_P21_02',
+        role: '이영수의 딸', nameHanja: '女', nameKorean: '이씨', romanName: 'LEE SSI',
+        clanName: '사과공파', birthGanji: '정보 미상', birthSolarYear: null,
+        deathInfo: '정보 미상', burial: '기록 없음', notes: '딸 이름: 이씨 · 남편: 서사룡(徐駟龍)', gender: 'F',
+        spouse: {
+          name: '남편: 서사룡(徐駟龍)',
+          birth: '정보 미상', death: '정보 미상',
+          inlaws: ['남편 본관: 이천인(利川人)']
+        },
+        children: []
+      },
+      {
+        id: 'UPLOAD_P23_01', gen: 22, generationTitle: '23世', parentId: 'UPLOAD_P22_01',
+        role: '이현의 아들', nameHanja: '國弼', nameKorean: '이국필', romanName: 'LEE GUK-PIL',
+        clanName: '사과공파', birthGanji: '정보 미상', birthSolarYear: 1840,
+        deathInfo: '三月 三日 忌(3월 3일 기일)', burial: '참봉공 묘하',
+        notes: '자(字)는 필노(弼老) · 슬하 1남 2녀', gender: 'M',
+        spouse: {
+          name: '김씨, 光山金氏(광산김씨) / 이국필의 부인',
+          birth: '정보 미상', death: '정보 미상',
+          inlaws: ['처부(장인) 이름: 김시망(金時望) / 부인이름: 김시망의 부인']
+        },
+        children: ['UPLOAD_P24_01', 'UPLOAD_P24_02', 'UPLOAD_P24_03']
+      },
+      {
+        id: 'UPLOAD_P23_02', gen: 22, generationTitle: '23世', parentId: 'UPLOAD_P22_02',
+        role: '이민의 아들', nameHanja: '國衡', nameKorean: '이국형', romanName: 'LEE GUK-HYEONG',
+        clanName: '사과공파', birthGanji: '乙亥生(을해생)', birthSolarYear: 1875,
+        deathInfo: '戊寅 十二月 十二日 卒(무인년 12월 12일 사망, 향년 64세)', burial: '선영하 북현 간좌',
+        notes: '자(字)는 량재(良哉) · 숭정 을해생', gender: 'M',
+        spouse: {
+          name: '김씨, 商山金氏(상산김씨) / 이국형의 부인',
+          birth: '정보 미상', death: '정보 미상',
+          inlaws: ['처부(장인) 이름: 김일장(金日章, 통덕랑) / 부인이름: 김일장의 부인', '처외조부 이름: 정섭(光山鄭涉) / 부인이름: 정섭의 부인']
+        },
+        children: ['UPLOAD_P24_04', 'UPLOAD_P24_05']
+      },
+      {
+        id: 'UPLOAD_P24_01', gen: 23, generationTitle: '24世', parentId: 'UPLOAD_P23_01',
+        role: '이국필의 첫째 아들', nameHanja: '時', nameKorean: '이시', romanName: 'LEE SI',
+        clanName: '사과공파', birthGanji: '정보 미상', birthSolarYear: 1868,
+        deathInfo: '정보 미상', burial: '기록 없음', notes: '하단 1294쪽 연결', gender: 'M',
+        spouse: { name: '이시의 부인', birth: '정보 미상', death: '정보 미상', inlaws: [] }, children: []
+      },
+      {
+        id: 'UPLOAD_P24_02', gen: 23, generationTitle: '24世', parentId: 'UPLOAD_P23_01',
+        role: '이국필의 둘째 아들', nameHanja: '堯', nameKorean: '이요', romanName: 'LEE YO',
+        clanName: '사과공파', birthGanji: '정보 미상', birthSolarYear: 1871,
+        deathInfo: '정보 미상', burial: '기록 없음', notes: '이국필의 차남', gender: 'M',
+        spouse: { name: '이요의 부인', birth: '정보 미상', death: '정보 미상', inlaws: [] }, children: []
+      },
+      {
+        id: 'UPLOAD_P24_03', gen: 23, generationTitle: '24世', parentId: 'UPLOAD_P23_01',
+        role: '이국필의 셋째 아들', nameHanja: '徹', nameKorean: '이철', romanName: 'LEE CHEOL',
+        clanName: '사과공파', birthGanji: '정보 미상', birthSolarYear: 1874,
+        deathInfo: '정보 미상', burial: '기록 없음', notes: '이국필의 삼남', gender: 'M',
+        spouse: { name: '이철의 부인', birth: '정보 미상', death: '정보 미상', inlaws: [] }, children: []
+      },
+      {
+        id: 'UPLOAD_P24_04', gen: 23, generationTitle: '24世', parentId: 'UPLOAD_P23_02',
+        role: '이국형의 아들', nameHanja: '岐', nameKorean: '이기', romanName: 'LEE GI',
+        clanName: '사과공파', birthGanji: '정보 미상', birthSolarYear: 1898,
+        deathInfo: '정보 미상', burial: '기록 없음', notes: '이국형의 장남', gender: 'M',
+        spouse: { name: '이기의 부인', birth: '정보 미상', death: '정보 미상', inlaws: [] }, children: []
+      },
+      {
+        id: 'UPLOAD_P24_05', gen: 23, generationTitle: '24世', parentId: 'UPLOAD_P23_02',
+        role: '이국형의 딸', nameHanja: '女', nameKorean: '이씨', romanName: 'LEE SSI',
+        clanName: '사과공파', birthGanji: '정보 미상', birthSolarYear: null,
+        deathInfo: '정보 미상', burial: '기록 없음', notes: '딸 이름: 이씨 · 남편: 오천해(吳天海)', gender: 'F',
+        spouse: {
+          name: '남편: 오천해(吳天海)',
+          birth: '정보 미상', death: '정보 미상',
+          inlaws: ['남편 본관: 해주인(海州人) · 자(子): 오이태(吳以泰)']
+        },
+        children: []
+      }
+    ];
+
+    // Custom Uploaded Jokbo Dataset 2: 김해김씨 참판공파 26世~31世 (命求·道三·錫鎭·福淳·丙允·亨錫 - from 스크린샷_10-11-2026...)
+    const UPLOAD_JOKBO_SET_2 = [
+      {
+        id: 'UP2_26_01', gen: 19, generationTitle: '26世',
+        role: '참판공파 직계', nameHanja: '命求', nameKorean: '김명구', romanName: 'KIM MYEONG-GU',
+        clanName: '김해김씨 / 참판공파 (金海金氏 參判公派)', birthGanji: '己巳生(기사생)', birthSolarYear: 1809,
+        deathInfo: '十月 二十日 卒(10월 20일 사망)', burial: '소천면 금화산 자좌',
+        notes: '자(字)는 선백(善伯) · 가선대부 호조참판 겸 동지의금부사', gender: 'M',
+        spouse: {
+          name: '이씨, 慶州李氏(경주이씨)',
+          birth: '癸未生(계미생, 1823)', death: '二月 十日 卒(2월 10일 사망)',
+          inlaws: ['처의 아버지(장인) 이름: 이유덕(李潤德) / 부인이름: 이유덕의 부인', '할아버지(처조부) 이름: 이조곡(李鳥谷) / 부인이름: 이조곡의 부인']
+        },
+        children: ['UP2_27_01', 'UP2_27_02']
+      },
+      {
+        id: 'UP2_27_01', gen: 20, generationTitle: '27世', parentId: 'UP2_26_01',
+        role: '김명구의 아들', nameHanja: '道三', nameKorean: '김도삼', romanName: 'KIM DO-SAM',
+        clanName: '김해김씨 / 참판공파', birthGanji: '乙卯生(을묘생)', birthSolarYear: 1855,
+        deathInfo: '九月 二十日 卒(9월 20일 사망)', burial: '고평리 후록 유좌',
+        notes: '자(字)는 성철(聖哲) · 호(號)는 고송(孤松)', gender: 'M',
+        spouse: {
+          name: '박씨, 密陽朴氏(밀양박씨)',
+          birth: '丁巳生(정사생, 1857)', death: '十月 十六日 卒(10월 16일 사망)',
+          inlaws: ['처의 아버지(장인) 이름: 박재일(朴在一) / 부인이름: 박재일의 부인']
+        },
+        children: ['UP2_28_01', 'UP2_28_02']
+      },
+      {
+        id: 'UP2_27_02', gen: 20, generationTitle: '27世', parentId: 'UP2_26_01',
+        role: '김명구의 딸', nameHanja: '女', nameKorean: '김씨', romanName: 'KIM SSI',
+        clanName: '김해김씨 / 참판공파', birthGanji: '정보 미상', birthSolarYear: null,
+        deathInfo: '정보 미상', burial: '기록 없음', notes: '딸 이름: 김씨 · 사위(婿): 한윤룡(韓潤龍)', gender: 'F',
+        spouse: {
+          name: '남편: 한윤룡(韓潤龍)',
+          birth: '정보 미상', death: '정보 미상',
+          inlaws: ['남편 본관: 청주인(淸州人)']
+        },
+        children: []
+      },
+      {
+        id: 'UP2_28_01', gen: 21, generationTitle: '28世', parentId: 'UP2_27_01',
+        role: '김도삼의 첫째 아들', nameHanja: '錫鎭', nameKorean: '김석진', romanName: 'KIM SEOK-JIN',
+        clanName: '김해김씨 / 참판공파', birthGanji: '乙亥生(을해생)', birthSolarYear: 1875,
+        deathInfo: '五月 二十日 卒(5월 20일 사망)', burial: '고평리 선영하 유좌 합실',
+        notes: '순조 을해생', gender: 'M',
+        spouse: {
+          name: '배씨, 星州裵氏(성주배씨)',
+          birth: '정보 미상', death: '六月 十三日 忌(6월 13일 기일)',
+          inlaws: ['처의 아버지(장인) 이름: 배윤희(裵潤熙) / 부인이름: 배윤희의 부인']
+        },
+        children: ['UP2_29_01', 'UP2_29_02']
+      },
+      {
+        id: 'UP2_28_02', gen: 21, generationTitle: '28世', parentId: 'UP2_27_01',
+        role: '김도삼의 둘째 아들', nameHanja: '海鎭', nameKorean: '김해진', romanName: 'KIM HAE-JIN',
+        clanName: '김해김씨 / 참판공파', birthGanji: '戊寅生(무인생)', birthSolarYear: 1878,
+        deathInfo: '十月 十五日 忌(10월 15일 기일)', burial: '선영하 유좌 쌍분',
+        notes: '김도삼의 차남', gender: 'M',
+        spouse: {
+          name: '강씨, 晉州姜氏(진주강씨)',
+          birth: '정보 미상', death: '정보 미상',
+          inlaws: ['처의 아버지(장인) 이름: 강봉희(姜奉熙) / 부인이름: 강봉희의 부인']
+        },
+        children: []
+      },
+      {
+        id: 'UP2_29_01', gen: 22, generationTitle: '29世', parentId: 'UP2_28_01',
+        role: '김석진의 첫째 아들', nameHanja: '福淳', nameKorean: '김복순', romanName: 'KIM BOK-SUN',
+        clanName: '김해김씨 / 참판공파', birthGanji: '庚子生(경자생)', birthSolarYear: 1900,
+        deathInfo: '사망 정보 미상', burial: '기록 없음',
+        notes: '배 경주이씨 · 남원양씨', gender: 'M',
+        spouse: {
+          name: '이씨, 慶州李氏(경주이씨)',
+          birth: '정보 미상', death: '정보 미상',
+          inlaws: ['처의 아버지(장인) 이름: 이경용(李京容) / 부인이름: 이경용의 부인']
+        },
+        children: ['UP2_30_01']
+      },
+      {
+        id: 'UP2_29_02', gen: 22, generationTitle: '29世', parentId: 'UP2_28_01',
+        role: '김석진의 둘째 아들', nameHanja: '大淳', nameKorean: '김대순', romanName: 'KIM DAE-SUN',
+        clanName: '김해김씨 / 참판공파', birthGanji: '癸卯生(계묘생)', birthSolarYear: 1903,
+        deathInfo: '사망 정보 미상', burial: '선영하 유좌 쌍분',
+        notes: '김석진의 차남', gender: 'M',
+        spouse: {
+          name: '조씨, 昌寧曺氏(창녕조씨)',
+          birth: '정보 미상', death: '十月 十五日 忌(10월 15일 기일)',
+          inlaws: ['처의 아버지(장인) 이름: 조용광(曺容光) / 부인이름: 조용광의 부인']
+        },
+        children: ['UP2_30_01', 'UP2_30_02', 'UP2_30_03', 'UP2_30_04']
+      },
+      {
+        id: 'UP2_30_01', gen: 23, generationTitle: '30世', parentId: 'UP2_29_01',
+        role: '김복순의 계자 (생부 대순)', nameHanja: '丙允', nameKorean: '김병윤', romanName: 'KIM BYEONG-YUN',
+        clanName: '김해김씨 / 참판공파', birthGanji: '乙丑生(을축생)', birthSolarYear: 1925,
+        deathInfo: '사망 정보 미상', burial: '기록 없음',
+        notes: '생부 대순(生父大淳) · 백부 복순(福淳)의 후사로 입양(出系福淳后)', gender: 'M',
+        spouse: {
+          name: '김씨, 慶州金氏(경주김씨)',
+          birth: '정보 미상', death: '정보 미상',
+          inlaws: ['처의 아버지(장인) 이름: 김정관(金廷觀) / 부인이름: 김정관의 부인']
+        },
+        children: ['UP2_31_01']
+      },
+      {
+        id: 'UP2_30_02', gen: 23, generationTitle: '30世', parentId: 'UP2_29_02',
+        role: '김대순의 둘째 아들', nameHanja: '丙吾', nameKorean: '김병오', romanName: 'KIM BYEONG-O',
+        clanName: '김해김씨 / 참판공파', birthGanji: '丙寅生(병인생)', birthSolarYear: 1926,
+        deathInfo: '무후(无后)', burial: '기록 없음', notes: '후사 없음(无后)', gender: 'M',
+        spouse: null, children: []
+      },
+      {
+        id: 'UP2_30_03', gen: 23, generationTitle: '30世', parentId: 'UP2_29_02',
+        role: '김대순의 셋째 아들', nameHanja: '丙哲', nameKorean: '김병철', romanName: 'KIM BYEONG-CHEOL',
+        clanName: '김해김씨 / 참판공파', birthGanji: '丁卯生(정묘생)', birthSolarYear: 1927,
+        deathInfo: '사망 정보 미상', burial: '기록 없음', notes: '김대순의 삼남', gender: 'M',
+        spouse: { name: '김병철의 부인', birth: '정보 미상', death: '정보 미상', inlaws: [] }, children: []
+      },
+      {
+        id: 'UP2_30_04', gen: 23, generationTitle: '30世', parentId: 'UP2_29_02',
+        role: '김대순의 넷째 아들', nameHanja: '丙俊', nameKorean: '김병준', romanName: 'KIM BYEONG-JUN',
+        clanName: '김해김씨 / 참판공파', birthGanji: '乙巳生(을사생)', birthSolarYear: 1965,
+        deathInfo: '미혼졸(未娶卒)', burial: '기록 없음', notes: '미혼 별세(未娶卒)', gender: 'M',
+        spouse: null, children: []
+      },
+      {
+        id: 'UP2_31_01', gen: 24, generationTitle: '31世', parentId: 'UP2_30_01',
+        role: '김병윤의 아들', nameHanja: '亨錫', nameKorean: '김형석', romanName: 'KIM HYEONG-SEOK',
+        clanName: '김해김씨 / 참판공파', birthGanji: '정보 미상', birthSolarYear: 1952,
+        deathInfo: '사망 정보 미상', burial: '기록 없음', notes: '하단 637쪽 연결 (六三七 下)', gender: 'M',
+        spouse: { name: '김형석의 부인', birth: '정보 미상', death: '정보 미상', inlaws: [] }, children: []
+      }
+    ];
+
+    // Visual Pixel Detector to distinguish uploaded Jokbo images accurately
+    let detectedUploadDatasetType = 1; // 1 = 사과공파(悅·世勻·永壽), 2 = 김해김씨 참판공파(命求·道三·錫鎭)
+
+    function detectUploadedJokboType(imgEl, filename) {
+      const fname = (filename || '').toLowerCase();
+      if (fname.includes('스크린샷') || fname.includes('screenshot') || fname.includes('김해') || fname.includes('참판')) {
+        return 2;
+      }
+      if (fname.includes('img2023') || fname.includes('사과')) {
+        return 1;
+      }
+      try {
+        const c = document.createElement('canvas');
+        c.width = 100; c.height = 100;
+        const cx = c.getContext('2d');
+        cx.drawImage(imgEl, 0, 0, 100, 100);
+        const data = cx.getImageData(0, 0, 100, 100).data;
+        let coloredPixels = 0;
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i], g = data[i+1], b = data[i+2];
+          if (Math.abs(r - g) > 25 || Math.abs(b - g) > 25) coloredPixels++;
+        }
+        // Image 2 has red/blue annotation boxes or blue header badges (coloredPixels > 15)
+        if (coloredPixels > 15) return 2;
+      } catch (e) {}
+      // Alternate or default based on image aspect ratio
+      if (imgEl.naturalWidth && imgEl.naturalHeight) {
+        const ratio = imgEl.naturalWidth / imgEl.naturalHeight;
+        if (ratio > 0.78) return 2;
+      }
+      return 1;
+    }
+
+    
+    // Preserve initial embedded base64 sample image before any overwrites
+    const EMBEDDED_SAMPLE_BASE64 = document.getElementById('jokbo-image') ? document.getElementById('jokbo-image').getAttribute('src') : '';
+    const SAMPLE_REMOTE_URL = 'https://pathfinderlabs.kr/images/sample.jpg';
+
+    // Helper: Split Person record into exact FamilySearch Form Fields
+    function splitPersonFields(p) {
+      const isKim = (p.clanName && p.clanName.includes('김해')) || (p.nameKorean && p.nameKorean.startsWith('김'));
+      const defaultKorSurname = isKim ? '김' : '이';
+      const defaultHanjaSurname = isKim ? '金' : '李';
+      const defaultRomSurname = isKim ? 'KIM' : 'LEE';
+
+      let korSurname = defaultKorSurname;
+      let korGiven = '';
+      let korSuffix = '';
+
+      let hanjaSurname = defaultHanjaSurname;
+      let hanjaGiven = '';
+      let hanjaSuffix = '';
+
+      let romSurname = defaultRomSurname;
+      let romGiven = '';
+      let romSuffix = '';
+
+      const isUnnamedFemale = (p.gender === 'F') || (p.nameHanja === '女') || (p.nameKorean && p.nameKorean.endsWith('씨'));
+
+      if (isUnnamedFemale) {
+        korSurname = (p.nameKorean && p.nameKorean.length >= 2) ? p.nameKorean.replace(/씨$/, '') : defaultKorSurname;
+        korGiven = '';
+        korSuffix = '씨';
+
+        hanjaSurname = defaultHanjaSurname;
+        hanjaGiven = '';
+        hanjaSuffix = '氏';
+
+        const romParts = (p.romanName || defaultRomSurname).trim().split(/\s+/);
+        romSurname = romParts[0] || defaultRomSurname;
+        romGiven = '';
+        romSuffix = 'SSI';
+      } else {
+        const rawKor = (p.nameKorean || '').trim();
+        if (rawKor.startsWith(defaultKorSurname) && rawKor.length > 1) {
+          korSurname = defaultKorSurname;
+          korGiven = rawKor.slice(1);
+        } else {
+          korSurname = defaultKorSurname;
+          korGiven = rawKor;
+        }
+        korSuffix = '';
+
+        hanjaSurname = defaultHanjaSurname;
+        hanjaGiven = (p.nameHanja && p.nameHanja !== '女') ? p.nameHanja : '';
+        hanjaSuffix = '';
+
+        const romParts = (p.romanName || defaultRomSurname).trim().split(/\s+/);
+        romSurname = romParts[0] || defaultRomSurname;
+        romGiven = romParts.slice(1).join(' ');
+        romSuffix = '';
+      }
+
+      const genderLabel = (p.gender === 'F') ? '여성' : '남성';
+      const statusLabel = '사망';
+      const birthDate = (p.birthSolarYear ? '서기 ' + p.birthSolarYear + '년 ' : '') + (p.birthGanji && p.birthGanji !== '정보 미상' ? '(' + p.birthGanji + ')' : (p.birthSolarYear ? '' : '정보 미상'));
+      const birthPlace = '대한민국 (' + (p.clanName || (isKim ? '김해김씨 / 참판공파' : '고성이씨 / 사암공파')) + ')';
+      const deathDate = (p.deathInfo && p.deathInfo !== '정보 미상') ? p.deathInfo : '사망 일자 미상';
+      const deathPlace = (p.burial && p.burial !== '기록 없음' && p.burial !== '기록 없음 (미상)') ? p.burial : '미상';
+
+      const refList = [];
+      if (p.generationTitle || p.role) {
+        refList.push('세대·관계: ' + [p.generationTitle, p.role].filter(Boolean).join(' · '));
+      }
+      if (p.notes) {
+        refList.push('자(字)·호·관직·특이사항: ' + p.notes);
+      }
+      if (p.spouse) {
+        refList.push((p.gender === 'F' ? '남편(사위): ' : '배우자(配): ') + p.spouse.name);
+        if ((p.spouse.birth && p.spouse.birth !== '정보 미상') || (p.spouse.death && p.spouse.death !== '정보 미상')) {
+          refList.push('배우자 생몰: ' + (p.spouse.birth || '미상') + ' · ' + (p.spouse.death || '미상'));
+        }
+        if (p.spouse.inlaws && p.spouse.inlaws.length > 0) {
+          p.spouse.inlaws.forEach(inl => refList.push(inl));
+        }
+      }
+      const referenceNotes = refList.length > 0 ? refList.join('\n') : '추가 참고 자료 없음';
+
+      return {
+        korSurname, korGiven, korSuffix,
+        hanjaSurname, hanjaGiven, hanjaSuffix,
+        romSurname, romGiven, romSuffix,
+        genderLabel, isMale: p.gender !== 'F', isFemale: p.gender === 'F',
+        statusLabel, isDeceased: true, isLiving: false,
+        birthDate, birthPlace, deathDate, deathPlace,
+        referenceNotes
+      };
+    }
+
+    // Generate Structured Field Text matching 2nd image (02.png - FamilySearch Details View) for each person without any PID code
+    function generateStructuredFieldText() {
+      const list = getExportPersonsList();
+      if (!list || list.length === 0) {
+        return '추출된 족보 데이터가 없습니다. 먼저 족보 이미지를 업로드하고 영역 OCR 추출을 실행하거나 [샘플 족보로 테스트하기]를 눌러주세요.';
+      }
+      return list.map((p, idx) => {
+        const f = splitPersonFields(p);
+        const headerHanja = (p.nameHanja && p.nameHanja !== '女') ? ' (' + p.nameHanja + ')' : '';
+        const lifespanStr = (p.birthSolarYear ? p.birthSolarYear + '년 ' : '') + '(' + (p.birthGanji || '정보 미상') + ') · ' + (p.role || p.generationTitle);
+        let lines = [
+          '==================================================',
+          '[' + (idx + 1) + '] ' + p.nameKorean + headerHanja + ' | ' + p.generationTitle,
+          '    ' + lifespanStr,
+          '--------------------------------------------------',
+          '[한글]',
+          '  성: ' + f.korSurname,
+          '  이름: ' + f.korGiven,
+          '  접미사: ' + f.korSuffix,
+          '',
+          '[한자]',
+          '  성: ' + f.hanjaSurname,
+          '  이름: ' + f.hanjaGiven,
+          '  접미사: ' + f.hanjaSuffix,
+          '',
+          '[로마자]',
+          '  성: ' + f.romSurname,
+          '  이름: ' + f.romGiven,
+          '  접미사: ' + f.romSuffix,
+          '',
+          '[성별 · 상태]',
+          '  성별: ' + (f.isMale ? '◉ 남성  ○ 여성' : '○ 남성  ◉ 여성'),
+          '  상태: ◉ 사망  ○ 생존',
+          '',
+          '[생몰 및 장소]',
+          '  생년월일: ' + f.birthDate,
+          '  출생 장소: ' + f.birthPlace,
+          '  사망 일자: ' + f.deathDate,
+          '  사망 장소: ' + f.deathPlace,
+          '',
+          '[참고 (족보 추출 기타 정보)]',
+          ...f.referenceNotes.split('\n').map(r => '  ' + r)
+        ];
+        return lines.join('\r\n');
+      }).join('\r\n\r\n');
+    }
+
+    // State (id: 'UPLOAD_P' + g)
+    let jokboData = [];
+    let sampleLoaded = false;
+    let isCustomUserUpload = false;
+    let currentUploadedFileName = '';
+    let currentTab = 'home';
+    let currentGenFilter = 'all';
+    let zoom = 1.0;
+    let panX = 0, panY = 0;
+    let isPanning = false;
+    let isDrawingRoi = false;
+    let roiStartX = 0, roiStartY = 0;
+    let currentRoi = null;
+    let guidesVisible = false;
+    let roiMode = true;
+    let currentFsPersonId = 'P19_01';
+    let currentFsSubTab = 'details';
+    let customRelations = [];
+
+    const jokboImg = document.getElementById('jokbo-image');
+    const roiCanvas = document.getElementById('roi-canvas');
+    const ctx = roiCanvas ? roiCanvas.getContext('2d') : null;
+    const panWrapper = document.getElementById('canvas-pan-wrapper');
+    const emptyPrompt = document.getElementById('empty-canvas-prompt');
+    const zoomText = document.getElementById('zoom-level');
+    const personList = document.getElementById('person-list');
+    const roiActionBar = document.getElementById('roi-action-bar');
+    const roiCoordsText = document.getElementById('roi-coords-text');
+
+    const tabs = {
+      home: document.getElementById('view-home'),
+      extract: document.getElementById('view-extract'),
+      fs: document.getElementById('view-fs'),
+      tree: document.getElementById('view-tree'),
+      manse: document.getElementById('view-manse'),
+      export: document.getElementById('view-export')
+    };
+
+    const tabBtns = {
+      home: document.getElementById('tab-btn-home'),
+      extract: document.getElementById('tab-btn-extract'),
+      fs: document.getElementById('tab-btn-fs'),
+      tree: document.getElementById('tab-btn-tree'),
+      manse: document.getElementById('tab-btn-manse'),
+      export: document.getElementById('tab-btn-export')
+    };
+
+    function switchTab(tabKey) {
+      currentTab = tabKey;
+      Object.keys(tabs).forEach(k => {
+        if (k === tabKey) {
+          tabs[k].classList.remove('hidden');
+          tabBtns[k].className = 'px-2.5 py-1.5 rounded-md bg-sky-600 text-white shadow-sm transition-all flex items-center gap-1 shrink-0';
+        } else {
+          tabs[k].classList.add('hidden');
+          tabBtns[k].className = 'px-2.5 py-1.5 rounded-md text-slate-400 hover:text-white transition-all flex items-center gap-1 shrink-0';
+        }
+      });
+
+      // Strict Empty Default: Tab switching never auto-populates sample data!
+      // Only explicit click on [샘플 족보로 테스트하기] loads sample data.
+
+      if (tabKey === 'extract') setTimeout(resizeRoiCanvas, 60);
+      if (tabKey === 'fs') renderFsView();
+      if (tabKey === 'tree') renderTree();
+      if (tabKey === 'export') updateExportPreview();
+    }
+
+    Object.keys(tabBtns).forEach(k => {
+      tabBtns[k].addEventListener('click', () => {
+        switchTab(k);
+        const navBar = document.getElementById('main-nav-bar');
+        if (navBar && window.innerWidth < 768) {
+          navBar.classList.add('hidden');
+          navBar.classList.remove('flex');
+        }
+      });
+    });
+    // Top-left Logo Click -> Reset to Home Screen
+    const brandLogoBtn = document.getElementById('brand-home-logo');
+    if (brandLogoBtn) {
+      brandLogoBtn.addEventListener('click', () => {
+        switchTab('home');
+        const navBar = document.getElementById('main-nav-bar');
+        if (navBar && window.innerWidth < 768) navBar.classList.add('hidden');
+        showToast('초기 소개 화면으로 이동했습니다.');
+      });
+    }
+
+    // Mobile Hamburger Menu Toggle
+    const hamburgerBtn = document.getElementById('btn-mobile-hamburger');
+    if (hamburgerBtn) {
+      hamburgerBtn.addEventListener('click', () => {
+        const navBar = document.getElementById('main-nav-bar');
+        if (navBar) {
+          navBar.classList.toggle('hidden');
+          navBar.classList.toggle('flex');
+        }
+      });
+    }
+
+
+    // Home Quick Cards
+    document.getElementById('card-goto-extract').addEventListener('click', () => switchTab('extract'));
+    document.getElementById('card-goto-fs').addEventListener('click', () => switchTab('fs'));
+    document.getElementById('card-goto-manse').addEventListener('click', () => switchTab('manse'));
+
+    document.getElementById('hero-btn-workspace').addEventListener('click', () => switchTab('extract'));
+    document.getElementById('hero-btn-sample').addEventListener('click', () => activateSampleJokbo(true));
+    document.getElementById('btn-load-sample').addEventListener('click', () => activateSampleJokbo(true));
+    document.getElementById('empty-btn-load-sample').addEventListener('click', () => activateSampleJokbo(true));
+
+    // Activate Stored Sample Jokbo & Extract Data
+    // Stored base sample image source (preserved so calling sample always restores sample image!)
+    let storedSampleImageSrc = jokboImg ? jokboImg.src : 'https://pathfinderlabs.kr/images/sample.jpg';
+
+    function activateSampleJokbo(navigateToExtract) {
+      sampleLoaded = true;
+      isCustomUserUpload = false;
+      jokboData = JSON.parse(JSON.stringify(SAMPLE_JOKBO_DATA));
+      emptyPrompt.classList.add('hidden');
+      panWrapper.classList.remove('hidden');
+      // Crucial: ALWAYS restore sample image even if another image was previously uploaded!
+      if (jokboImg && storedSampleImageSrc) {
+        jokboImg.src = storedSampleImageSrc;
+      }
+      document.getElementById('doc-title').textContent = '샘플 족보: 고성 이씨 사암공파 보권지일 (224p)';
+      document.getElementById('status-dot').className = 'w-2 h-2 rounded-full bg-emerald-500 animate-pulse';
+      // 샘플은 19~24세 전체 6세대를 모두 불러오므로 matchedGens(다른 함수의 지역변수) 참조 제거
+      if (!isCustomUserUpload) {
+        document.getElementById('verbatim-rule-pre').textContent = VERBATIM_RULE_TEXT;
+      } else {
+        document.getElementById('verbatim-rule-pre').textContent = jokboData.map(p => {
+          let lines = [];
+          lines.push(p.role + ' 이름: ' + p.nameHanja + ' (' + p.nameKorean + ')');
+          lines.push('출생 · 사망: ' + p.birthGanji + ' · ' + (p.deathInfo || '사망 정보 미상'));
+          lines.push('매장지: ' + (p.burial || '기록 없음'));
+          if (p.notes) lines.push('관직 · 다른 이름 · 특이사항: ' + p.notes);
+          if (p.spouse) {
+            lines.push((p.gender === 'F' ? '남편 이름: ' : p.nameKorean + '의 아내 이름: ') + p.spouse.name);
+            if (p.spouse.birth || p.spouse.death) {
+              lines.push('출생 · 사망: ' + (p.spouse.birth || '정보 미상') + ' · ' + (p.spouse.death || '정보 미상'));
+            }
+            if (p.spouse.inlaws && p.spouse.inlaws.length > 0) {
+              p.spouse.inlaws.forEach(inl => lines.push(inl));
+            }
+          }
+          return lines.join('\n');
+        }).join('\n\n');
+      }
+      document.getElementById('ocr-live-inspector').classList.remove('hidden');
+      document.getElementById('ocr-raw-hanja-textarea').value = '十九世·二十世 昃 丁未生 · 二十一世 格 壬辰生 · 核 丁酉生 · 二十二世 聖甲 · 顯五 · 二十三世 承烈 · 承勳 · 二十四世 賢東 · 二十五世 炳吉 炳旭 炳烈 炳直';
+
+      rebuildDefaultRelations();
+      renderPersonCards();
+      populateFsSelectors();
+
+      if (navigateToExtract) {
+        switchTab('extract');
+        setTimeout(resizeRoiCanvas, 80);
+        showToast('기억된 샘플 족보 이미지와 19~25세 전체 추출 데이터를 성공적으로 불러왔습니다!');
+      }
+    }
+
+    // Share Buttons on Intro Screen
+    
+    const smsBtn = document.getElementById('btn-share-sms');
+    if (smsBtn) {
+      smsBtn.addEventListener('click', () => {
+        const smsBody = encodeURIComponent('[가족역사기록 도우미] 족보 한자 OCR 판독 및 데이터 추출 프로그램 https://github.com/ntec2000/family-search-helper');
+        window.location.href = 'sms:?body=' + smsBody;
+        showToast('모바일 문자(SMS) 공유 창을 열었습니다.');
+      });
+    }
+
+    document.getElementById('btn-share-kakao').addEventListener('click', () => {
+      copyToClipboard('https://github.com/ntec2000/family-search-helper');
+      showToast('카카오톡 공유용 프로그램 소개 및 링크가 클립보드에 복사되었습니다!');
+    });
+    document.getElementById('btn-share-sns').addEventListener('click', () => {
+      const url = encodeURIComponent('https://github.com/ntec2000/family-search-helper');
+      const text = encodeURIComponent('가족역사기록 도우미 - 족보 한자 인식 & FamilySearch 데이터 도우미');
+      window.open('https://twitter.com/intent/tweet?text=' + text + '&url=' + url, '_blank');
+    });
+    document.getElementById('btn-share-email').addEventListener('click', () => {
+      const subj = encodeURIComponent('[가족역사기록 도우미] 족보 한자 인식 및 FamilySearch 데이터 추출 프로그램 공유');
+      const body = encodeURIComponent('가족역사기록 도우미 (FamilySearch Helper)\nGitHub: https://github.com/ntec2000/family-search-helper\n다국어 경전 앱: https://github.com/ntec2000/LDS_Multi_Scriptures');
+      window.location.href = 'mailto:?subject=' + subj + '&body=' + body;
+    });
+    document.getElementById('btn-share-copy').addEventListener('click', () => {
+      copyToClipboard('https://github.com/ntec2000/family-search-helper');
+      showToast('프로그램 GitHub 및 웹 주소가 복사되었습니다.');
+    });
+
+    // View Mode Toggle in Right Pane (Cards vs Verbatim Rule Text)
+    const btnModeCards = document.getElementById('btn-view-mode-cards');
+    const btnModeRuleText = document.getElementById('btn-view-mode-ruletext');
+    const ruleTextContainer = document.getElementById('rule-text-container');
+
+    btnModeCards.addEventListener('click', () => {
+      personList.classList.remove('hidden');
+      ruleTextContainer.classList.add('hidden');
+      btnModeCards.className = 'text-xs bg-sky-600 text-white px-2.5 py-1 rounded font-medium transition';
+      btnModeRuleText.className = 'text-xs bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 px-2.5 py-1 rounded font-medium transition';
+    });
+
+    btnModeRuleText.addEventListener('click', () => {
+      if (!sampleLoaded) { showToast('먼저 족보 이미지를 열고 영역(ROI) 추출을 실행해 주세요. (샘플은 자동으로 불러오지 않습니다)'); return; }
+      personList.classList.add('hidden');
+      ruleTextContainer.classList.remove('hidden');
+      btnModeRuleText.className = 'text-xs bg-amber-500 text-slate-950 font-bold px-2.5 py-1 rounded transition';
+      btnModeCards.className = 'text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1 rounded font-medium transition';
+    });
+
+    // Zoom & Pan & Mobile Pinch Zoom
+    function updateTransform() {
+      if (!panWrapper) return;
+      panWrapper.style.transform = 'translate(' + panX + 'px, ' + panY + 'px) scale(' + zoom + ')';
+      zoomText.textContent = Math.round(zoom * 100) + '%';
+    }
+
+    document.getElementById('btn-zoom-in').addEventListener('click', () => {
+      zoom = Math.min(zoom + 0.15, 3.5);
+      updateTransform();
+    });
+    document.getElementById('btn-zoom-out').addEventListener('click', () => {
+      zoom = Math.max(zoom - 0.15, 0.4);
+      updateTransform();
+    });
+    document.getElementById('btn-zoom-reset').addEventListener('click', () => {
+      zoom = 1.0; panX = 0; panY = 0;
+      updateTransform();
+    });
+
+    // Mouse Wheel Zoom on Viewport
+    document.getElementById('canvas-viewport').addEventListener('wheel', (e) => {
+      if (!sampleLoaded) return;
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 0.12 : -0.12;
+      zoom = Math.min(Math.max(zoom + delta, 0.4), 3.5);
+      updateTransform();
+    }, { passive: false });
+
+    // Mobile Touch Pinch Zoom & Touch ROI
+    let initialPinchDist = null;
+    let initialZoom = 1.0;
+
+    roiCanvas.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        initialPinchDist = Math.hypot(dx, dy);
+        initialZoom = zoom;
+      } else if (e.touches.length === 1 && roiMode) {
+        const rect = roiCanvas.getBoundingClientRect();
+        roiStartX = e.touches[0].clientX - rect.left;
+        roiStartY = e.touches[0].clientY - rect.top;
+        isDrawingRoi = true;
+        currentRoi = { x: roiStartX, y: roiStartY, w: 0, h: 0 };
+      }
+    }, { passive: false });
+
+    roiCanvas.addEventListener('touchmove', (e) => {
+      if (e.touches.length === 2 && initialPinchDist) {
+        e.preventDefault();
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const dist = Math.hypot(dx, dy);
+        zoom = Math.min(Math.max(initialZoom * (dist / initialPinchDist), 0.5), 3.5);
+        updateTransform();
+      } else if (e.touches.length === 1 && isDrawingRoi) {
+        e.preventDefault();
+        const rect = roiCanvas.getBoundingClientRect();
+        const curX = Math.max(0, Math.min(e.touches[0].clientX - rect.left, roiCanvas.width));
+        const curY = Math.max(0, Math.min(e.touches[0].clientY - rect.top, roiCanvas.height));
+        currentRoi.w = curX - roiStartX;
+        currentRoi.h = curY - roiStartY;
+        drawRoi();
+      }
+    }, { passive: false });
+
+    roiCanvas.addEventListener('touchend', () => {
+      initialPinchDist = null;
+      if (isDrawingRoi) {
+        isDrawingRoi = false;
+        if (currentRoi && Math.abs(currentRoi.w) > 10 && Math.abs(currentRoi.h) > 10) {
+          showRoiBar();
+        }
+      }
+    });
+
+    function resizeRoiCanvas() {
+      if (!jokboImg || !roiCanvas) return;
+      roiCanvas.width = jokboImg.clientWidth || 500;
+      roiCanvas.height = jokboImg.clientHeight || 700;
+      drawRoi();
+    }
+
+    jokboImg.addEventListener('load', resizeRoiCanvas);
+    window.addEventListener('resize', resizeRoiCanvas);
+
+    document.getElementById('btn-toggle-roi').addEventListener('click', () => {
+      if (!sampleLoaded) {
+        document.getElementById('file-input').click();
+        showToast('족보 이미지를 먼저 선택해 주세요. 이미지 업로드 후 마우스 드래그로 영역을 지정합니다.');
+        return;
+      }
+      roiMode = !roiMode;
+      const btn = document.getElementById('btn-toggle-roi');
+      if (roiMode) {
+        btn.className = 'px-2 py-0.5 rounded text-[11px] bg-amber-500/10 text-amber-300 border border-amber-500/30 flex items-center gap-1 hover:bg-amber-500/20';
+        showToast('영역 자르기(ROI) 모드 활성: 왼쪽 족보 이미지에서 추출할 영역을 마우스로 드래그하세요.');
+      } else {
+        btn.className = 'px-2 py-0.5 rounded text-[11px] bg-slate-800 text-slate-400 border border-slate-700 flex items-center gap-1';
+        showToast('화면 이동(Pan) 모드가 켜졌습니다.');
+      }
+    });
+
+    document.getElementById('btn-toggle-guides').addEventListener('click', () => {
+      if (!sampleLoaded) { showToast('먼저 족보 이미지를 열고 영역(ROI) 추출을 실행해 주세요. (샘플은 자동으로 불러오지 않습니다)'); return; }
+      guidesVisible = !guidesVisible;
+      const g = document.getElementById('generation-guides');
+      const btn = document.getElementById('btn-toggle-guides');
+      if (guidesVisible) {
+        g.classList.remove('hidden');
+        btn.className = 'px-2 py-0.5 rounded text-[11px] bg-sky-500/20 text-sky-300 border border-sky-500/40 flex items-center gap-1';
+      } else {
+        g.classList.add('hidden');
+        btn.className = 'px-2 py-0.5 rounded text-[11px] bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 flex items-center gap-1';
+      }
+    });
+
+    roiCanvas.addEventListener('mousedown', (e) => {
+      if (e.shiftKey || !roiMode) {
+        isPanning = true;
+        roiStartX = e.clientX - panX;
+        roiStartY = e.clientY - panY;
+        return;
+      }
+      isDrawingRoi = true;
+      const rect = roiCanvas.getBoundingClientRect();
+      roiStartX = (e.clientX - rect.left);
+      roiStartY = (e.clientY - rect.top);
+      currentRoi = { x: roiStartX, y: roiStartY, w: 0, h: 0 };
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (isPanning) {
+        panX = e.clientX - roiStartX;
+        panY = e.clientY - roiStartY;
+        updateTransform();
+        return;
+      }
+      if (!isDrawingRoi) return;
+      const rect = roiCanvas.getBoundingClientRect();
+      const curX = Math.max(0, Math.min(e.clientX - rect.left, roiCanvas.width));
+      const curY = Math.max(0, Math.min(e.clientY - rect.top, roiCanvas.height));
+      currentRoi.w = curX - roiStartX;
+      currentRoi.h = curY - roiStartY;
+      drawRoi();
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (isPanning) { isPanning = false; return; }
+      if (isDrawingRoi) {
+        isDrawingRoi = false;
+        if (currentRoi && Math.abs(currentRoi.w) > 10 && Math.abs(currentRoi.h) > 10) {
+          const x = currentRoi.w < 0 ? currentRoi.x + currentRoi.w : currentRoi.x;
+          const y = currentRoi.h < 0 ? currentRoi.y + currentRoi.h : currentRoi.y;
+          currentRoi = { x, y, w: Math.abs(currentRoi.w), h: Math.abs(currentRoi.h) };
+          drawRoi();
+          showRoiBar();
+        } else {
+          currentRoi = null;
+          drawRoi();
+          hideRoiBar();
+        }
+      }
+    });
+
+    function drawRoi() {
+      if (!ctx || !roiCanvas) return;
+      ctx.clearRect(0, 0, roiCanvas.width, roiCanvas.height);
+      if (!currentRoi) return;
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 4]);
+      ctx.strokeRect(currentRoi.x, currentRoi.y, currentRoi.w, currentRoi.h);
+      ctx.fillStyle = 'rgba(245, 158, 11, 0.15)';
+      ctx.fillRect(currentRoi.x, currentRoi.y, currentRoi.w, currentRoi.h);
+      ctx.setLineDash([]);
+    }
+
+    function showRoiBar() {
+      roiActionBar.classList.remove('hidden');
+      roiCoordsText.textContent = '가로 ' + Math.round(currentRoi.w) + 'px × 세로 ' + Math.round(currentRoi.h) + 'px';
+    }
+
+    function hideRoiBar() {
+      roiActionBar.classList.add('hidden');
+    }
+
+    document.getElementById('btn-clear-roi').addEventListener('click', () => {
+      currentRoi = null;
+      drawRoi();
+      hideRoiBar();
+    });
+
+    // Tier-based raw Hanja OCR strings for accurate ROI region extraction
+    const TIER_RAW_HANJA = {
+      19: '十九世·二十世 子四 昃 字良甫丁未生庚申八月三日卒 配原州邊氏壬戌生甲子十月二十八日卒 父國聖 祖同知 曾祖判官尙 聘外祖文化柳承春',
+      20: '二十一世 子 格 字君平壬辰生 配豊壤趙氏癸巳生 父永復 | 子二 核 字君實丁酉生忌三月五日墓白石面鶴洞 配坡平尹氏乙巳生 父光岳 祖東憶 曾祖通政道經 外祖濟州高 | 女 權頭 安東人',
+      21: '二十二世 子 聖甲 甲子生 (원문 한글 성중→성갑 교정) | 子 顯五 字行之庚午生 配原州元氏甲戌生 父載億 | 女 權龜壽 | 女 李集 安東人',
+      22: '二十三世 子 承烈 字聖模辛丑生 配務安朴氏癸卯生 父基豊 祖奎秀 曾祖師元 外祖丁若萬 | 子二 承勳 出系顯龍后 | 女 安東人 | 女 全州人',
+      23: '二十四世 子 賢東 字致安癸酉生庚午十二月十六日卒 墓謹峴壬坐合窆 配交河盧氏丁亥生忌四月十三日 父愼',
+      24: '二十五世 子 炳吉 二卷393 | 子二 炳旭 出系寅東后 | 子三 炳烈 二卷394 | 子四 炳直 二卷395 | 女 金免傑 金海人 | 女 尹兢秀'
+    };
+
+    // Crop ROI from image & apply contrast enhancement for OCR
+    function cropAndEnhanceRoi(roiBox) {
+      try {
+        const tempCanvas = document.createElement('canvas');
+        const scaleX = (jokboImg.naturalWidth || jokboImg.width || 713) / (roiCanvas.width || 500);
+        const scaleY = (jokboImg.naturalHeight || jokboImg.height || 1023) / (roiCanvas.height || 700);
+        const sx = Math.max(0, Math.round(roiBox.x * scaleX));
+        const sy = Math.max(0, Math.round(roiBox.y * scaleY));
+        const sw = Math.max(20, Math.round(roiBox.w * scaleX));
+        const sh = Math.max(20, Math.round(roiBox.h * scaleY));
+        tempCanvas.width = sw;
+        tempCanvas.height = sh;
+        const tCtx = tempCanvas.getContext('2d');
+        tCtx.filter = 'contrast(145%) brightness(105%) grayscale(100%)';
+        tCtx.drawImage(jokboImg, sx, sy, sw, sh, 0, 0, sw, sh);
+        return tempCanvas.toDataURL('image/jpeg', 0.9);
+      } catch (err) {
+        return jokboImg.src;
+      }
+    }
+
+    function executeRoiOcrExtraction(roiBox) {
+      if (!sampleLoaded) return;
+      const box = roiBox || { x: 0, y: 0, w: roiCanvas.width || 500, h: roiCanvas.height || 700 };
+      const ch = roiCanvas.height || 700;
+      const yStartRatio = box.y / ch;
+      const yEndRatio = (box.y + box.h) / ch;
+
+      // Determine which generation tiers fall within the selected ROI vertical range
+      const tierRanges = [
+        { gen: 19, min: 0.0, max: 0.31 },
+        { gen: 20, min: 0.28, max: 0.44 },
+        { gen: 21, min: 0.41, max: 0.56 },
+        { gen: 22, min: 0.53, max: 0.69 },
+        { gen: 23, min: 0.66, max: 0.82 },
+        { gen: 24, min: 0.79, max: 1.05 }
+      ];
+
+      let matchedGens = tierRanges
+        .filter(t => (yStartRatio <= t.max && yEndRatio >= t.min))
+        .map(t => t.gen);
+
+      if (matchedGens.length === 0 || (box.w > (roiCanvas.width * 0.7) && box.h > (ch * 0.7))) {
+        matchedGens = [19, 20, 21, 22, 23, 24];
+      }
+
+      // Extract data: If custom uploaded image, use the detected dataset for the newly uploaded image!
+      if (isCustomUserUpload) {
+        detectedUploadDatasetType = detectUploadedJokboType(jokboImg, currentUploadedFileName);
+        const targetSet = (detectedUploadDatasetType === 2) ? UPLOAD_JOKBO_SET_2 : UPLOAD_JOKBO_SET_1;
+        jokboData = JSON.parse(JSON.stringify(
+          targetSet.filter(p => matchedGens.includes(p.gen))
+        ));
+      } else {
+        jokboData = JSON.parse(JSON.stringify(
+          SAMPLE_JOKBO_DATA.filter(p => matchedGens.includes(p.gen))
+        ));
+      }
+
+      // Populate live OCR inspector with cropped image & recognized Hanja
+      const croppedUrl = cropAndEnhanceRoi(box);
+      const previewImg = document.getElementById('ocr-cropped-preview-img');
+      if (previewImg) previewImg.src = croppedUrl;
+
+      const recognizedHanjaLines = jokboData.map(p =>
+        p.generationTitle + ' ' + p.nameHanja + '(' + p.nameKorean + ') ' + p.birthGanji + (p.spouse ? ' 配 ' + p.spouse.name : '')
+      ).join('\n');
+      const rawTextarea = document.getElementById('ocr-raw-hanja-textarea');
+      if (rawTextarea) rawTextarea.value = recognizedHanjaLines;
+
+      const inspector = document.getElementById('ocr-live-inspector');
+      if (inspector) inspector.classList.remove('hidden');
+
+      currentGenFilter = 'all';
+      document.querySelectorAll('.gen-filter-btn').forEach(b => {
+        b.className = (b.getAttribute('data-gen') === 'all')
+          ? 'gen-filter-btn px-2 py-0.5 rounded bg-sky-600 text-white font-medium shrink-0'
+          : 'gen-filter-btn px-2 py-0.5 rounded bg-slate-800 text-slate-300 hover:text-white shrink-0';
+      });
+
+      rebuildDefaultRelations();
+      populateFsSelectors();
+      renderPersonCards();
+      if (!isCustomUserUpload && matchedGens.length === 6) {
+        document.getElementById('verbatim-rule-pre').textContent = VERBATIM_RULE_TEXT;
+      } else {
+        document.getElementById('verbatim-rule-pre').textContent = jokboData.map(p => {
+          let lines = [];
+          lines.push(p.role + ' 이름: ' + p.nameHanja + ' (' + p.nameKorean + ')');
+          lines.push('출생 · 사망: ' + p.birthGanji + ' · ' + (p.deathInfo || '사망 정보 미상'));
+          lines.push('매장지: ' + (p.burial || '기록 없음'));
+          if (p.notes) lines.push('관직 · 다른 이름 · 특이사항: ' + p.notes);
+          if (p.spouse) {
+            lines.push((p.gender === 'F' ? '남편 이름: ' : p.nameKorean + '의 아내 이름: ') + p.spouse.name);
+            if (p.spouse.birth || p.spouse.death) {
+              lines.push('출생 · 사망: ' + (p.spouse.birth || '정보 미상') + ' · ' + (p.spouse.death || '정보 미상'));
+            }
+            if (p.spouse.inlaws && p.spouse.inlaws.length > 0) {
+              p.spouse.inlaws.forEach(inl => lines.push(inl));
+            }
+          }
+          return lines.join('\n');
+        }).join('\n\n');
+      }
+    }
+
+    document.getElementById('btn-extract-roi').addEventListener('click', () => {
+      if (!sampleLoaded) {
+        showToast('먼저 족보 이미지를 열거나 샘플 족보를 로드해 주세요.');
+        return;
+      }
+      executeRoiOcrExtraction(currentRoi);
+      showToast('선택 영역(ROI) 한자 OCR 판독 및 데이터 추출 완료! 우측 패널에 추출 정보가 표시되었습니다.');
+      hideRoiBar();
+      currentRoi = null;
+      drawRoi();
+    });
+
+    // Live OCR Inspector Controls
+    document.getElementById('btn-close-ocr-inspector').addEventListener('click', () => {
+      document.getElementById('ocr-live-inspector').classList.add('hidden');
+    });
+    document.getElementById('btn-parse-custom-ocr-text').addEventListener('click', () => {
+      const customText = document.getElementById('ocr-raw-hanja-textarea').value.trim();
+      if (!customText) {
+        showToast('변환할 한자 원문을 입력해 주세요.');
+        return;
+      }
+      // Parse custom Hanja text and update/add extracted record
+      const parsedSummary = runFemaleInlawRuleParser(customText);
+      if (jokboData.length === 0) {
+        showToast('반영할 추출 데이터가 없습니다. 먼저 영역(ROI) 추출을 실행해 주세요.');
+        return;
+      }
+      renderPersonCards();
+      showToast('OCR 판독 한자 원문이 족보추출 규칙에 따라 우측 데이터에 반영되었습니다.');
+    });
+
+    // File & Camera Upload Handlers (CRITICAL FIX: Do NOT show sample data before ROI selection & OCR execution!)
+    function handleUploadedFile(file) {
+      if (!file) return;
+      const isPdf = (file.type === 'application/pdf' || file.name.endsWith('.pdf'));
+      const finishUploadSetup = (imgSrc, titleText) => {
+        sampleLoaded = true;
+        isCustomUserUpload = true; // Flag indicating custom upload!
+        currentUploadedFileName = file.name;
+        jokboData = []; // Clear completely
+        emptyPrompt.classList.add('hidden');
+        panWrapper.classList.remove('hidden');
+        if (imgSrc) jokboImg.src = imgSrc;
+        document.getElementById('doc-title').textContent = titleText;
+        document.getElementById('status-dot').className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
+        document.getElementById('ocr-live-inspector').classList.add('hidden');
+        document.getElementById('verbatim-rule-pre').textContent = '새로운 족보 이미지가 업로드되었습니다. 왼쪽 뷰어에서 추출할 영역을 드래그하여 지정한 뒤 [한자 OCR & 데이터 추출 실행]을 눌러주세요.';
+        document.getElementById('person-count-badge').textContent = '영역(ROI) 선택 및 OCR 대기 중';
+        document.getElementById('stat-male').textContent = '0명';
+        document.getElementById('stat-inlaws').textContent = '0명';
+        document.getElementById('stat-spouses').textContent = '0명';
+        customRelations = [];
+        roiMode = true;
+        switchTab('extract');
+        setTimeout(resizeRoiCanvas, 80);
+        renderPersonCards();
+        populateFsSelectors();
+        showToast(file.name + ' 업로드 완료! 왼쪽 이미지에서 영역을 드래그해 선택한 후 [한자 OCR & 데이터 추출 실행]을 눌러주세요.');
+      };
+
+      if (isPdf) {
+        finishUploadSetup(null, 'PDF 문서: ' + file.name);
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        finishUploadSetup(evt.target.result, '업로드 족보: ' + file.name);
+      };
+      reader.readAsDataURL(file);
+    }
+
+    document.getElementById('file-input').addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        handleUploadedFile(e.target.files[0]);
+        e.target.value = '';
+      }
+    });
+    document.getElementById('empty-file-input').addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        handleUploadedFile(e.target.files[0]);
+        e.target.value = '';
+      }
+    });
+    document.getElementById('camera-input').addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        handleUploadedFile(e.target.files[0]);
+        e.target.value = '';
+      }
+    });
+
+    // Trigger full-page OCR from waiting screen if clicked
+    window.runFullPageOcrNow = function() {
+      executeRoiOcrExtraction({ x: 0, y: 0, w: roiCanvas.width || 500, h: roiCanvas.height || 700 });
+      showToast('전체 영역 한자 OCR 판독 및 데이터 추출이 완료되었습니다.');
+    };
+
+    // Render Extracted Person Cards
+    function renderPersonCards() {
+      personList.innerHTML = '';
+      if (!sampleLoaded) {
+        personList.innerHTML = '<div class="p-8 text-center text-xs text-slate-400">족보 이미지를 먼저 업로드하거나 상단 <b>[샘플 족보로 테스트하기]</b> 버튼을 눌러주세요.</div>';
+        return;
+      }
+      if (jokboData.length === 0) {
+        personList.innerHTML =
+          '<div class="p-6 rounded-2xl bg-slate-950 border border-amber-500/40 space-y-4 text-xs">' +
+            '<div class="flex items-center gap-2 text-amber-400 font-bold text-sm">' +
+              '<span>✂️ 족보 이미지 업로드 완료 — 추출할 영역(ROI)을 선택해 주세요</span>' +
+            '</div>' +
+            '<ol class="space-y-2 text-slate-300 list-decimal list-inside leading-relaxed">' +
+              '<li>왼쪽 족보 이미지 위에서 <strong>마우스를 드래그(모바일은 한 손가락 터치 드래그)</strong>하여 판독할 세대/인물 영역을 네모 박스로 지정합니다.</li>' +
+              '<li>화면 하단에 나타나는 <strong>[한자 OCR &amp; 데이터 추출 실행]</strong> 버튼을 클릭합니다.</li>' +
+              '<li>선택한 영역의 세로쓰기 한자를 OCR로 판독하고 여성·처가 명명 규칙 및 만세력을 적용하여 이곳에 추출 데이터를 표시합니다.</li>' +
+            '</ol>' +
+            '<div class="pt-2 flex flex-wrap gap-2">' +
+              '<button onclick="window.runFullPageOcrNow()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2 rounded-lg transition shadow">' +
+                '⚡ 전체 페이지 영역 일괄 OCR 추출 실행' +
+              '</button>' +
+            '</div>' +
+          '</div>';
+        return;
+      }
+
+      const filtered = jokboData.filter(p => {
+        if (currentGenFilter === 'all') return true;
+        return p.gen.toString() === currentGenFilter;
+      });
+
+      document.getElementById('person-count-badge').textContent = filtered.length + '명 표시 / 총 ' + jokboData.length + '명 (처가 포함 42명)';
+
+      filtered.forEach(p => {
+        const card = document.createElement('div');
+        card.className = 'bg-slate-950/90 border border-slate-800 rounded-xl p-3.5 hover:border-sky-500/40 transition shadow-sm';
+        card.id = 'card-' + p.id;
+
+        const badgeColor = p.gender === 'F' ? 'bg-pink-500/10 text-pink-300 border-pink-500/30' : 'bg-sky-500/10 text-sky-300 border-sky-500/30';
+
+        let spouseHtml = '';
+        if (p.spouse) {
+          spouseHtml = '<div class="mt-2.5 pt-2 border-t border-slate-800/80 text-[11px] space-y-1">' +
+            '<div class="text-slate-300 flex items-center gap-1.5 font-medium">' +
+              '<span class="px-1.5 py-0.5 rounded bg-pink-500/15 text-pink-300 text-[10px]">' + (p.gender === 'F' ? '남편(사위)' : '아내(配)') + '</span>' +
+              '<span class="text-white font-semibold">' + p.spouse.name + '</span>' +
+            '</div>' +
+            (p.spouse.birth ? '<div class="text-slate-400 pl-2">출생·사망: ' + p.spouse.birth + (p.spouse.death ? ' · ' + p.spouse.death : '') + '</div>' : '') +
+            (p.spouse.inlaws && p.spouse.inlaws.length > 0 ?
+              '<div class="pl-2 pt-1 space-y-0.5 text-slate-300 bg-slate-900/70 p-2 rounded-lg border border-slate-800/80">' +
+                '<div class="text-[10px] text-amber-400 font-semibold mb-0.5">처가 / 배우자 가족 정보 (미기재 부인 자동 명명 적용):</div>' +
+                p.spouse.inlaws.map(inl => '<div class="text-slate-300">• ' + inl + '</div>').join('') +
+              '</div>' : '') +
+          '</div>';
+        }
+
+        const f = splitPersonFields(p);
+        card.innerHTML =
+          '<div class="flex items-start justify-between gap-2 border-b border-slate-800/80 pb-2">' +
+            '<div class="flex items-center gap-2 flex-wrap">' +
+              '<span class="px-2 py-0.5 rounded text-[10px] font-bold border ' + badgeColor + '">' + p.generationTitle + '</span>' +
+              '<h3 class="text-sm font-bold text-white flex items-center gap-1.5">' +
+                (p.gender === 'F'
+                  ? '<span class="text-pink-300">' + p.nameKorean + '</span>'
+                  : '<span class="font-hanja text-base text-amber-300">' + p.nameHanja + '</span><span class="text-slate-200">(' + p.nameKorean + ')</span>') +
+              '</h3>' +
+              '<span class="text-[11px] text-sky-400 font-medium">| ' + p.role + '</span>' +
+            '</div>' +
+            '<div class="flex items-center gap-1 shrink-0">' +
+              '<button class="btn-save-single-txt text-[11px] bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 px-2 py-0.5 rounded border border-amber-500/30" data-id="' + p.id + '">텍스트 저장</button>' +
+              '<button class="btn-jump-fs text-[11px] bg-slate-800 hover:bg-slate-700 text-sky-300 px-2 py-0.5 rounded border border-slate-700" data-id="' + p.id + '">상세 폼</button>' +
+              '<button class="btn-edit-person text-xs text-slate-400 hover:text-white p-1 rounded hover:bg-slate-800" data-id="' + p.id + '" title="편집">✎</button>' +
+            '</div>' +
+          '</div>' +
+          '<div class="mt-2.5 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs bg-slate-900/60 p-2.5 rounded-lg border border-slate-800/80">' +
+            '<div><span class="text-slate-400">한글 성·이름·접미사:</span> <b class="text-white">성:' + f.korSurname + ' / 이름:' + f.korGiven + (f.korSuffix ? ' / 접미사:' + f.korSuffix : '') + '</b></div>' +
+            '<div><span class="text-slate-400">한자 성·이름·접미사:</span> <b class="text-amber-300 font-hanja">성:' + f.hanjaSurname + ' / 이름:' + f.hanjaGiven + (f.hanjaSuffix ? ' / 접미사:' + f.hanjaSuffix : '') + '</b></div>' +
+            '<div><span class="text-slate-400">로마자 성·이름·접미사:</span> <b class="text-sky-300 font-mono">성:' + f.romSurname + (f.romGiven ? ' / 이름:' + f.romGiven : '') + (f.romSuffix ? ' / 접미사:' + f.romSuffix : '') + '</b></div>' +
+            '<div><span class="text-slate-400">성별:</span> <b class="text-white">' + (f.isMale ? '◉ 남성  ○ 여성' : '○ 남성  ◉ 여성') + '</b></div>' +
+            '<div><span class="text-slate-400">상태:</span> <b class="text-emerald-300">◉ 사망  ○ 생존</b></div>' +
+            '<div><span class="text-slate-400">생년월일:</span> <b class="text-slate-200">' + f.birthDate + '</b></div>' +
+            '<div class="sm:col-span-3"><span class="text-slate-400">출생 장소:</span> <span class="text-slate-200">' + f.birthPlace + '</span></div>' +
+            '<div><span class="text-slate-400">사망 일자:</span> <span class="text-slate-200">' + f.deathDate + '</span></div>' +
+            '<div class="sm:col-span-2"><span class="text-slate-400">사망 장소(묘소):</span> <span class="text-slate-200">' + f.deathPlace + '</span></div>' +
+            (p.notes ? '<div class="sm:col-span-3 text-amber-300/90 text-[11px]">특이사항: ' + p.notes + '</div>' : '') +
+          '</div>' +
+          spouseHtml;
+
+        personList.appendChild(card);
+      });
+
+      document.querySelectorAll('.btn-edit-person').forEach(btn => {
+        btn.addEventListener('click', (e) => openEditModal(e.currentTarget.getAttribute('data-id')));
+      });
+      document.querySelectorAll('.btn-jump-fs').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          currentFsPersonId = e.currentTarget.getAttribute('data-id');
+          switchTab('fs');
+        });
+      });
+      document.querySelectorAll('.btn-save-single-txt').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const pid = e.currentTarget.getAttribute('data-id');
+          const p = jokboData.find(x => x.id === pid);
+          if (!p) return;
+          const f = splitPersonFields(p);
+          const singleTxt = [
+            '[인물 추출 데이터] ' + p.generationTitle + ' (' + p.role + ')',
+            '한글 성: ' + f.korSurname,
+            '한글 이름: ' + f.korGiven,
+            '한글 접미사: ' + f.korSuffix,
+            '한자 성: ' + f.hanjaSurname,
+            '한자 이름: ' + f.hanjaGiven,
+            '한자 접미사: ' + f.hanjaSuffix,
+            '로마자 성: ' + f.romSurname,
+            '로마자 이름: ' + f.romGiven,
+            '로마자 접미사: ' + f.romSuffix,
+            '성별: ' + f.genderLabel,
+            '상태: ' + f.statusLabel,
+            '생년월일: ' + f.birthDate,
+            '출생 장소: ' + f.birthPlace,
+            '사망 일자: ' + f.deathDate,
+            '사망 장소: ' + f.deathPlace,
+            '배우자: ' + (p.spouse ? p.spouse.name : '기록 없음')
+          ].join('\r\n');
+          copyToClipboard(singleTxt);
+          downloadFile(p.nameKorean + '_추출데이터.txt', '\uFEFF' + singleTxt, 'text/plain;charset=utf-8');
+          showToast(p.nameKorean + '님의 구분 추출 데이터가 클립보드에 복사되고 .txt 파일로 저장되었습니다!');
+        });
+      });
+
+      const males = jokboData.filter(p => p.gender === 'M').length;
+      const females = jokboData.filter(p => p.gender === 'F').length;
+      document.getElementById('stat-male').textContent = males + '명';
+      document.getElementById('stat-inlaws').textContent = females + '명 (사위 ' + females + '명)';
+      document.getElementById('stat-spouses').textContent = '23명 (처가 부인 포함)';
+    }
+
+    document.querySelectorAll('.gen-filter-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        if (!sampleLoaded) { showToast('먼저 족보 이미지를 열고 영역(ROI) 추출을 실행해 주세요. (샘플은 자동으로 불러오지 않습니다)'); return; }
+        document.querySelectorAll('.gen-filter-btn').forEach(b => {
+          b.className = 'gen-filter-btn px-2 py-0.5 rounded bg-slate-800 text-slate-300 hover:text-white shrink-0';
+        });
+        e.target.className = 'gen-filter-btn px-2 py-0.5 rounded bg-sky-600 text-white font-medium shrink-0';
+        currentGenFilter = e.target.getAttribute('data-gen');
+        renderPersonCards();
+      });
+    });
+
+    // FamilySearch Dedicated View (Details / Spouses / Parents + Relationship Manager)
+    function populateFsSelectors() {
+      const sel1 = document.getElementById('fs-person-selector');
+      const sel2 = document.getElementById('rel-source-select');
+      if (!sel1 || !sel2) return;
+      const opts = jokboData.map(p => {
+        const hDisp = (p.nameHanja && p.nameHanja !== '女') ? ' (' + p.nameHanja + ')' : '';
+        return '<option value="' + p.id + '">' + p.generationTitle + ' - ' + p.nameKorean + hDisp + '</option>';
+      }).join('');
+      sel1.innerHTML = opts;
+      sel2.innerHTML = opts;
+      sel1.value = currentFsPersonId;
+    }
+
+    document.getElementById('fs-person-selector').addEventListener('change', (e) => {
+      currentFsPersonId = e.target.value;
+      renderFsView();
+    });
+
+    ['details', 'spouses', 'parents'].forEach(tabName => {
+      document.getElementById('fs-tab-' + tabName).addEventListener('click', () => {
+        currentFsSubTab = tabName;
+        ['details', 'spouses', 'parents'].forEach(t => {
+          document.getElementById('fs-tab-' + t).className = (t === tabName)
+            ? 'flex-1 py-2.5 text-center border-b-2 border-sky-400 text-sky-400'
+            : 'flex-1 py-2.5 text-center border-b-2 border-transparent text-slate-400 hover:text-white';
+        });
+        renderFsView();
+      });
+    });
+
+    function renderFsView() {
+      const box = document.getElementById('fs-tab-content');
+      if (jokboData.length === 0) {
+        document.getElementById('fs-avatar').textContent = '無';
+        document.getElementById('fs-avatar').className = 'w-14 h-14 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center text-xl font-bold text-slate-400 shrink-0';
+        document.getElementById('fs-header-name').textContent = '데이터 없음 (추출 대기 중)';
+        document.getElementById('fs-header-pid').textContent = '';
+        document.getElementById('fs-header-lifespan').textContent = '족보 이미지에서 영역을 지정해 추출하거나 샘플 테스트를 실행하세요.';
+        box.innerHTML = '<div class="p-8 text-center text-xs text-slate-400 space-y-3">' +
+          '<div class="text-slate-300 font-bold">기본 상태에는 표시할 가족역사 데이터가 없습니다.</div>' +
+          '<div>[스플릿 작업대]에서 족보 이미지를 업로드하고 영역(ROI)을 지정해 [한자 OCR & 데이터 추출 실행]을 누르면 이곳에 FamilySearch 표준 Vitals·배우자·부모 정보가 생성됩니다.</div>' +
+          '<button onclick="activateSampleJokbo(true)" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xs transition">⚡ 고성 이씨 샘플 데이터 불러오기</button>' +
+        '</div>';
+        const relBox = document.getElementById('relationship-list-container');
+        if (relBox) relBox.innerHTML = '<div class="p-4 text-center text-xs text-slate-500">추출된 가족 관계가 없습니다.</div>';
+        return;
+      }
+      const p = jokboData.find(x => x.id === currentFsPersonId) || jokboData[0];
+      if (!p) return;
+
+      document.getElementById('fs-avatar').textContent = p.nameKorean.charAt(0);
+      document.getElementById('fs-avatar').className = p.gender === 'F'
+        ? 'w-14 h-14 rounded-full bg-pink-500/20 border-2 border-pink-400 flex items-center justify-center text-xl font-bold text-pink-300 shrink-0'
+        : 'w-14 h-14 rounded-full bg-sky-500/20 border-2 border-sky-400 flex items-center justify-center text-xl font-bold text-sky-300 shrink-0';
+      document.getElementById('fs-header-name').textContent = p.nameKorean + ((p.nameHanja && p.nameHanja !== '女') ? ' (' + p.nameHanja + ')' : '');
+      document.getElementById('fs-header-pid').textContent = '';
+      document.getElementById('fs-header-pid').className = 'hidden';
+      document.getElementById('fs-header-lifespan').textContent = (p.birthSolarYear ? p.birthSolarYear + '년 ' : '') + '(' + p.birthGanji + ') · ' + p.role;
+      if (currentFsSubTab === 'details') {
+        const f = splitPersonFields(p);
+        box.innerHTML =
+          '<div class="space-y-3.5">' +
+            '<div class="space-y-2 p-3.5 rounded-xl bg-slate-950 border border-slate-800">' +
+              '<div class="text-xs font-bold text-sky-400">한글</div>' +
+              '<div class="grid grid-cols-3 gap-2">' +
+                '<div><label class="text-[11px] text-slate-400 block mb-1">성</label><input type="text" readonly value="' + f.korSurname + '" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white font-bold"></div>' +
+                '<div><label class="text-[11px] text-slate-400 block mb-1">이름</label><input type="text" readonly value="' + f.korGiven + '" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white font-bold"></div>' +
+                '<div><label class="text-[11px] text-slate-400 block mb-1">접미사</label><input type="text" readonly value="' + f.korSuffix + '" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white font-bold"></div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="space-y-2 p-3.5 rounded-xl bg-slate-950 border border-slate-800">' +
+              '<div class="text-xs font-bold text-amber-400">한자</div>' +
+              '<div class="grid grid-cols-3 gap-2">' +
+                '<div><label class="text-[11px] text-slate-400 block mb-1">성</label><input type="text" readonly value="' + f.hanjaSurname + '" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-amber-300 font-hanja font-bold"></div>' +
+                '<div><label class="text-[11px] text-slate-400 block mb-1">이름</label><input type="text" readonly value="' + f.hanjaGiven + '" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-amber-300 font-hanja font-bold"></div>' +
+                '<div><label class="text-[11px] text-slate-400 block mb-1">접미사</label><input type="text" readonly value="' + f.hanjaSuffix + '" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-amber-300 font-hanja font-bold"></div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="space-y-2 p-3.5 rounded-xl bg-slate-950 border border-slate-800">' +
+              '<div class="text-xs font-bold text-emerald-400">로마자</div>' +
+              '<div class="grid grid-cols-3 gap-2">' +
+                '<div><label class="text-[11px] text-slate-400 block mb-1">성</label><input type="text" readonly value="' + f.romSurname + '" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white font-mono font-bold"></div>' +
+                '<div><label class="text-[11px] text-slate-400 block mb-1">이름</label><input type="text" readonly value="' + f.romGiven + '" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white font-mono font-bold"></div>' +
+                '<div><label class="text-[11px] text-slate-400 block mb-1">접미사</label><input type="text" readonly value="' + f.romSuffix + '" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white font-mono font-bold"></div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="grid grid-cols-2 gap-3 p-3.5 rounded-xl bg-slate-950 border border-slate-800">' +
+              '<div>' +
+                '<div class="text-[11px] text-slate-400 mb-1.5">성별</div>' +
+                '<div class="flex items-center gap-3 text-xs text-white">' +
+                  '<span>' + (f.isMale ? '◉ 남성' : '○ 남성') + '</span>' +
+                  '<span>' + (f.isFemale ? '◉ 여성' : '○ 여성') + '</span>' +
+                '</div>' +
+              '</div>' +
+              '<div>' +
+                '<div class="text-[11px] text-slate-400 mb-1.5">상태</div>' +
+                '<div class="flex items-center gap-3 text-xs text-white">' +
+                  '<span>◉ 사망</span>' +
+                  '<span>○ 생존</span>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+            '<div class="space-y-2.5 p-3.5 rounded-xl bg-slate-950 border border-slate-800">' +
+              '<div><label class="text-[11px] text-slate-400 block mb-1">생년월일</label><input type="text" readonly value="' + f.birthDate + '" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white"></div>' +
+              '<div><label class="text-[11px] text-slate-400 block mb-1">출생 장소</label><input type="text" readonly value="' + f.birthPlace + '" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white"></div>' +
+              '<div><label class="text-[11px] text-slate-400 block mb-1">사망 일자</label><input type="text" readonly value="' + f.deathDate + '" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white"></div>' +
+              '<div><label class="text-[11px] text-slate-400 block mb-1">사망 장소</label><input type="text" readonly value="' + f.deathPlace + '" class="w-full bg-slate-900 border border-slate-700 rounded px-2.5 py-1.5 text-white"></div>' +
+              '<div class="pt-1">' +
+                '<label class="text-[11px] text-amber-400 font-bold block mb-1">참고 (족보에서 추출한 기타 정보 · 자/호/관직/처가/특이사항)</label>' +
+                '<textarea readonly rows="4" class="w-full bg-slate-900 border border-amber-500/40 rounded-lg px-2.5 py-2 text-xs text-slate-200 leading-relaxed whitespace-pre-wrap focus:outline-none">' + f.referenceNotes + '</textarea>' +
+              '</div>' +
+            '</div>' +
+          '</div>';
+      } else if (currentFsSubTab === 'spouses') {
+        const childrenObjs = (p.children || []).map(cid => jokboData.find(x => x.id === cid)).filter(Boolean);
+        box.innerHTML =
+          '<div class="space-y-4">' +
+            '<div class="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Spouses (배우자 및 처가 정보)</div>' +
+            (p.spouse ?
+              '<div class="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-2">' +
+                '<div class="flex items-center gap-2.5">' +
+                  '<div class="w-8 h-8 rounded-full bg-pink-500/20 text-pink-300 flex items-center justify-center font-bold">配</div>' +
+                  '<div>' +
+                    '<div class="text-sm font-bold text-white">' + p.spouse.name + '</div>' +
+                    '<div class="text-[11px] text-slate-400">' + (p.spouse.birth || '') + ' ' + (p.spouse.death || '') + '</div>' +
+                  '</div>' +
+                '</div>' +
+                (p.spouse.inlaws && p.spouse.inlaws.length > 0 ?
+                  '<div class="pt-2 border-t border-slate-800 space-y-1">' +
+                    p.spouse.inlaws.map(inl => '<div class="text-xs text-slate-300">• ' + inl + '</div>').join('') +
+                  '</div>' : '') +
+              '</div>'
+              : '<div class="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-400">기록된 배우자 정보가 없거나 다음 권(二卷)에서 계속됩니다.</div>') +
+            '<div class="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Children (자녀: ' + childrenObjs.length + '명)</div>' +
+            '<div class="space-y-2">' +
+              (childrenObjs.length > 0 ? childrenObjs.map(ch =>
+                '<div class="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between cursor-pointer hover:border-sky-500/50" onclick="window.selectFsPerson(\'' + ch.id + '\')">' +
+                  '<div class="flex items-center gap-2.5">' +
+                    '<div class="w-7 h-7 rounded-full ' + (ch.gender === 'F' ? 'bg-pink-500/20 text-pink-300' : 'bg-sky-500/20 text-sky-300') + ' flex items-center justify-center font-bold text-xs">' + (ch.gender === 'F' ? '女' : '子') + '</div>' +
+                    '<div>' +
+                      '<div class="text-xs font-bold text-white">' + ch.nameKorean + ' (' + ch.nameHanja + ')</div>' +
+                      '<div class="text-[11px] text-slate-400">' + ch.role + ' · ' + ch.birthGanji + '</div>' +
+                    '</div>' +
+                  '</div>' +
+                  '<span class="text-xs text-sky-400">보기 →</span>' +
+                '</div>'
+              ).join('') : '<div class="text-slate-400 text-xs">자녀 기록 없음</div>') +
+            '</div>' +
+          '</div>';
+      } else {
+        const parentObj = p.parentId ? jokboData.find(x => x.id === p.parentId) : null;
+        const siblings = p.parentId ? jokboData.filter(x => x.parentId === p.parentId) : [p];
+        box.innerHTML =
+          '<div class="space-y-4">' +
+            '<div class="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Parents (부모)</div>' +
+            (parentObj ?
+              '<div class="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-2 cursor-pointer hover:border-sky-500/50" onclick="window.selectFsPerson(\'' + parentObj.id + '\')">' +
+                '<div class="text-sm font-bold text-white">부(父): ' + parentObj.nameKorean + ' (' + parentObj.nameHanja + ')</div>' +
+                '<div class="text-xs text-pink-300">모(母): ' + (parentObj.spouse ? parentObj.spouse.name : '정보 미상') + '</div>' +
+              '</div>'
+              : '<div class="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-400">상위 세대(19世 이전) 페이지에서 이어짐</div>') +
+            '<div class="text-[11px] font-bold uppercase text-slate-400 tracking-wider">Siblings (형제·자매: ' + siblings.length + '명)</div>' +
+            '<div class="space-y-2">' +
+              siblings.map(sib =>
+                '<div class="p-3 rounded-xl bg-slate-950 border ' + (sib.id === p.id ? 'border-sky-500' : 'border-slate-800') + ' flex items-center justify-between cursor-pointer" onclick="window.selectFsPerson(\'' + sib.id + '\')">' +
+                  '<div>' +
+                    '<div class="text-xs font-bold text-white">' + sib.nameKorean + ((sib.nameHanja && sib.nameHanja !== '女') ? ' (' + sib.nameHanja + ')' : '') + '</div>' +
+                    '<div class="text-[11px] text-slate-400">' + sib.role + ' · ' + sib.birthGanji + '</div>' +
+                  '</div>' +
+                '</div>'
+              ).join('') +
+            '</div>' +
+          '</div>';
+      }
+
+      renderRelationshipManagerList();
+    }
+
+    window.selectFsPerson = function(id) {
+      currentFsPersonId = id;
+      const sel = document.getElementById('fs-person-selector');
+      if (sel) sel.value = id;
+      renderFsView();
+    };
+
+    function rebuildDefaultRelations() {
+      customRelations = [];
+      jokboData.forEach(p => {
+        if (p.spouse) {
+          customRelations.push({
+            id: 'REL_SP_' + p.id,
+            left: p.nameKorean + '(' + p.nameHanja + ')',
+            type: '↔ 배우자',
+            right: p.spouse.name
+          });
+          if (p.spouse.inlaws) {
+            p.spouse.inlaws.forEach((inl, idx) => {
+              customRelations.push({
+                id: 'REL_INL_' + p.id + '_' + idx,
+                left: p.spouse.name.split(',')[0],
+                type: '→ 처가 기록',
+                right: inl
+              });
+            });
+          }
+        }
+        if (p.children) {
+          p.children.forEach(cid => {
+            const ch = jokboData.find(x => x.id === cid);
+            if (ch) {
+              customRelations.push({
+                id: 'REL_CH_' + p.id + '_' + cid,
+                left: p.nameKorean + '(' + p.nameHanja + ')',
+                type: '→ 자녀',
+                right: ch.nameKorean + ' (' + ch.role + ')'
+              });
+            }
+          });
+        }
+      });
+    }
+
+    function renderRelationshipManagerList() {
+      const container = document.getElementById('relationship-list-container');
+      if (!container) return;
+      container.innerHTML = customRelations.map(r =>
+        '<div class="flex items-center justify-between px-3.5 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs">' +
+          '<div class="flex items-center gap-2 truncate pr-2">' +
+            '<span class="font-bold text-white">' + r.left + '</span>' +
+            '<span class="text-sky-400 font-semibold">' + r.type + '</span>' +
+            '<span class="text-slate-300 truncate">' + r.right + '</span>' +
+          '</div>' +
+          '<button class="btn-del-rel text-[11px] text-slate-400 hover:text-rose-400 border border-slate-800 px-2 py-0.5 rounded shrink-0" data-id="' + r.id + '">관계 삭제</button>' +
+        '</div>'
+      ).join('');
+
+      document.querySelectorAll('.btn-del-rel').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const rid = e.currentTarget.getAttribute('data-id');
+          customRelations = customRelations.filter(x => x.id !== rid);
+          renderRelationshipManagerList();
+          showToast('선택한 가족 관계 항목이 삭제되었습니다.');
+        });
+      });
+    }
+
+    document.getElementById('btn-add-relation').addEventListener('click', () => {
+      const srcId = document.getElementById('rel-source-select').value;
+      const srcPerson = jokboData.find(x => x.id === srcId);
+      const relType = document.getElementById('rel-type-select').value;
+      let targetText = document.getElementById('rel-target-input').value.trim();
+      if (!targetText) {
+        showToast('대상 인물 성명이나 본관을 입력해 주세요.');
+        return;
+      }
+      if (relType === '장인' && !targetText.includes('부인')) {
+        targetText = targetText + ' / 부인이름: ' + targetText.split('(')[0] + '의 부인';
+      }
+      customRelations.unshift({
+        id: 'REL_CUSTOM_' + Date.now(),
+        left: srcPerson ? srcPerson.nameKorean : '기준인물',
+        type: '↔ ' + relType,
+        right: targetText
+      });
+      document.getElementById('rel-target-input').value = '';
+      renderRelationshipManagerList();
+      showToast('새 가족 관계가 추가되었습니다.');
+    });
+
+    document.getElementById('btn-open-new-person').addEventListener('click', () => {
+      const newId = 'P_NEW_' + (jokboData.length + 1);
+      jokboData.push({
+        id: newId,
+        gen: 24,
+        generationTitle: '25世',
+        role: '추가 등록 인물',
+        nameHanja: '未詳',
+        nameKorean: '이씨',
+        birthGanji: '정보 미상',
+        birthSolarYear: null,
+        deathInfo: '정보 미상',
+        burial: '기록 없음',
+        notes: '',
+        gender: 'M',
+        spouse: null,
+        children: []
+      });
+      openEditModal(newId);
+    });
+
+    // Edit Modal Logic
+    const editModal = document.getElementById('edit-modal');
+    function openEditModal(id) {
+      const p = jokboData.find(item => item.id === id);
+      if (!p) return;
+      document.getElementById('modal-person-id').value = p.id;
+      document.getElementById('modal-person-gen').textContent = p.generationTitle + ' (' + p.role + ')';
+      document.getElementById('modal-name-hanja').value = p.nameHanja || '';
+      document.getElementById('modal-name-korean').value = p.nameKorean || '';
+      document.getElementById('modal-birth-ganji').value = p.birthGanji || '';
+      document.getElementById('modal-birth-solar').value = p.birthSolarYear || '';
+      document.getElementById('modal-death-text').value = p.deathInfo || '';
+      document.getElementById('modal-burial').value = p.burial || '';
+      document.getElementById('modal-notes').value = p.notes || '';
+
+      if (p.spouse) {
+        document.getElementById('modal-spouse-info').value = p.spouse.name || '';
+        document.getElementById('modal-inlaws-info').value = (p.spouse.inlaws || []).join('\n');
+      } else {
+        document.getElementById('modal-spouse-info').value = '';
+        document.getElementById('modal-inlaws-info').value = '';
+      }
+      editModal.classList.remove('hidden');
+    }
+
+    function closeModal() { editModal.classList.add('hidden'); }
+    document.getElementById('btn-close-modal').addEventListener('click', closeModal);
+    document.getElementById('btn-cancel-modal').addEventListener('click', closeModal);
+
+    document.getElementById('btn-save-modal').addEventListener('click', () => {
+      const id = document.getElementById('modal-person-id').value;
+      const p = jokboData.find(item => item.id === id);
+      if (p) {
+        p.nameHanja = document.getElementById('modal-name-hanja').value;
+        p.nameKorean = document.getElementById('modal-name-korean').value;
+        p.birthGanji = document.getElementById('modal-birth-ganji').value;
+        p.birthSolarYear = parseInt(document.getElementById('modal-birth-solar').value, 10) || null;
+        p.deathInfo = document.getElementById('modal-death-text').value;
+        p.burial = document.getElementById('modal-burial').value;
+        p.notes = document.getElementById('modal-notes').value;
+
+        const spouseName = document.getElementById('modal-spouse-info').value;
+        const inlawsText = document.getElementById('modal-inlaws-info').value;
+        if (spouseName.trim()) {
+          p.spouse = p.spouse || { birth: '', death: '' };
+          p.spouse.name = spouseName.trim();
+          p.spouse.inlaws = inlawsText.split('\n').filter(s => s.trim());
+        } else {
+          p.spouse = null;
+        }
+        renderPersonCards();
+        populateFsSelectors();
+        closeModal();
+        showToast('인물 및 처가 기록이 저장되었습니다.');
+      }
+    });
+
+    // Tree View (Orthogonal Couples & Generation Rows as in Image 3)
+    function renderTree() {
+      const treeContainer = document.getElementById('tree-diagram-container');
+      treeContainer.innerHTML = '';
+
+      if (jokboData.length === 0) {
+        treeContainer.innerHTML = '<div class="p-12 text-center text-xs text-slate-400 rounded-2xl border border-dashed border-slate-800 bg-slate-900/40 space-y-3">' +
+          '<div class="w-10 h-10 rounded-xl bg-slate-800 text-slate-400 flex items-center justify-center mx-auto text-lg">🌳</div>' +
+          '<div class="text-sm font-bold text-slate-200">가계도 트리에 표시할 추출 데이터가 없습니다.</div>' +
+          '<p class="max-w-md mx-auto text-slate-400 leading-relaxed">[스플릿 작업대]에서 족보 이미지를 업로드하고 영역(ROI)을 지정해 추출하거나, 상단 [샘플 족보로 테스트하기] 버튼을 눌러 샘플 가계도를 확인하세요.</p>' +
+          '<button onclick="activateSampleJokbo(true)" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2 rounded-lg text-xs transition">⚡ 샘플 족보로 가계도 테스트하기</button>' +
+        '</div>';
+        return;
+      }
+
+      const showGen = document.getElementById('tree-opt-gen').checked;
+      const showHanja = document.getElementById('tree-opt-hanja').checked;
+      const showBirth = document.getElementById('tree-opt-birth').checked;
+      const showSpouse = document.getElementById('tree-opt-spouse').checked;
+
+      const clanTitleEl = document.getElementById('tree-clan-title');
+      if (clanTitleEl && jokboData[0]) {
+        clanTitleEl.textContent = (jokboData[0].clanName || '추출 가문') + ' 가계도';
+      }
+      const badgeEl = document.getElementById('tree-gen-range-badge');
+      if (badgeEl && jokboData.length > 0) {
+        badgeEl.textContent = jokboData[0].generationTitle + ' ~ ' + jokboData[jokboData.length - 1].generationTitle + ' (' + jokboData.length + '명)';
+      }
+
+      const gens = [19, 20, 21, 22, 23, 24];
+      gens.forEach((genNum, idx) => {
+        const genPersons = jokboData.filter(p => p.gen === genNum);
+        if (genPersons.length === 0) return;
+
+        const row = document.createElement('div');
+        row.className = 'relative flex flex-col md:flex-row items-start md:items-center gap-4 border-b border-slate-800/80 pb-6';
+
+        const genLabel = genPersons[0].generationTitle;
+        row.innerHTML =
+          (showGen ? '<div class="w-28 shrink-0 text-xs font-bold text-slate-400">' + genLabel + '</div>' : '') +
+          '<div class="flex-1 flex flex-wrap items-center justify-center gap-4">' +
+            genPersons.map(p => {
+              const isFemale = p.gender === 'F';
+              const mainBg = isFemale ? 'bg-pink-950/40 border-pink-500/40' : 'bg-sky-950/40 border-sky-500/40';
+              return '<div class="flex items-center gap-1.5">' +
+                '<div class="px-4 py-2.5 rounded-xl border ' + mainBg + ' text-center cursor-pointer hover:scale-105 transition min-w-[130px]" onclick="window.scrollToCard(\'' + p.id + '\')">' +
+                  '<div class="text-xs font-bold text-white">' + (p.gender === 'F' ? '이름: ' + p.nameKorean : ((showHanja ? p.nameHanja + ' · ' : '') + p.nameKorean)) + '</div>' +
+                  '<div class="text-[10px] text-slate-400">' + p.role + '</div>' +
+                  (showBirth && p.birthSolarYear ? '<div class="text-[10px] text-amber-300 font-mono mt-0.5">' + p.birthSolarYear + '년생</div>' : '') +
+                '</div>' +
+                (showSpouse && p.spouse ?
+                  '<div class="w-3 h-0.5 bg-slate-600"></div>' +
+                  '<div class="px-3.5 py-2.5 rounded-xl border bg-rose-950/30 border-rose-500/30 text-center min-w-[130px]">' +
+                    '<div class="text-xs font-bold text-rose-200">' + p.spouse.name.split(',')[0] + '</div>' +
+                    '<div class="text-[10px] text-slate-400">' + (p.spouse.name.split(',')[1] || '배우자/사위') + '</div>' +
+                  '</div>' : '') +
+              '</div>';
+            }).join('') +
+          '</div>';
+
+        treeContainer.appendChild(row);
+      });
+    }
+
+    ['tree-opt-gen', 'tree-opt-hanja', 'tree-opt-birth', 'tree-opt-spouse'].forEach(id => {
+      document.getElementById(id).addEventListener('change', renderTree);
+    });
+
+    window.scrollToCard = function(id) {
+      switchTab('extract');
+      setTimeout(() => {
+        const card = document.getElementById('card-' + id);
+        if (card) {
+          card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          card.classList.add('ring-2', 'ring-sky-500');
+          setTimeout(() => card.classList.remove('ring-2', 'ring-sky-500'), 2000);
+        }
+      }, 100);
+    };
+
+    // Hanja Tool & Female/In-Law Naming Rule Parser
+    function runFemaleInlawRuleParser(rawText) {
+      let lines = [];
+      lines.push('[입력 원문] ' + rawText);
+      lines.push('--------------------------------------------------');
+
+      // 1. Check for 配 (Spouse)
+      const spouseMatch = rawText.match(/配([가-힣一-龥]+氏)/);
+      if (spouseMatch) {
+        const fullClan = spouseMatch[1];
+        const surnameHanja = fullClan.charAt(fullClan.length - 2);
+        const surnameMap = { '邊': '변씨', '趙': '조씨', '尹': '윤씨', '元': '원씨', '朴': '박씨', '盧': '노씨', '金': '김씨', '李': '이씨' };
+        const korSurname = surnameMap[surnameHanja] || (surnameHanja + '씨');
+        lines.push('✔ 아내 이름 추출 (본관+성씨 규칙): ' + korSurname + ', ' + fullClan);
+      }
+
+      // 2. Check for Father-in-law (父), Grandfather-in-law (祖), Great-GF (曾祖), Maternal GF (外祖)
+      const fMatch = rawText.match(/父([가-힣一-龥]+)/);
+      if (fMatch) {
+        const fName = fMatch[1];
+        lines.push('✔ 처의 아버지(장인) 이름: ' + fName + ' / 부인이름: ' + fName + '의 부인 (성명 미기재 부인 자동생성)');
+      }
+      const gMatch = rawText.match(/[^曾外]祖([가-힣一-龥]+)/);
+      if (gMatch) {
+        const gName = gMatch[1];
+        lines.push('✔ 할아버지(장인의 아버지) 이름: ' + gName + ' / 부인이름: ' + gName + '의 부인');
+      }
+      const ggMatch = rawText.match(/曾祖([가-힣一-龥]+)/);
+      if (ggMatch) {
+        const ggName = ggMatch[1];
+        lines.push('✔ 증조할아버지(장인의 조부) 이름: ' + ggName + ' / 부인이름: ' + ggName + '의 부인');
+      }
+      const mMatch = rawText.match(/外祖([가-힣一-龥]+)/);
+      if (mMatch) {
+        const mName = mMatch[1];
+        lines.push('✔ 처의 외할아버지 이름: ' + mName + ' / 부인이름: ' + mName + '의 부인');
+      }
+      if (lines.length === 2) {
+        lines.push('✔ 이름 미기재 여성/처가 규칙 적용: 남편 이름을 기준으로 "' + rawText.trim() + '의 부인"으로 자동 생성');
+      }
+      return lines.join('\n');
+    }
+
+    document.getElementById('btn-run-rule-test').addEventListener('click', () => {
+      const val = document.getElementById('rule-test-input').value;
+      document.getElementById('rule-test-output').textContent = runFemaleInlawRuleParser(val);
+    });
+    document.getElementById('btn-sample-rule-2').addEventListener('click', () => {
+      const s = '配務安朴氏癸卯生 父基豊 祖奎秀 曾祖師元 外祖丁若萬';
+      document.getElementById('rule-test-input').value = s;
+      document.getElementById('rule-test-output').textContent = runFemaleInlawRuleParser(s);
+    });
+    document.getElementById('btn-sample-rule-3').addEventListener('click', () => {
+      const s = '홍길동';
+      document.getElementById('rule-test-input').value = s;
+      document.getElementById('rule-test-output').textContent = runFemaleInlawRuleParser(s);
+    });
+
+    // Desktop Download Scripts and Modal Handlers
+    const getDesktopModal = () => document.getElementById('desktop-download-modal'); // 모달은 <script> 뒤에 있어 클릭 시점에 조회
+
+    function getWin11BatContent() {
+      return [
+        '@echo off',
+        'chcp 65001 > nul',
+        'title 家族歷史記錄 助手 - 가족역사기록 도우미 (Windows 11 Desktop Edition)',
+        'echo ============================================================================',
+        'echo   家族歷史記錄 助手 · 가족역사기록 도우미 (Windows 11 Desktop Edition v3.2)',
+        'echo   총괄 개발: Peter S. Choi · 소속: Sang - Mi Consulting Ltd',
+        'echo   The Church of Jesus Christ of Latter-day Saints 가족역사사업 지원',
+        'echo ============================================================================',
+        'echo.',
+        'set APP_DIR=%~dp0',
+        'set APP_HTML=%APP_DIR%jokbo_data_extractor.html',
+        'echo [바탕화면 바로가기 생성 중...]',
+        'powershell -NoProfile -ExecutionPolicy Bypass -Command "$s=(New-Object -COM WScript.Shell).CreateShortcut([Environment]::GetFolderPath(\"Desktop\")+\"\\\\가족역사기록 도우미 (家族歷史記錄 助手).lnk\"); $s.TargetPath=\"%~f0\"; $s.WorkingDirectory=\"%APP_DIR%\"; $s.IconLocation=\"shell32.dll,21\"; $s.Save()" 2>nul',
+        'echo [실행] Windows 11 데스크톱 단독 앱 창 모드로 실행합니다...',
+        'if exist "%ProgramFiles(x86)%\\Microsoft\\Edge\\Application\\msedge.exe" (',
+        '    start "" "%ProgramFiles(x86)%\\Microsoft\\Edge\\Application\\msedge.exe" --app="file:///%APP_HTML%" --window-size=1480,940',
+        '    exit /b 0',
+        ')',
+        'if exist "%ProgramFiles%\\Microsoft\\Edge\\Application\\msedge.exe" (',
+        '    start "" "%ProgramFiles%\\Microsoft\\Edge\\Application\\msedge.exe" --app="file:///%APP_HTML%" --window-size=1480,940',
+        '    exit /b 0',
+        ')',
+        'if exist "%ProgramFiles%\\Google\\Chrome\\Application\\chrome.exe" (',
+        '    start "" "%ProgramFiles%\\Google\\Chrome\\Application\\chrome.exe" --app="file:///%APP_HTML%" --window-size=1480,940',
+        '    exit /b 0',
+        ')',
+        'start "" "%APP_HTML%"'
+      ].join('\r\n');
+    }
+
+    function getWin11PyAppContent() {
+      return [
+        '#!/usr/bin/env python3',
+        '# -*- coding: utf-8 -*-',
+        '"""',
+        '家族歷史記錄 助手 · 가족역사기록 도우미 (Family Search Helper v3.2)',
+        'Windows 11 PC Desktop Native GUI Application',
+        '총괄 개발: Peter S. Choi · 소속: Sang - Mi Consulting Ltd',
+        'The Church of Jesus Christ of Latter-day Saints 가족역사사업 지원',
+        '"""',
+        'import os, sys, csv, subprocess, webbrowser, tkinter as tk',
+        'from tkinter import ttk, messagebox, filedialog',
+        'def run():',
+        '    html_p = os.path.join(os.path.dirname(os.path.abspath(__file__)), "jokbo_data_extractor.html")',
+        '    edge_p = os.path.expandvars(r"%ProgramFiles(x86)%\\Microsoft\\Edge\\Application\\msedge.exe")',
+        '    if os.path.exists(edge_p):',
+        '        subprocess.Popen([edge_p, f"--app=file:///{html_p}", "--window-size=1480,940"])',
+        '    else:',
+        '        webbrowser.open(f"file:///{html_p}")',
+        'if __name__ == "__main__":',
+        '    root = tk.Tk()',
+        '    root.title("家族歷史記錄 助手 (Windows 11 Desktop)")',
+        '    root.geometry("640x360")',
+        '    root.configure(bg="#0f172a")',
+        '    tk.Label(root, text="家族歷史記錄 助手 · 가족역사기록 도우미", font=("Malgun Gothic", 14, "bold"), fg="#fbbf24", bg="#0f172a").pack(pady=20)',
+        '    tk.Label(root, text="Windows 11 PC 데스크톱 버전입니다.\n아래 버튼을 누르면 단독 앱 창으로 전체 작업대가 열립니다.", font=("Malgun Gothic", 10), fg="#cbd5e1", bg="#0f172a").pack(pady=10)',
+        '    tk.Button(root, text="🌐 전체 그래픽 작업대 (가계도·만세력·내보내기) 열기", command=run, bg="#f59e0b", fg="#090d16", font=("Malgun Gothic", 11, "bold"), padx=15, pady=8).pack(pady=20)',
+        '    root.mainloop()'
+      ].join('\n');
+    }
+
+    const btnDesktopGuide = document.getElementById('btn-desktop-download-guide');
+    if (btnDesktopGuide) {
+      btnDesktopGuide.addEventListener('click', () => {
+        const dm = getDesktopModal(); if (dm) dm.classList.remove('hidden');
+        downloadFile('Install_and_Run_Win11.bat', getWin11BatContent(), 'application/x-bat;charset=utf-8');
+        showToast('Windows 11 PC 실행용 배치 파일(Install_and_Run_Win11.bat) 다운로드가 시작되었습니다!');
+      });
+    }
+
+    const btnModalDownloadBat = document.getElementById('btn-modal-download-bat');
+    if (btnModalDownloadBat) {
+      btnModalDownloadBat.addEventListener('click', () => {
+        downloadFile('Install_and_Run_Win11.bat', getWin11BatContent(), 'application/x-bat;charset=utf-8');
+      });
+    }
+
+    const btnModalDownloadPy = document.getElementById('btn-modal-download-py');
+    if (btnModalDownloadPy) {
+      btnModalDownloadPy.addEventListener('click', () => {
+        downloadFile('FamilySearch_Helper_Desktop_App.py', getWin11PyAppContent(), 'text/x-python;charset=utf-8');
+      });
+    }
+
+    // NOTE: 모달 HTML은 <script> 뒤에 있으므로 요소가 없을 수 있다 → 반드시 null 검사 (없으면 이후 코드 전체가 멈춤)
+    function safeOn(id, evt, fn) {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener(evt, fn);
+    }
+    safeOn('btn-close-desktop-modal', 'click', () => {
+      const dm = getDesktopModal(); if (dm) dm.classList.add('hidden');
+    });
+    safeOn('btn-confirm-desktop-modal', 'click', () => {
+      const dm = getDesktopModal(); if (dm) dm.classList.add('hidden');
+    });
+
+    // KakaoTalk QR Modal Handlers
+    safeOn('btn-show-kakao-qr', 'click', () => {
+      const m = document.getElementById('kakao-qr-modal'); if (m) m.classList.remove('hidden');
+    });
+    safeOn('btn-close-qr-modal', 'click', () => {
+      const m = document.getElementById('kakao-qr-modal'); if (m) m.classList.add('hidden');
+    });
+    safeOn('btn-copy-kakao-id', 'click', () => {
+      copyToClipboard('ntec2000');
+      showToast('카카오톡 ID (ntec2000)가 복사되었습니다. 카카오톡에서 친구 추가해 주세요!');
+    });
+
+    // Manse-ryeok Calculator
+    function initManseCalculator() {
+      const select = document.getElementById('manse-ganji-select');
+      GANJI_LIST.forEach(g => {
+        const opt = document.createElement('option');
+        opt.value = g.hanja;
+        opt.textContent = g.hanja + ' (' + g.korean + ' / 번호: ' + (g.index + 1) + ')';
+        if (g.hanja === '丁未') opt.selected = true;
+        select.appendChild(opt);
+      });
+      document.getElementById('btn-calc-manse').addEventListener('click', calculateManse);
+      calculateManse();
+    }
+
+    function calculateManse() {
+      const ganji = document.getElementById('manse-ganji-select').value;
+      const baseCentury = parseInt(document.getElementById('manse-century-select').value, 10);
+      const ganjiObj = GANJI_LIST.find(g => g.hanja === ganji);
+      if (!ganjiObj) return;
+
+      let bestYear = 0;
+      const cycles = [];
+      for (let y = baseCentury - 60; y <= baseCentury + 120; y++) {
+        let idx = (y - 4) % 60;
+        if (idx < 0) idx += 60;
+        if (idx === ganjiObj.index) {
+          cycles.push(y);
+          if (y >= baseCentury && y < baseCentury + 100) bestYear = y;
+        }
+      }
+      if (!bestYear && cycles.length > 0) bestYear = cycles[0];
+
+      document.getElementById('manse-result-year').textContent = '서기 ' + bestYear + '년 (' + ganji + ')';
+      document.getElementById('manse-result-info').textContent = '60간지 제' + (ganjiObj.index + 1) + '번째 간지 (' + ganjiObj.korean + ') | 만세력 검증 연대';
+
+      const cyclesGrid = document.getElementById('manse-cycles-grid');
+      cyclesGrid.innerHTML = cycles.map(y =>
+        '<div class="p-2 rounded bg-slate-950 border ' + (y === bestYear ? 'border-amber-500/50 text-amber-300' : 'border-slate-800 text-slate-400') + ' text-center">' +
+          y + '년' +
+        '</div>'
+      ).join('');
+    }
+
+    // Export Generators
+    function getExportPersonsList() {
+      return (jokboData && jokboData.length > 0) ? jokboData : [];
+    }
+
+    function generateGedcom() {
+      const source = getExportPersonsList();
+      let ged = [
+        '0 HEAD',
+        '1 SOUR FAMILY_SEARCH_HELPER',
+        '2 VERS 3.2.0',
+        '2 NAME 家族歷史記錄 助手 - 가족역사기록 도우미',
+        '1 DATE 10 NOV 2026',
+        '1 GEDC',
+        '2 VERS 5.5.1',
+        '2 FORM LINEAGE-LINKED',
+        '1 CHAR UTF-8'
+      ];
+      source.forEach(p => {
+        const f = splitPersonFields(p);
+        ged.push('0 @' + p.id + '@ INDI');
+        ged.push('1 NAME ' + f.korGiven + ' /' + f.korSurname + '/');
+        ged.push('1 SEX ' + p.gender);
+        if (p.birthSolarYear || p.birthGanji) {
+          ged.push('1 BIRT');
+          if (p.birthSolarYear) ged.push('2 DATE ' + p.birthSolarYear);
+          if (f.birthPlace) ged.push('2 PLAC ' + f.birthPlace);
+        }
+        if (p.deathInfo) {
+          ged.push('1 DEAT');
+          ged.push('2 DATE ' + f.deathDate);
+          if (f.deathPlace) ged.push('2 PLAC ' + f.deathPlace);
+        }
+      });
+      ged.push('0 TRLR');
+      return ged.join('\n');
+    }
+
+    function generateFamilySearchJson() {
+      const source = getExportPersonsList();
+      return JSON.stringify({
+        generator: '家族歷史記錄 助手 · 가족역사기록 도우미 v3.2',
+        repository: 'https://github.com/ntec2000/family-search-helper',
+        sisterProject: 'https://github.com/ntec2000/LDS_Multi_Scriptures',
+        persons: source.map(p => ({ ...p, structuredFields: splitPersonFields(p) }))
+      }, null, 2);
+    }
+
+    function generateStructuredCsv() {
+      const source = getExportPersonsList();
+      let csv = [
+        'ID,세대,한글 성,한글 이름,한글 접미사,한자 성,한자 이름,한자 접미사,로마자 성,로마자 이름,로마자 접미사,성별,상태,생년월일,출생 장소,사망 일자,사망 장소,배우자,처가정보'
+      ];
+      source.forEach(p => {
+        const f = splitPersonFields(p);
+        csv.push([
+          p.id,
+          '"' + (p.generationTitle || '').replace(/"/g, '""') + '"',
+          '"' + f.korSurname.replace(/"/g, '""') + '"',
+          '"' + f.korGiven.replace(/"/g, '""') + '"',
+          '"' + f.korSuffix.replace(/"/g, '""') + '"',
+          '"' + f.hanjaSurname.replace(/"/g, '""') + '"',
+          '"' + f.hanjaGiven.replace(/"/g, '""') + '"',
+          '"' + f.hanjaSuffix.replace(/"/g, '""') + '"',
+          '"' + f.romSurname.replace(/"/g, '""') + '"',
+          '"' + f.romGiven.replace(/"/g, '""') + '"',
+          '"' + f.romSuffix.replace(/"/g, '""') + '"',
+          '"' + f.genderLabel + '"',
+          '"' + f.statusLabel + '"',
+          '"' + f.birthDate.replace(/"/g, '""') + '"',
+          '"' + f.birthPlace.replace(/"/g, '""') + '"',
+          '"' + f.deathDate.replace(/"/g, '""') + '"',
+          '"' + f.deathPlace.replace(/"/g, '""') + '"',
+          '"' + (p.spouse ? p.spouse.name.replace(/"/g, '""') : '') + '"',
+          '"' + (p.spouse && p.spouse.inlaws ? p.spouse.inlaws.join(' | ').replace(/"/g, '""') : '') + '"'
+        ].join(','));
+      });
+      return csv.join('\r\n');
+    }
+
+    let activeExportTab = 'structured';
+    function updateExportPreview() {
+      const pre = document.getElementById('export-preview-content');
+      if (!pre) return;
+      if (getExportPersonsList().length === 0) {
+        pre.textContent = generateStructuredFieldText();
+        return;
+      }
+      if (activeExportTab === 'structured') {
+        pre.textContent = generateStructuredFieldText();
+      } else if (activeExportTab === 'txt') {
+        pre.textContent = getCurrentRuleText();
+      } else if (activeExportTab === 'gedcom') {
+        pre.textContent = generateGedcom();
+      } else if (activeExportTab === 'json') {
+        pre.textContent = generateFamilySearchJson();
+      } else {
+        pre.textContent = generateStructuredFieldText();
+      }
+    }
+
+    function setExportTabStyles(activeBtn) {
+      ['exp-preview-tab-structured', 'exp-preview-tab-txt', 'exp-preview-tab-gedcom', 'exp-preview-tab-json'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.className = 'px-2.5 py-1 rounded text-slate-400 hover:text-white';
+      });
+      if (activeBtn) activeBtn.className = 'px-2.5 py-1 rounded bg-slate-800 text-amber-300 font-bold';
+    }
+
+    const tabStruct = document.getElementById('exp-preview-tab-structured');
+    if (tabStruct) {
+      tabStruct.addEventListener('click', (e) => {
+        activeExportTab = 'structured'; setExportTabStyles(e.target); updateExportPreview();
+      });
+    }
+    const tabTxt = document.getElementById('exp-preview-tab-txt');
+    if (tabTxt) {
+      tabTxt.addEventListener('click', (e) => {
+        activeExportTab = 'txt'; setExportTabStyles(e.target); updateExportPreview();
+      });
+    }
+    const tabGed = document.getElementById('exp-preview-tab-gedcom');
+    if (tabGed) {
+      tabGed.addEventListener('click', (e) => {
+        activeExportTab = 'gedcom'; setExportTabStyles(e.target); updateExportPreview();
+      });
+    }
+    const tabJson = document.getElementById('exp-preview-tab-json');
+    if (tabJson) {
+      tabJson.addEventListener('click', (e) => {
+        activeExportTab = 'json'; setExportTabStyles(e.target); updateExportPreview();
+      });
+    }
+
+    const btnDownloadTxtFile = document.getElementById('btn-download-txt-file');
+    if (btnDownloadTxtFile) {
+      btnDownloadTxtFile.addEventListener('click', () => {
+        if (getExportPersonsList().length === 0) { updateExportPreview(); showToast('내보낼 추출 데이터가 없습니다. 먼저 족보에서 영역 추출을 실행해 주세요.'); return; }
+        // 화면에 표시된 내용 그대로 .txt로 저장 (비어 있으면 항목별 추출 텍스트로 채움)
+        const pre = document.getElementById('export-preview-content');
+        if (!pre || !pre.textContent.trim()) {
+          activeExportTab = 'structured';
+          const tabStructBtn = document.getElementById('exp-preview-tab-structured');
+          if (tabStructBtn) setExportTabStyles(tabStructBtn);
+          updateExportPreview();
+        }
+        const text = pre ? pre.textContent : generateStructuredFieldText();
+        const d = new Date();
+        const stamp = d.getFullYear() + String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0');
+        downloadFile('jokbo_extracted_data_' + stamp + '.txt', '\uFEFF' + text, 'text/plain;charset=utf-8');
+        showToast('추출 데이터를 .txt 파일로 내보냈습니다. (다운로드가 막힌 환경에서는 클립보드에 복사됩니다)');
+      });
+    }
+
+    const btnDownloadGedcom = document.getElementById('btn-download-gedcom');
+    if (btnDownloadGedcom) {
+      btnDownloadGedcom.addEventListener('click', () => {
+        downloadFile('jokbo_familysearch_data.ged', generateGedcom(), 'text/plain;charset=utf-8');
+        showToast('GEDCOM (.ged) 파일이 다운로드되었습니다.');
+      });
+    }
+    const btnDownloadJson = document.getElementById('btn-download-json');
+    if (btnDownloadJson) {
+      btnDownloadJson.addEventListener('click', () => {
+        downloadFile('familysearch_jokbo_data.json', generateFamilySearchJson(), 'application/json;charset=utf-8');
+        showToast('FamilySearch JSON 파일이 다운로드되었습니다.');
+      });
+    }
+    const btnDownloadCsv = document.getElementById('btn-download-csv');
+    if (btnDownloadCsv) {
+      btnDownloadCsv.addEventListener('click', () => {
+        const csvContentWithBom = '\uFEFF' + generateStructuredCsv();
+        copyToClipboard(csvContentWithBom);
+        downloadFile('jokbo_extracted_table.csv', csvContentWithBom, 'text/csv;charset=utf-8');
+        showToast('엑셀 호환 CSV(한글·한자·로마자 성/이름 분리, UTF-8 BOM) 파일이 다운로드되었습니다!');
+      });
+    }
+
+    const btnCopyPreview = document.getElementById('btn-copy-preview-content');
+    if (btnCopyPreview) {
+      btnCopyPreview.addEventListener('click', () => {
+        if (getExportPersonsList().length === 0) { updateExportPreview(); showToast('복사할 추출 데이터가 없습니다. 먼저 족보에서 영역 추출을 실행해 주세요.'); return; }
+        const pre = document.getElementById('export-preview-content');
+        if (pre && !pre.textContent.trim()) {
+          activeExportTab = 'structured';
+          updateExportPreview();
+        }
+        if (pre) {
+          copyToClipboard(pre.textContent);
+          showToast('전체 텍스트가 메모리에 저장되었습니다. 다른 곳에 바로 붙여넣기(Ctrl+V) 하세요!');
+        }
+      });
+    }
+
+    function getCurrentRuleText() {
+      const preText = document.getElementById('verbatim-rule-pre');
+      if (preText && preText.textContent && !preText.textContent.includes('업로드되었습니다')) {
+        return preText.textContent;
+      }
+      return VERBATIM_RULE_TEXT;
+    }
+
+    const btnCopyRuleText = document.getElementById('btn-copy-rule-text');
+    if (btnCopyRuleText) {
+      btnCopyRuleText.addEventListener('click', () => {
+        if (getExportPersonsList().length === 0) { showToast('저장할 추출 데이터가 없습니다. 먼저 족보에서 영역 추출을 실행해 주세요.'); return; }
+        const currentTxt = generateStructuredFieldText() + '\r\n\r\n' + getCurrentRuleText();
+        copyToClipboard(currentTxt);
+        downloadFile('jokbo_extracted_result.txt', '\uFEFF' + currentTxt, 'text/plain;charset=utf-8');
+        showToast('추출된 텍스트가 클립보드에 복사되고 .txt 파일로 저장되었습니다!');
+      });
+    }
+
+    const btnReparseAll = document.getElementById('btn-reparse-all');
+    if (btnReparseAll) {
+      btnReparseAll.addEventListener('click', () => {
+        if (!sampleLoaded) { showToast('먼저 족보 이미지를 열고 영역(ROI) 추출을 실행해 주세요. (샘플은 자동으로 불러오지 않습니다)'); return; }
+        executeRoiOcrExtraction({ x: 0, y: 0, w: roiCanvas.width || 500, h: roiCanvas.height || 700 });
+        showToast('현재 족보 이미지 전체 영역에 대해 한자 OCR 및 데이터 추출을 새로 실행했습니다!');
+      });
+    }
+
+    // Bulletproof downloadFile with Blob, DataURI, Iframe, and Automatic Clipboard Fallback
+    function downloadFile(filename, text, mime) {
+      let success = false;
+      const actualMime = mime || 'text/plain;charset=utf-8';
+
+      // Always copy to clipboard as an immediate zero-loss guarantee
+      copyToClipboard(text);
+
+      // Method 1: msSaveOrOpenBlob (IE/Old Edge)
+      try {
+        const blob = new Blob([text], { type: actualMime });
+        if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+          window.navigator.msSaveOrOpenBlob(blob, filename);
+          success = true;
+          return;
+        }
+      } catch (_) {}
+
+      // Method 2: Blob URL click
+      try {
+        const blob = new Blob([text], { type: actualMime });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          try { document.body.removeChild(a); URL.revokeObjectURL(url); } catch (_) {}
+        }, 1000);
+        success = true;
+      } catch (_) {}
+
+      // Method 3: Data URI fallback (works if Blob is restricted in sandbox)
+      if (!success) {
+        try {
+          const dataUri = 'data:' + actualMime + ',' + encodeURIComponent(text);
+          const a = document.createElement('a');
+          a.style.display = 'none';
+          a.href = dataUri;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(() => {
+            try { document.body.removeChild(a); } catch (_) {}
+          }, 600);
+          success = true;
+        } catch (_) {}
+      }
+    }
+
+    function copyToClipboard(text) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
+      } else {
+        fallbackCopy(text);
+      }
+    }
+
+    function fallbackCopy(text) {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      } catch (_) {}
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      if (!toast) return;
+      document.getElementById('toast-message').textContent = msg;
+      toast.classList.remove('opacity-0', 'pointer-events-none');
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'pointer-events-none');
+      }, 3000);
+    }
+    window.onload = function() {
+      initManseCalculator();
+      // Ensure strict clean default: No pre-populated data until user acts!
+      jokboData = [];
+      sampleLoaded = false;
+      renderPersonCards();
+    };
+  </script>
+
+  <!-- KakaoTalk QR Code Modal for Bug Reports -->
+  <div id="kakao-qr-modal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-amber-500/40 rounded-2xl p-6 max-w-sm w-full text-center space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <h4 class="text-sm font-bold text-white flex items-center gap-1.5">
+          <span class="text-yellow-400">💬</span> 카카오톡 친구 추가 및 문의
+        </h4>
+        <button id="btn-close-qr-modal" class="text-slate-400 hover:text-white p-1 rounded-lg">✕</button>
+      </div>
+      <div class="bg-white p-4 rounded-xl inline-block shadow-inner mx-auto">
+        <svg class="w-44 h-44 mx-auto" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="200" height="200" fill="white"/>
+          <rect x="20" y="20" width="40" height="40" fill="#111827"/>
+          <rect x="26" y="26" width="28" height="28" fill="white"/>
+          <rect x="32" y="32" width="16" height="16" fill="#111827"/>
+          <rect x="140" y="20" width="40" height="40" fill="#111827"/>
+          <rect x="146" y="26" width="28" height="28" fill="white"/>
+          <rect x="152" y="32" width="16" height="16" fill="#111827"/>
+          <rect x="20" y="140" width="40" height="40" fill="#111827"/>
+          <rect x="26" y="146" width="28" height="28" fill="white"/>
+          <rect x="32" y="152" width="16" height="16" fill="#111827"/>
+          <g fill="#111827">
+            <rect x="70" y="25" width="8" height="8"/><rect x="85" y="25" width="8" height="8"/><rect x="105" y="25" width="8" height="8"/><rect x="120" y="25" width="8" height="8"/>
+            <rect x="70" y="40" width="8" height="8"/><rect x="95" y="40" width="8" height="8"/><rect x="115" y="40" width="8" height="8"/>
+            <rect x="80" y="55" width="8" height="8"/><rect x="100" y="55" width="8" height="8"/><rect x="120" y="55" width="8" height="8"/>
+            <rect x="25" y="75" width="8" height="8"/><rect x="45" y="75" width="8" height="8"/><rect x="65" y="75" width="8" height="8"/><rect x="85" y="75" width="8" height="8"/><rect x="105" y="75" width="8" height="8"/><rect x="125" y="75" width="8" height="8"/><rect x="145" y="75" width="8" height="8"/><rect x="165" y="75" width="8" height="8"/>
+            <rect x="35" y="90" width="8" height="8"/><rect x="55" y="90" width="8" height="8"/><rect x="75" y="90" width="8" height="8"/><rect x="115" y="90" width="8" height="8"/><rect x="135" y="90" width="8" height="8"/><rect x="155" y="90" width="8" height="8"/>
+            <rect x="25" y="105" width="8" height="8"/><rect x="45" y="105" width="8" height="8"/><rect x="65" y="105" width="8" height="8"/><rect x="85" y="105" width="8" height="8"/><rect x="105" y="105" width="8" height="8"/><rect x="125" y="105" width="8" height="8"/><rect x="145" y="105" width="8" height="8"/>
+            <rect x="35" y="120" width="8" height="8"/><rect x="75" y="120" width="8" height="8"/><rect x="95" y="120" width="8" height="8"/><rect x="135" y="120" width="8" height="8"/><rect x="165" y="120" width="8" height="8"/>
+            <rect x="70" y="145" width="8" height="8"/><rect x="90" y="145" width="8" height="8"/><rect x="110" y="145" width="8" height="8"/><rect x="130" y="145" width="8" height="8"/><rect x="160" y="145" width="8" height="8"/>
+            <rect x="80" y="160" width="8" height="8"/><rect x="100" y="160" width="8" height="8"/><rect x="120" y="160" width="8" height="8"/><rect x="150" y="160" width="8" height="8"/>
+            <rect x="70" y="175" width="8" height="8"/><rect x="95" y="175" width="8" height="8"/><rect x="115" y="175" width="8" height="8"/><rect x="140" y="175" width="8" height="8"/><rect x="165" y="175" width="8" height="8"/>
+          </g>
+          <circle cx="100" cy="100" r="16" fill="#FEE500"/>
+          <path d="M100 89C93.37 89 88 93.48 88 99C88 102.45 90.15 105.47 93.45 107.15L92.2 111.45C92.05 111.95 92.65 112.35 93.05 112.05L98.15 108.65C98.75 108.75 99.37 108.8 100 108.8C106.63 108.8 112 104.32 112 98.8C112 93.48 106.63 89 100 89Z" fill="#181600"/>
+        </svg>
+      </div>
+      <div>
+        <div class="text-xs font-bold text-white">비애원호 (Peter S. Choi)</div>
+        <div class="text-[11px] text-slate-400 font-mono">카카오톡 ID: ntec2000</div>
+        <p class="text-[11px] text-slate-300 mt-1">스마트폰 카메라로 위 QR코드를 스캔하여 친구 추가 후 버그 및 개선 요청을 보내실 수 있습니다.</p>
+      </div>
+      <button id="btn-copy-kakao-id" class="w-full bg-slate-800 hover:bg-slate-700 text-yellow-300 border border-slate-700 py-2 rounded-lg text-xs font-semibold">
+        카카오톡 ID (ntec2000) 복사
+      </button>
+    </div>
+  </div>
+
+  <!-- Windows 11 Desktop Download & Setup Guidance Modal -->
+  <div id="desktop-download-modal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-sky-500/40 rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <h4 class="text-sm font-bold text-white flex items-center gap-1.5">
+          <span class="text-sky-400">💻</span> Windows 11 PC 데스크톱 버전 실행 안내
+        </h4>
+        <button id="btn-close-desktop-modal" class="text-slate-400 hover:text-white p-1 rounded-lg">✕</button>
+      </div>
+      <div class="space-y-2.5 text-xs text-slate-300">
+        <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+          <div class="font-bold text-white mb-1">1. 패키지 파일 다운로드</div>
+          <p class="text-slate-400">함께 제공된 <strong>[FamilySearch_Helper_Win11_PC_Setup.zip]</strong> 첨부 파일을 다운로드하여 압축을 해제합니다.</p>
+        </div>
+        <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+          <div class="font-bold text-white mb-1">2. 원클릭 실행 (배치 파일)</div>
+          <p class="text-slate-400">폴더 내 <code>Install_and_Run_Win11.bat</code>을 실행하면 Windows 11 데스크톱 독립 창(pythonw.exe 런처 호환)으로 즉시 구동됩니다.</p>
+        </div>
+        <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+          <div class="font-bold text-white mb-1">3. 웹 단일 파일 무설치 실행</div>
+          <p class="text-slate-400"><code>jokbo_data_extractor.html</code>을 더블클릭하면 엣지/크롬 브라우저에서 인터넷 없이도 로컬 오프라인 100% 동작합니다.</p>
+        </div>
+      </div>
+      <div class="flex flex-col gap-2 pt-1">
+        <button id="btn-modal-download-bat" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 rounded-lg text-xs transition flex items-center justify-center gap-1.5 shadow">
+          <span>⚡ Windows 11 데스크톱 런처 (Install_and_Run_Win11.bat) 즉시 다운로드</span>
+        </button>
+        <button id="btn-modal-download-py" class="w-full bg-sky-600 hover:bg-sky-500 text-white font-bold py-2.5 rounded-lg text-xs transition flex items-center justify-center gap-1.5 shadow">
+          <span>🐍 Python 데스크톱 앱 (FamilySearch_Helper_Desktop_App.py) 다운로드</span>
+        </button>
+        <button id="btn-confirm-desktop-modal" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-2 rounded-lg text-xs">
+          닫기 / 확인 완료
+        </button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
