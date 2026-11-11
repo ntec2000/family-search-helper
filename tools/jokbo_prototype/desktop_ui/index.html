@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>가족역사 기록 도우미</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,"Malgun Gothic",sans-serif;background:#0d1420;color:#e7edf5}
+*{box-sizing:border-box}body{margin:0}header{padding:18px 24px;background:#131f30;border-bottom:1px solid #314054}h1{font-size:21px;margin:0}h2{font-size:17px;margin:0 0 12px}.sub{color:#bac8d8;font-size:14px;margin:.45em 0 0}.layout{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:16px;max-width:1600px;margin:auto}.panel{border:1px solid #36475b;background:#172335;border-radius:8px;padding:16px;min-width:0}.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin:12px 0}label{display:block;font-size:14px}input,textarea,button{font:inherit}input[type=text],textarea{background:#0d1623;color:#fff;border:1px solid #526781;border-radius:5px;padding:9px}input[type=text]{width:110px}textarea{width:100%;resize:vertical;min-height:135px;line-height:1.5}button,.file{display:inline-block;background:#26648d;color:white;border:1px solid #5385a5;border-radius:5px;padding:9px 13px;cursor:pointer}button:hover,.file:hover{background:#327ba6}button:disabled{opacity:.55;cursor:wait}input[type=file]{max-width:100%}.imagebox{overflow:auto;background:#0b1018;text-align:center;border:1px solid #354459;min-height:180px;max-height:68vh}.imagebox canvas{max-width:100%;height:auto;touch-action:none;cursor:crosshair;display:block;margin:auto}.hint{font-size:13px;color:#bdcbd9;line-height:1.6}.status{color:#ffda90;min-height:1.5em}.candidate{border-top:1px solid #394b60;padding:10px 2px;white-space:pre-wrap;overflow-wrap:anywhere}.tag{color:#ffd786;font-size:13px}.raw{margin-top:12px}.empty{padding:36px 10px;color:#bdcbd9}.screen-reader{position:absolute;left:-9999px}@media(max-width:800px){.layout{grid-template-columns:1fr}header{padding:14px}}
+</style>
+</head>
+<body>
+<header><h1>가족역사 기록 도우미</h1><p class="sub">이미지 선택 → 영역 지정 → 한자 판독 → 원문과 후보 검토</p></header>
+<main class="layout">
+<section class="panel">
+<h2>족보 이미지</h2>
+<p class="hint">JPG 또는 PNG 이미지를 선택하고 판독할 부분을 드래그하세요. 세대 한 구획씩 선택하면 검토하기 쉽습니다. 원본 파일은 변경하지 않습니다.</p>
+<div class="toolbar"><label>이미지 선택 <input id="file" type="file" accept="image/jpeg,image/png"></label><button id="reset" type="button">전체 영역 선택</button></div>
+<div class="imagebox"><div id="empty" class="empty">이미지를 선택해 주세요.</div><canvas id="canvas" hidden aria-label="선택한 족보 이미지"></canvas></div>
+<div class="toolbar"><label>작업 성씨 <input id="surname" type="text" maxlength="3" placeholder="예: 이"></label><button id="read" type="button">선택 영역 OCR</button></div>
+<p class="hint">선택하지 않으면 전체 이미지를 판독합니다. PDF와 카메라는 이 화면에서 아직 지원하지 않습니다.</p>
+<p class="status" id="status" role="status" aria-live="polite"></p>
+</section>
+<section class="panel">
+<h2>판독 원문과 인물 후보</h2>
+<p class="hint">OCR은 오류가 있을 수 있습니다. 인물·관계·날짜를 자동 확정하지 않습니다. 원본과 대조해 수정해 주세요.</p>
+<label class="raw" for="raw">OCR 원문 (자동 보존 · 읽기 전용)</label>
+<textarea id="raw" readonly></textarea>
+<label class="raw" for="edited">검토용 원문 (직접 수정 가능)</label>
+<textarea id="edited"></textarea>
+<div class="toolbar"><button id="parse" type="button">수정 원문으로 후보 다시 찾기</button><button id="save" type="button">원문·후보 JSON 저장</button></div>
+<h2>인물 후보 <span id="count" class="tag">0건</span></h2>
+<div id="candidates" class="hint">판독 후 후보가 여기에 표시됩니다.</div>
+</section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>

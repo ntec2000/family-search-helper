@@ -17,7 +17,10 @@ def run(webview):
     # A fixed origin is required by the existing request validation and storage.
     # Fail closed if the port is occupied; never display an unknown local server.
     parser_engine.Handler.ocr_engine = "rapidocr"
-    parser_engine.Handler.web_root = None
+    web_root = Path(__file__).resolve().parent / "desktop_ui"
+    if not (web_root / "index.html").is_file():
+        raise FileNotFoundError("데스크톱 화면 파일을 찾을 수 없습니다.")
+    parser_engine.Handler.web_root = web_root
     with HTTPServer(("127.0.0.1", parser_engine.PORT), parser_engine.Handler) as server:
         worker = threading.Thread(target=server.serve_forever, daemon=True)
         worker.start()
