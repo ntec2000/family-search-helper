@@ -25,6 +25,8 @@ PERSON_MARKER = re.compile(r"^\s*(?P<marker>휘\(諱\)|諱|휘|子|男|女)\s*")
 NAME = re.compile(rf"^(?P<name>{HAN}{{1,4}}?|[가-힣]{{1,5}}?)(?=\s|$|[字号號墓配]|[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥](?:年)?[生卒])")
 DATE = re.compile(r"(?:[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥](?:年)?|[0-9]{4}年)\s*[生卒]")
 NOTE_START = re.compile(r"^(?:坐|向|孫|女|男|配|字|號|墓|忌|生|卒|父|祖)")
+# Only a separately written ordinal can be distinguished from a name glyph.
+ORDINAL = re.compile(r"^([一二三四五六七八九十]+)\s+(?=\S)")
 
 
 def generation_number(value):
@@ -61,6 +63,10 @@ def parse_candidates(raw, surname=""):
             continue
         marker = heading["marker"]
         rest = line[heading.end():].strip()
+        original_rest = rest
+        ordinal = ORDINAL.match(rest) if marker in ("子", "男", "女") else None
+        if ordinal:
+            rest = rest[ordinal.end():]
         if not rest or NOTE_START.match(rest):
             continue
         name_match = NAME.match(rest)
@@ -78,7 +84,9 @@ def parse_candidates(raw, surname=""):
             "surname": surname,
             "relation": "딸 후보" if daughter else "아들 후보" if marker in ("子", "男") else "인물 후보",
             "birth_death": "" if daughter else " · ".join(DATE.findall(tail)),
-            "details": ("사위 후보 원문 · " + rest) if daughter else tail,
+            "details": ("사위 후보 원문 · " + original_rest) if daughter else
+                (("순서 표기 원문 · " + ordinal[1] + (" · " + tail if tail else ""))
+                 if ordinal else tail),
             "verified": False,
         })
     return candidates

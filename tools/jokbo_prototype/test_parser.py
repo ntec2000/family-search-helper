@@ -28,6 +28,14 @@ class ParserTests(unittest.TestCase):
         people = parse_candidates("21 世 諱 格\n男 核\n휘(諱) 昃")
         self.assertEqual([p["name_hanja"] for p in people], ["格", "核", "昃"])
 
+    def test_separate_ordinal_does_not_become_a_person_name(self):
+        people = parse_candidates("子 二 承勳\n女 三 權龜壽\n子 四 字君實", "이")
+        self.assertEqual(len(people), 2)
+        self.assertEqual(people[0]["name_hanja"], "承勳")
+        self.assertIn("二", people[0]["details"])
+        self.assertEqual(people[1]["name_hanja"], "")
+        self.assertIn("三 權龜壽", people[1]["details"])
+
     def test_invalid_surname(self):
         with self.assertRaises(ValueError):
             parse_candidates("子格", "잘못된성씨")
