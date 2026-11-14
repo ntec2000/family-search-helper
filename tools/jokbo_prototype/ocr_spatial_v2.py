@@ -25,16 +25,18 @@ def reconstruct(tsv, x_tolerance=18, gap_ratio=3.5):
             continue
         if w <= 0 or h <= 0:
             continue
-        words.append({'x':x+w/2,'y':y,'bottom':y+h,'height':h,'text':value})
+        if confidence < 0:
+            continue
+        words.append({'page':row.get('page_num'), 'block':row.get('block_num'), 'par':row.get('par_num'), 'x':x+w/2,'y':y,'bottom':y+h,'height':h,'text':value})
     columns = []
     for word in sorted(words,key=lambda w:(-w['x'],w['y'])):
-        options = [c for c in columns if abs(c['x']-word['x']) <= x_tolerance]
+        options = [c for c in columns if c['group'] == (word['page'],word['block'],word['par']) and abs(c['anchor']-word['x']) <= x_tolerance]
         if options:
             col = min(options,key=lambda c:abs(c['x']-word['x']))
             col['words'].append(word)
-            col['x'] = sum(w['x'] for w in col['words'])/len(col['words'])
+            # Keep anchor fixed to prevent drift across neighboring columns.
         else:
-            columns.append({'x':word['x'],'words':[word]})
+            columns.append({'x':word['x'],'anchor':word['x'],'group':(word['page'],word['block'],word['par']),'words':[word]})
     result=[]
     for col in sorted(columns,key=lambda c:-c['x']):
         sequence=[]; previous=None
