@@ -5,8 +5,9 @@ from pathlib import Path
 
 
 def evaluate(texts, gold):
-    cleaned = [''.join(text.split()) for text in texts]
-    matches = {name: [i for i, text in enumerate(cleaned) if name in text]
+    cleaned = [[''.join(line.split()) for line in text.splitlines()] for text in texts]
+    matches = {name: [i for i, lines in enumerate(cleaned)
+                      if any(name in line for line in lines)]
                for name in gold}
     matched = [name for name, indices in matches.items() if indices]
     return {'gold_count': len(gold), 'matched_count': len(matched),
@@ -14,7 +15,7 @@ def evaluate(texts, gold):
             'matched_names': matched,
             'unmatched_names': [n for n in gold if not matches[n]],
             'matched_transcript_indices': matches,
-            'metric': 'exact contiguous name recall (not CER or precision)'}
+            'metric': 'exact name substring within a single OCR line, whitespace removed (not CER or precision)'}
 
 
 def main():

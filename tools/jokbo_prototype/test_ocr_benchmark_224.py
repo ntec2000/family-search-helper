@@ -14,6 +14,13 @@ class BenchmarkTests(unittest.TestCase):
     def test_empty_gold(self):
         self.assertIsNone(evaluate(['anything'], [])['exact_name_recall'])
 
+    def test_name_cannot_cross_ocr_lines(self):
+        result = evaluate(['聖\n甲', '聖 甲'], ['聖甲'])
+        self.assertEqual(result['matched_transcript_indices']['聖甲'], [1])
+
+    def test_name_cannot_cross_transcripts(self):
+        self.assertEqual(evaluate(['聖', '甲'], ['聖甲'])['matched_count'], 0)
+
 
 if __name__ == '__main__':
     unittest.main()
