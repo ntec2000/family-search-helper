@@ -6,6 +6,7 @@ assign names or relationships and does not write OCR text or image files.
 import argparse
 import io
 import json
+import math
 from pathlib import Path
 
 from PIL import Image, ImageOps
@@ -13,6 +14,15 @@ from PIL import Image, ImageOps
 from jokbo_layout import detect_bands
 from ocr_benchmark_224 import evaluate
 from parser_engine import parse_candidates, recognize_rapid
+
+
+def rotate_for_experiment(image, angle):
+    """Rotate a copy only; output coordinates refer to the processed image."""
+    if not math.isfinite(angle) or abs(angle) > 5:
+        raise ValueError('rotation must be finite and within -5 to 5 degrees')
+    if angle == 0:
+        return image.copy()
+    return image.rotate(angle, resample=Image.Resampling.BICUBIC, fillcolor='white')
 
 
 def uncovered_ranges(height, bands):
@@ -87,6 +97,8 @@ def main():
     parser.add_argument("image", help="local source image")
     parser.add_argument("--gold", required=True, help="local UTF-8 JSON list of reviewed names")
     parser.add_argument("--candidate-gold", help="optional local JSON list of expected parser name fields")
+    parser.add_argument("--rotation-degrees", type=float, default=0,
+                        help="experimental rotation of image copy; coordinates refer to rotated pixels")
     args = parser.parse_args()
     gold = json.loads(Path(args.gold).read_text(encoding="utf-8"))
     if not isinstance(gold, list) or not all(isinstance(name, str) and name.strip() for name in gold):
@@ -102,7 +114,11 @@ def main():
             raise ValueError('candidate gold must be a JSON list of distinct nonempty names')
     with Image.open(args.image) as source:
         image = ImageOps.exif_transpose(source).convert("RGB")
-    print(json.dumps(compare(image, gold, candidate_gold=candidate_gold), ensure_ascii=False, indent=2))
+    processed = rotate_for_experiment(image, args.rotation_degrees)
+    report = compare(processed, gold, candidate_gold=candidate_gold)
+    report['rotation_degrees'] = args.rotation_degrees
+    report['coordinate_space'] = 'rotated image copy; not original source coordinates'
+    print(json.dumps(report, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

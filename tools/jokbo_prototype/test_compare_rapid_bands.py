@@ -1,10 +1,21 @@
 import unittest
 from unittest.mock import patch
 from PIL import Image
-from compare_rapid_bands import candidate_coverage, compare, uncovered_ranges
+from compare_rapid_bands import candidate_coverage, compare, rotate_for_experiment, uncovered_ranges
 
 
 class ComparisonTests(unittest.TestCase):
+    def test_rotation_is_bounded_and_does_not_modify_source(self):
+        image = Image.new('RGB', (20, 20), 'white')
+        image.putpixel((0, 0), (0, 0, 0))
+        original = image.tobytes()
+        rotated = rotate_for_experiment(image, 0.3)
+        self.assertEqual(rotated.size, image.size)
+        self.assertEqual(image.tobytes(), original)
+        for value in (float('nan'), float('inf'), -5.1, 5.1):
+            with self.subTest(value=value), self.assertRaises(ValueError):
+                rotate_for_experiment(image, value)
+
     def test_candidate_coverage_requires_exact_name_field(self):
         result = candidate_coverage(['子明\n子明\n女和'], ['明', '和'])
         self.assertEqual(result['matched_names'], ['明'])
