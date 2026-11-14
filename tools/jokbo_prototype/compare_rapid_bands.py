@@ -12,7 +12,7 @@ from PIL import Image, ImageOps
 
 from jokbo_layout import detect_bands
 from ocr_benchmark_224 import evaluate
-from parser_engine import recognize_rapid
+from parser_engine import parse_candidates, recognize_rapid
 
 
 def uncovered_ranges(height, bands):
@@ -30,14 +30,26 @@ def uncovered_ranges(height, bands):
     return missing
 
 
-def compare(image, gold, recognize=recognize_rapid, *, min_uncovered_height=10):
+def candidate_coverage(raws, gold):
+    """Count exact candidate name fields; never infer identity or kinship."""
+    names = [person.get('name_hanja', '') for raw in raws
+             for person in parse_candidates(raw)]
+    matches = [name for name in gold if name in names]
+    return {'reference_count': len(gold), 'matched_count': len(matches),
+            'matched_names': matches, 'unmatched_names': [name for name in gold if name not in names],
+            'candidate_count': len(names),
+            'warning': 'Exact name-field coverage is not person identity or relationship accuracy.'}
+
+
+def compare(image, gold, recognize=recognize_rapid, *, min_uncovered_height=10, candidate_gold=None):
     """Evaluate each OCR line independently and retain region coordinates."""
     def read(sample):
         payload = io.BytesIO()
         sample.save(payload, format="PNG")
         return recognize(payload.getvalue())
 
-    baseline = evaluate([read(image)], gold)
+    baseline_raw = read(image)
+    baseline = evaluate([baseline_raw], gold)
     bands = detect_bands(image)
     uncovered = uncovered_ranges(image.height, bands)
     band_results = [read(image.crop((0, top, image.width, bottom)))
@@ -52,7 +64,7 @@ def compare(image, gold, recognize=recognize_rapid, *, min_uncovered_height=10):
     review = evaluate(review_results, gold)
     baseline_names = set(baseline["matched_names"])
     segmented_names = set(segmented["matched_names"])
-    return {
+    result = {
         "image_size": list(image.size),
         "band_bounds": bands,
         "uncovered_rows": uncovered,
@@ -64,21 +76,33 @@ def compare(image, gold, recognize=recognize_rapid, *, min_uncovered_height=10):
         "segmented_only": sorted(segmented_names - baseline_names),
         "warning": "Name substring coverage is not OCR accuracy or relationship accuracy; bands require review.",
     }
+    if candidate_gold is not None:
+        result['baseline_candidates'] = candidate_coverage([baseline_raw], candidate_gold)
+        result['segmented_candidates'] = candidate_coverage(band_results, candidate_gold)
+    return result
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("image", help="local source image")
     parser.add_argument("--gold", required=True, help="local UTF-8 JSON list of reviewed names")
+    parser.add_argument("--candidate-gold", help="optional local JSON list of expected parser name fields")
     args = parser.parse_args()
     gold = json.loads(Path(args.gold).read_text(encoding="utf-8"))
     if not isinstance(gold, list) or not all(isinstance(name, str) and name.strip() for name in gold):
         raise ValueError("gold must be a JSON list of nonempty names")
     if len(set(gold)) != len(gold):
         raise ValueError("duplicate names cannot represent independently identified people")
+    candidate_gold = None
+    if args.candidate_gold:
+        candidate_gold = json.loads(Path(args.candidate_gold).read_text(encoding='utf-8'))
+        if (not isinstance(candidate_gold, list)
+                or not all(isinstance(name, str) and name.strip() for name in candidate_gold)
+                or len(set(candidate_gold)) != len(candidate_gold)):
+            raise ValueError('candidate gold must be a JSON list of distinct nonempty names')
     with Image.open(args.image) as source:
         image = ImageOps.exif_transpose(source).convert("RGB")
-    print(json.dumps(compare(image, gold), ensure_ascii=False, indent=2))
+    print(json.dumps(compare(image, gold, candidate_gold=candidate_gold), ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

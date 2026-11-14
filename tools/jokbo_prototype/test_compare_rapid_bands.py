@@ -1,10 +1,16 @@
 import unittest
 from unittest.mock import patch
 from PIL import Image
-from compare_rapid_bands import compare, uncovered_ranges
+from compare_rapid_bands import candidate_coverage, compare, uncovered_ranges
 
 
 class ComparisonTests(unittest.TestCase):
+    def test_candidate_coverage_requires_exact_name_field(self):
+        result = candidate_coverage(['子明\n子明\n女和'], ['明', '和'])
+        self.assertEqual(result['matched_names'], ['明'])
+        self.assertEqual(result['unmatched_names'], ['和'])
+        self.assertEqual(result['candidate_count'], 3)
+
     def test_evaluates_regions_separately_and_reports_losses(self):
         image = Image.new("RGB", (80, 100), "white")
         outputs = iter(["甲\n乙", "丙", "乙"])
