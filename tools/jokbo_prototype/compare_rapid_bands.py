@@ -15,7 +15,22 @@ from ocr_benchmark_224 import evaluate
 from parser_engine import recognize_rapid
 
 
-def compare(image, gold, recognize=recognize_rapid):
+def uncovered_ranges(height, bands):
+    """Return half-open image rows that are not sent for segmented OCR."""
+    missing = []
+    cursor = 0
+    for top, bottom in sorted(bands):
+        if not (0 <= top < bottom <= height):
+            raise ValueError("band bounds must be inside the image")
+        if top > cursor:
+            missing.append((cursor, top))
+        cursor = max(cursor, bottom)
+    if cursor < height:
+        missing.append((cursor, height))
+    return missing
+
+
+def compare(image, gold, recognize=recognize_rapid, *, min_uncovered_height=10):
     """Evaluate each OCR line independently and retain region coordinates."""
     def read(sample):
         payload = io.BytesIO()
@@ -24,14 +39,25 @@ def compare(image, gold, recognize=recognize_rapid):
 
     baseline = evaluate([read(image)], gold)
     bands = detect_bands(image)
+    uncovered = uncovered_ranges(image.height, bands)
     band_results = [read(image.crop((0, top, image.width, bottom)))
                     for top, bottom in bands]
+    # Keep OCR from gaps separate; a detector with no bands falls back to the
+    # already-read full page rather than running the same OCR a second time.
+    review_ranges = [(top, bottom) for top, bottom in uncovered
+                     if bands and bottom - top >= min_uncovered_height]
+    review_results = [read(image.crop((0, top, image.width, bottom)))
+                      for top, bottom in review_ranges]
     segmented = evaluate(band_results, gold)
+    review = evaluate(review_results, gold)
     baseline_names = set(baseline["matched_names"])
     segmented_names = set(segmented["matched_names"])
     return {
         "image_size": list(image.size),
         "band_bounds": bands,
+        "uncovered_rows": uncovered,
+        "reviewed_uncovered_rows": review_ranges,
+        "uncovered_review": review,
         "baseline": baseline,
         "segmented": segmented,
         "baseline_only": sorted(baseline_names - segmented_names),
