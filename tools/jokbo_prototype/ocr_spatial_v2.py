@@ -9,17 +9,21 @@ import re
 HAN = re.compile(r'[\u3400-\u9fff\U00020000-\U0002fa1f]+')
 
 def reconstruct(tsv, x_tolerance=18, gap_ratio=3.5):
+    if x_tolerance <= 0 or gap_ratio <= 0:
+        raise ValueError('Tolerances must be positive')
     words = []
     for row in csv.DictReader(io.StringIO(tsv), delimiter='\t'):
         if row.get('level') != '5':
             continue
-        value = ''.join(HAN.findall(row.get('text', '')))
+        value = ''.join(HAN.findall(row.get('text') or ''))
         if not value:
             continue
         try:
             x,y,w,h = (int(row[k]) for k in ('left','top','width','height'))
             float(row.get('conf','-1'))
-        except (ValueError,KeyError):
+        except (ValueError,KeyError,TypeError):
+            continue
+        if w <= 0 or h <= 0:
             continue
         words.append({'x':x+w/2,'y':y,'bottom':y+h,'height':h,'text':value})
     columns = []
@@ -34,7 +38,7 @@ def reconstruct(tsv, x_tolerance=18, gap_ratio=3.5):
     result=[]
     for col in sorted(columns,key=lambda c:-c['x']):
         sequence=[]; previous=None
-        heights=sorted(w['height'] for w in col['words'])
+        heights=sorted(w['height']/max(1,len(w['text'])) for w in col['words'])
         median=heights[len(heights)//2]
         for word in sorted(col['words'],key=lambda w:w['y']):
             if previous is not None and word['y']-previous > gap_ratio*max(10,median):
